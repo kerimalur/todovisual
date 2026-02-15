@@ -208,7 +208,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
       TABLES.TIME_ENTRIES,
       userId,
       (timeEntries) => {
-        const activeEntry = timeEntries.find(e => e.is_running);
+        const activeEntry = timeEntries.find(e => e.isRunning);
         set({ timeEntries, activeTimeEntry: activeEntry || null });
       }
     );
@@ -438,7 +438,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const habit = get().habits.find(h => h.id === habitId);
     if (habit) {
       await get().updateHabit(habitId, {
-        total_completions: (habit.total_completions || 0) + 1,
+        totalCompletions: (habit.totalCompletions || 0) + 1,
       });
     }
   },
@@ -448,7 +448,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
     // Delete completion record
     const completions = await supabaseService.readMany<HabitCompletion>(TABLES.HABIT_COMPLETIONS, habitId);
-    const completion = completions.find(c => c.date === dateStr);
+    const completion = completions.find(c => new Date(c.date).toISOString().split('T')[0] === dateStr);
     if (completion) {
       await supabaseService.delete(TABLES.HABIT_COMPLETIONS, completion.id);
     }
@@ -656,7 +656,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   stopTimeTracking: async () => {
     if (get().activeTimeEntry) {
       const endTime = new Date();
-      const startTime = new Date(get().activeTimeEntry!.start_time);
+      const startTime = new Date(get().activeTimeEntry!.startTime);
       const durationMinutes = Math.floor((endTime.getTime() - startTime.getTime()) / 60000);
 
       await supabaseService.update(TABLES.TIME_ENTRIES, get().activeTimeEntry!.id, {
@@ -685,12 +685,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   getTimeEntriesForTask: (taskId) => {
-    return get().timeEntries.filter(te => te.task_id === taskId);
+    return get().timeEntries.filter(te => te.taskId === taskId);
   },
 
   getTotalTimeForTask: (taskId) => {
     return get().timeEntries
-      .filter(te => te.task_id === taskId)
-      .reduce((total, te) => total + (te.duration_minutes || 0), 0);
+      .filter(te => te.taskId === taskId)
+      .reduce((total, te) => total + (te.duration || 0), 0);
   },
 }));
