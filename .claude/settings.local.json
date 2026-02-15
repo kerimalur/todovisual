@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git restore:*)",
+      "Bash(npm run build:*)",
+      "Bash(dir:*)",
+      "Bash(xcopy:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(del backup*.bak)",
+      "Bash(del backup*.backup)",
+      "Bash(npm install:*)",
+      "Bash(firebase deploy:*)"
+    ]
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "name": "Productive - Deine Produktivitäts-App",
+  "short_name": "Productive",
+  "description": "Verwalte deine Aufgaben, Ziele und Projekte an einem Ort",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6366f1",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "Neue Aufgabe",
+      "short_name": "Aufgabe",
+      "description": "Erstelle eine neue Aufgabe",
+      "url": "/?action=new-task",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Ziele",
+      "short_name": "Ziele",
+      "description": "Zeige deine Ziele an",
+      "url": "/goals",
+      "icons": [{ "src": "/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
+}
