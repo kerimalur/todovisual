@@ -43,7 +43,7 @@ export interface ProjectMetric {
 
 export interface Goal {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   title: string;
   description: string;
   deadline: Date;
@@ -59,7 +59,7 @@ export interface Goal {
 
 export interface Project {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   goalId?: string; // Optional - Projects can be independent
   title: string;
   description: string;
@@ -111,7 +111,7 @@ export interface SubTask {
 
 export interface Task {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   projectId?: string;
   goalId?: string;
   title: string;
@@ -143,7 +143,7 @@ export interface Task {
 
 export interface CalendarEvent {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   title: string;
   description?: string;
   startTime: Date;
@@ -173,7 +173,7 @@ export interface DailyReflection {
 
 export interface JournalEntry {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   date: Date;
   content: string;
   mood?: 'great' | 'good' | 'neutral' | 'bad' | 'terrible';
@@ -212,7 +212,7 @@ export interface WeeklyReflection {
 
 export interface FocusSession {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   taskId?: string;
   startTime: Date;
   endTime?: Date;
@@ -245,7 +245,7 @@ export type HabitFrequency = 'daily' | 'weekly' | 'specific-days';
 // Custom habit category (user-defined)
 export interface HabitCategoryItem {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   name: string;
   emoji: string;
   color: string;
@@ -260,7 +260,7 @@ export interface HabitCompletion {
 
 export interface Habit {
   id: string;
-  userId: string; // Firebase User ID
+  userId: string;
   title: string;
   description?: string;
   category: string; // User-defined category ID

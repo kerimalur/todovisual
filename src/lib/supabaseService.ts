@@ -308,18 +308,6 @@ export const supabaseService = {
     return user;
   },
 
-  async signInWithGoogle() {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${typeof window !== 'undefined' ? window.location.origin : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
-      },
-    });
-
-    if (error) throw new Error(error.message);
-    return data;
-  },
-
   async signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw new Error(error.message);

@@ -284,5 +284,5 @@ export const useSettingsStore = create<SettingsStore>()(
 );
 
 // ===== DATA STORE =====
-// Export the Firestore-based data store
+// Export the Supabase-based data store
 export { useDataStore } from './supbaseStore';
