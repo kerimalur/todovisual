@@ -1,6 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
   apiKey: "AIzaSyD9zKaXIhrd5x1tvpXQXf5wIOGAW0Q62CA",
@@ -19,7 +18,13 @@ const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Initialize Analytics (only in browser)
-export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
+// Initialize Analytics (only in browser) - lazy loaded
+export const getAnalyticsInstance = () => {
+  if (typeof window !== 'undefined') {
+    const { getAnalytics } = require('firebase/analytics');
+    return getAnalytics(app);
+  }
+  return null;
+};
 
 export default app;
