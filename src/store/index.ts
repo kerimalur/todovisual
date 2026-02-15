@@ -285,4 +285,4 @@ export const useSettingsStore = create<SettingsStore>()(
 
 // ===== DATA STORE =====
 // Export the Firestore-based data store
-export { useDataStore } from './firestoreStore';
+export { useDataStore } from './supbaseStore';

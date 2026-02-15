@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useDataStore } from '@/store/firestoreStore';
+import { useDataStore } from '@/store';
 
 export function StoreInitializer({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -12,7 +12,7 @@ export function StoreInitializer({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading && user) {
       // Initialize store with user ID
-      initialize(user.uid);
+      initialize(user.id);
     } else if (!loading && !user) {
       // Cleanup when user logs out
       cleanup();

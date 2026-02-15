@@ -47,12 +47,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { sidebarCollapsed, zenModeActive, zenWorkspaceActive } = useAppStore();
   const { timer } = useTimerStore();
 
-  // If on login page, render children without auth protection
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  // Modal states
+  // Modal states - MUST be before conditional returns
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -77,6 +72,11 @@ export function MainLayout({ children }: MainLayoutProps) {
   const [preselectedDate, setPreselectedDate] = useState<Date | undefined>();
 
   const [timerModalOpen, setTimerModalOpen] = useState(false);
+
+  // If on login page, render children without auth protection
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   // Modal handlers
   const openTaskModal = (task?: Task | null) => {
