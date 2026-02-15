@@ -199,7 +199,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
     }
   }, [editTask, isOpen, events]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Parse date string as local date (not UTC) using date-fns
@@ -232,58 +232,63 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       } : undefined,
     };
 
-    if (editTask) {
-      updateTask(editTask.id, taskData);
-      
-      // Update linked event with new time/date if exists
-      const linkedEvent = events.find(e => e.taskId === editTask.id);
-      if (linkedEvent && dueDate) {
-        const eventDate = dueDate;
-        const startDateTime = new Date(`${eventDate}T${startTime}`);
-        const endDateTime = new Date(`${eventDate}T${endTime}`);
+    try {
+      if (editTask) {
+        await updateTask(editTask.id, taskData);
         
-        updateEvent(linkedEvent.id, {
-          title,
-          description: description || undefined,
-          startTime: startDateTime,
-          endTime: endDateTime,
-        });
-      } else if (!linkedEvent && dueDate) {
-        // Create new event if none exists
-        const eventDate = dueDate;
-        const startDateTime = new Date(`${eventDate}T${startTime}`);
-        const endDateTime = new Date(`${eventDate}T${endTime}`);
-        
-        addEvent({
-          title,
-          description: description || undefined,
-          startTime: startDateTime,
-          endTime: endDateTime,
-          allDay: false,
-          taskId: editTask.id,
-        });
-      }
-    } else {
-      addTask(taskData);
+        // Update linked event with new time/date if exists
+        const linkedEvent = events.find(e => e.taskId === editTask.id);
+        if (linkedEvent && dueDate) {
+          const eventDate = dueDate;
+          const startDateTime = new Date(`${eventDate}T${startTime}`);
+          const endDateTime = new Date(`${eventDate}T${endTime}`);
+          
+          await updateEvent(linkedEvent.id, {
+            title,
+            description: description || undefined,
+            startTime: startDateTime,
+            endTime: endDateTime,
+          });
+        } else if (!linkedEvent && dueDate) {
+          // Create new event if none exists
+          const eventDate = dueDate;
+          const startDateTime = new Date(`${eventDate}T${startTime}`);
+          const endDateTime = new Date(`${eventDate}T${endTime}`);
+          
+          await addEvent({
+            title,
+            description: description || undefined,
+            startTime: startDateTime,
+            endTime: endDateTime,
+            allDay: false,
+            taskId: editTask.id,
+          });
+        }
+      } else {
+        await addTask(taskData);
 
-      // Bei neuen Tasks kann keine taskId verlinkt werden da async
-      // Das Event wird separat erstellt
-      if (dueDate) {
-        const eventDate = dueDate;
-        const startDateTime = new Date(`${eventDate}T${startTime}`);
-        const endDateTime = new Date(`${eventDate}T${endTime}`);
+        // Bei neuen Tasks kann keine taskId verlinkt werden da async
+        // Das Event wird separat erstellt
+        if (dueDate) {
+          const eventDate = dueDate;
+          const startDateTime = new Date(`${eventDate}T${startTime}`);
+          const endDateTime = new Date(`${eventDate}T${endTime}`);
 
-        addEvent({
-          title,
-          description: description || undefined,
-          startTime: startDateTime,
-          endTime: endDateTime,
-          allDay: false,
-        });
+          await addEvent({
+            title,
+            description: description || undefined,
+            startTime: startDateTime,
+            endTime: endDateTime,
+            allDay: false,
+          });
+        }
       }
+
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Speichern der Aufgabe:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    onClose();
   };
 
   const handleDelete = () => {

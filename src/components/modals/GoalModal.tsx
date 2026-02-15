@@ -93,7 +93,7 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
     setMilestones(milestones.filter(m => m.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const goalData = {
@@ -109,13 +109,17 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
       milestones: milestones.length > 0 ? milestones : undefined,
     };
 
-    if (editGoal) {
-      updateGoal(editGoal.id, goalData);
-    } else {
-      addGoal(goalData);
+    try {
+      if (editGoal) {
+        await updateGoal(editGoal.id, goalData);
+      } else {
+        await addGoal(goalData);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Ziels:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    onClose();
   };
 
   return (

@@ -131,7 +131,7 @@ export function ProjectModal({ isOpen, onClose, editProject, preselectedGoalId, 
     }
   }, [editProject, isOpen, preselectedGoalId, preselectedCategory]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const projectData = {
@@ -162,13 +162,17 @@ export function ProjectModal({ isOpen, onClose, editProject, preselectedGoalId, 
       } : undefined,
     };
 
-    if (editProject) {
-      updateProject(editProject.id, projectData);
-    } else {
-      addProject(projectData);
+    try {
+      if (editProject) {
+        await updateProject(editProject.id, projectData);
+      } else {
+        await addProject(projectData);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Projekts:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    onClose();
   };
 
   const selectedCategoryConfig = categoryOptions.find(c => c.value === category);

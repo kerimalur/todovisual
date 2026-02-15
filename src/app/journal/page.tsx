@@ -299,7 +299,7 @@ export default function JournalPage() {
     return { completedTasks, focusMinutes, habitsCompleted };
   }, [tasks, timeEntries, habits, today]);
 
-  const handleSaveJournal = () => {
+  const handleSaveJournal = async () => {
     const entryData = {
       date: new Date(),
       content: journalContent,
@@ -308,17 +308,21 @@ export default function JournalPage() {
       reflection: showReflection ? reflection : undefined,
     };
 
-    if (editingEntry) {
-      updateJournalEntry(editingEntry.id, entryData);
-      setEditingEntry(null);
-    } else {
-      addJournalEntry(entryData);
+    try {
+      if (editingEntry) {
+        await updateJournalEntry(editingEntry.id, entryData);
+        setEditingEntry(null);
+      } else {
+        await addJournalEntry(entryData);
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Journaleintrags:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-    
-    resetForm();
   };
 
-  const handleSaveWeeklyReflection = () => {
+  const handleSaveWeeklyReflection = async () => {
     const entryData = {
       date: new Date(),
       content: `Wochenreflexion KW ${format(thisWeekStart, 'w')}: ${weeklyReflection.wentWell || ''}`,
@@ -336,20 +340,25 @@ export default function JournalPage() {
       } as WeeklyReflection,
     };
 
-    addJournalEntry(entryData);
-    setShowWeeklyReflection(false);
-    setWeeklyReflectionStep(0);
-    setWeeklyReflection({
-      wentWell: '',
-      couldImprove: '',
-      lessonsLearned: '',
-      proudOf: '',
-      nextWeekPlan: '',
-      nextWeekPriorities: ['', '', ''],
-      productivityRating: 3,
-      energyRating: 3,
-      satisfactionRating: 3,
-    });
+    try {
+      await addJournalEntry(entryData);
+      setShowWeeklyReflection(false);
+      setWeeklyReflectionStep(0);
+      setWeeklyReflection({
+        wentWell: '',
+        couldImprove: '',
+        lessonsLearned: '',
+        proudOf: '',
+        nextWeekPlan: '',
+        nextWeekPriorities: ['', '', ''],
+        productivityRating: 3,
+        energyRating: 3,
+        satisfactionRating: 3,
+      });
+    } catch (error) {
+      console.error('Fehler beim Speichern der Wochenreflexion:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
+    }
   };
 
   const resetForm = () => {

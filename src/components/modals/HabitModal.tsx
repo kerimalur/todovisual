@@ -175,7 +175,7 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
     }
   }, [editHabit, isOpen]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const habitData = {
@@ -204,13 +204,17 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
       isPaused: false,
     };
 
-    if (editHabit) {
-      updateHabit(editHabit.id, habitData);
-    } else {
-      addHabit(habitData);
+    try {
+      if (editHabit) {
+        await updateHabit(editHabit.id, habitData);
+      } else {
+        await addHabit(habitData);
+      }
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Speichern der Gewohnheit:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    onClose();
   };
 
   const handleDelete = () => {

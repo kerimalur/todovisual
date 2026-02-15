@@ -19,6 +19,9 @@ import { supabaseService, TABLES } from '@/lib/supabaseService';
 import { isSameDay, startOfWeek, endOfWeek } from 'date-fns';
 
 interface DataStore {
+  // User
+  userId: string | null;
+
   // Data
   tasks: Task[];
   goals: Goal[];
@@ -121,6 +124,7 @@ let unsubscribeFunctions: (() => void)[] = [];
 
 export const useDataStore = create<DataStore>((set, get) => ({
   // Initial State
+  userId: null,
   tasks: [],
   goals: [],
   projects: [],
@@ -141,7 +145,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   initialize: (userId: string) => {
     if (get().initialized) return;
 
-    set({ loading: true });
+    set({ loading: true, userId });
 
     // Subscribe to all collections
     const unsubTasks = supabaseService.subscribe<Task>(
@@ -241,12 +245,12 @@ export const useDataStore = create<DataStore>((set, get) => ({
   cleanup: () => {
     unsubscribeFunctions.forEach((unsub) => unsub());
     unsubscribeFunctions = [];
-    set({ initialized: false });
+    set({ initialized: false, userId: null });
   },
 
   // === TASK ACTIONS ===
   addTask: async (taskData) => {
-    const userId = get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.TASKS, {
@@ -303,7 +307,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === GOAL ACTIONS ===
   addGoal: async (goalData) => {
-    const userId = get().goals[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.GOALS, {
@@ -328,7 +332,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === PROJECT ACTIONS ===
   addProject: async (projectData) => {
-    const userId = get().projects[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.PROJECTS, {
@@ -353,7 +357,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === EVENT ACTIONS ===
   addEvent: async (eventData) => {
-    const userId = get().events[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.EVENTS, {
@@ -376,7 +380,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === JOURNAL ACTIONS ===
   addJournalEntry: async (entryData) => {
-    const userId = get().journalEntries[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.JOURNAL_ENTRIES, {
@@ -399,7 +403,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === HABIT ACTIONS ===
   addHabit: async (habitData) => {
-    const userId = get().habits[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.HABITS, {
@@ -531,7 +535,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === TAG ACTIONS ===
   addTag: async (tagData) => {
-    const userId = get().tags[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     const tagId = await supabaseService.create(TABLES.TAGS, {
@@ -558,7 +562,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === NOTE ACTIONS ===
   addNote: async (noteData) => {
-    const userId = get().notes[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     const noteId = await supabaseService.create(TABLES.NOTES, {
@@ -599,7 +603,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === BRAINSTORM ACTIONS ===
   addBrainstormSession: async (sessionData) => {
-    const userId = get().brainstormSessions[0]?.userId || get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     const sessionId = await supabaseService.create(TABLES.BRAINSTORM_SESSIONS, {
@@ -633,7 +637,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === TIME TRACKING ACTIONS ===
   startTimeTracking: async (taskId, description) => {
-    const userId = get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     // Stop any active time entry first
@@ -669,7 +673,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   addManualTimeEntry: async (entryData) => {
-    const userId = get().tasks[0]?.userId;
+    const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
     await supabaseService.create(TABLES.TIME_ENTRIES, {

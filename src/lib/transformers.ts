@@ -8,7 +8,7 @@ export function snakeToCamel(obj: any): any {
     return obj.map(item => snakeToCamel(item));
   }
 
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== 'object' || obj instanceof Date) {
     return obj;
   }
 
@@ -30,7 +30,7 @@ export function camelToSnake(obj: any): any {
     return obj.map(item => camelToSnake(item));
   }
 
-  if (obj === null || typeof obj !== 'object') {
+  if (obj === null || typeof obj !== 'object' || obj instanceof Date) {
     return obj;
   }
 

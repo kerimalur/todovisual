@@ -89,7 +89,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
     }
   }, [editEvent, isOpen, preselectedDate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const startDateTime = new Date(`${date}T${allDay ? '00:00' : startTime}`);
@@ -113,31 +113,35 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       eventType: isTimeBlock ? 'focus-time' as const : 'event' as const,
     };
 
-    if (editEvent) {
-      updateEvent(editEvent.id, eventData);
-    } else {
-      addEvent(eventData);
+    try {
+      if (editEvent) {
+        await updateEvent(editEvent.id, eventData);
+      } else {
+        await addEvent(eventData);
 
-      // Für normale Events: auch eine Task erstellen
-      // Für Time-Blocks mit neuer Aufgabe: auch Task erstellen
-      if (!isTimeBlock || (isTimeBlock && !linkedTaskId && title.trim())) {
-        const parsedDueDate = parse(date, 'yyyy-MM-dd', new Date());
-        const taskDueDate = startOfDay(parsedDueDate);
+        // Für normale Events: auch eine Task erstellen
+        // Für Time-Blocks mit neuer Aufgabe: auch Task erstellen
+        if (!isTimeBlock || (isTimeBlock && !linkedTaskId && title.trim())) {
+          const parsedDueDate = parse(date, 'yyyy-MM-dd', new Date());
+          const taskDueDate = startOfDay(parsedDueDate);
 
-        addTask({
-          title: isTimeBlock ? title : `📅 ${title}`,
-          description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
-          dueDate: taskDueDate,
-          priority,
-          goalId: goalId || undefined,
-          projectId: projectId || undefined,
-          status: 'todo',
-          tags: isTimeBlock ? ['fokuszeit'] : ['termin'],
-        });
+          await addTask({
+            title: isTimeBlock ? title : `📅 ${title}`,
+            description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
+            dueDate: taskDueDate,
+            priority,
+            goalId: goalId || undefined,
+            projectId: projectId || undefined,
+            status: 'todo',
+            tags: isTimeBlock ? ['fokuszeit'] : ['termin'],
+          });
+        }
       }
+      onClose();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Termins:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    onClose();
   };
 
   const handleDelete = () => {

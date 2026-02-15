@@ -92,7 +92,7 @@ export default function NotesPage() {
     );
   }, [brainstormSessions, searchQuery]);
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     const noteData = {
       title: noteTitle || 'Unbenannte Notiz',
       content: noteContent,
@@ -102,17 +102,21 @@ export default function NotesPage() {
       tags: noteTags,
     };
 
-    if (editingNote) {
-      updateNote(editingNote.id, { ...noteData, updatedAt: new Date() });
-      setEditingNote(null);
-    } else {
-      addNote(noteData);
+    try {
+      if (editingNote) {
+        await updateNote(editingNote.id, { ...noteData, updatedAt: new Date() });
+        setEditingNote(null);
+      } else {
+        await addNote(noteData);
+      }
+      resetNoteForm();
+    } catch (error) {
+      console.error('Fehler beim Speichern der Notiz:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    resetNoteForm();
   };
 
-  const handleSaveBrainstorm = () => {
+  const handleSaveBrainstorm = async () => {
     const ideas = brainstormIdeas
       .filter(idea => idea.trim())
       .map((content, index) => ({
@@ -126,14 +130,18 @@ export default function NotesPage() {
       ideas,
     };
 
-    if (editingSession) {
-      updateBrainstormSession(editingSession.id, sessionData);
-      setEditingSession(null);
-    } else {
-      addBrainstormSession(sessionData);
+    try {
+      if (editingSession) {
+        await updateBrainstormSession(editingSession.id, sessionData);
+        setEditingSession(null);
+      } else {
+        await addBrainstormSession(sessionData);
+      }
+      resetBrainstormForm();
+    } catch (error) {
+      console.error('Fehler beim Speichern des Brainstorms:', error);
+      alert('Fehler beim Speichern. Bitte versuche es erneut.');
     }
-
-    resetBrainstormForm();
   };
 
   const resetNoteForm = () => {

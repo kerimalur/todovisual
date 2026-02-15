@@ -14,6 +14,7 @@ import {
   TimeEntry,
   BrainstormSession,
 } from '@/types';
+import { snakeToCamel, camelToSnake } from './transformers';
 
 // Table names
 export const TABLES = {
@@ -46,9 +47,10 @@ interface SupabaseError {
 export const supabaseService = {
   // Generic CRUD operations
   async create<T>(tableName: string, data: T): Promise<string> {
+    const snakeData = camelToSnake(data);
     const { data: result, error } = await supabase
       .from(tableName)
-      .insert([data])
+      .insert([snakeData])
       .select('id')
       .single();
 
@@ -72,7 +74,7 @@ export const supabaseService = {
       throw new Error(error.message);
     }
 
-    return data as T;
+    return snakeToCamel(data) as T;
   },
 
   async readMany<T>(tableName: string, userId: string): Promise<T[]> {
@@ -86,13 +88,14 @@ export const supabaseService = {
       throw new Error(error.message);
     }
 
-    return data as T[];
+    return snakeToCamel(data || []) as T[];
   },
 
   async update(tableName: string, id: string, data: Partial<any>): Promise<void> {
+    const snakeData = camelToSnake(data);
     const { error } = await supabase
       .from(tableName)
-      .update(data)
+      .update(snakeData)
       .eq('id', id);
 
     if (error) {
@@ -150,7 +153,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Task[];
+    return snakeToCamel(data || []) as Task[];
   },
 
   async getTasksByProject(projectId: string): Promise<Task[]> {
@@ -161,7 +164,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Task[];
+    return snakeToCamel(data || []) as Task[];
   },
 
   async getGoalsByUser(userId: string): Promise<Goal[]> {
@@ -172,7 +175,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Goal[];
+    return snakeToCamel(data || []) as Goal[];
   },
 
   async getProjectsByUser(userId: string): Promise<Project[]> {
@@ -183,7 +186,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Project[];
+    return snakeToCamel(data || []) as Project[];
   },
 
   async getHabitsByUser(userId: string): Promise<Habit[]> {
@@ -195,7 +198,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Habit[];
+    return snakeToCamel(data || []) as Habit[];
   },
 
   async getHabitCompletions(habitId: string, startDate: Date, endDate: Date): Promise<HabitCompletion[]> {
@@ -208,7 +211,7 @@ export const supabaseService = {
       .order('completion_date', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as HabitCompletion[];
+    return snakeToCamel(data || []) as HabitCompletion[];
   },
 
   async getEventsByUser(userId: string, startDate: Date, endDate: Date): Promise<CalendarEvent[]> {
@@ -221,7 +224,7 @@ export const supabaseService = {
       .order('start_time', { ascending: true });
 
     if (error) throw new Error(error.message);
-    return data as CalendarEvent[];
+    return snakeToCamel(data || []) as CalendarEvent[];
   },
 
   async getJournalEntry(userId: string, date: Date): Promise<JournalEntry | null> {
@@ -237,7 +240,7 @@ export const supabaseService = {
       throw new Error(error.message);
     }
 
-    return data as JournalEntry | null;
+    return data ? snakeToCamel(data) as JournalEntry : null;
   },
 
   async getActiveTimeEntry(userId: string): Promise<TimeEntry | null> {
@@ -252,7 +255,7 @@ export const supabaseService = {
       throw new Error(error.message);
     }
 
-    return data as TimeEntry | null;
+    return data ? snakeToCamel(data) as TimeEntry : null;
   },
 
   async getNotesByUser(userId: string): Promise<Note[]> {
@@ -264,7 +267,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as Note[];
+    return snakeToCamel(data || []) as Note[];
   },
 
   async getBrainstormSessionsByUser(userId: string): Promise<BrainstormSession[]> {
@@ -275,7 +278,7 @@ export const supabaseService = {
       .order('created_at', { ascending: false });
 
     if (error) throw new Error(error.message);
-    return data as BrainstormSession[];
+    return snakeToCamel(data || []) as BrainstormSession[];
   },
 
   // Batch operations
