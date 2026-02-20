@@ -122,7 +122,7 @@ function StatCard({ label, value, icon: Icon, trend, color = 'gray' }: {
 
 /* Main Dashboard */
 export function Dashboard() {
-  const { tasks, goals } = useDataStore();
+  const { tasks, goals, habits } = useDataStore();
   const { openTaskModal } = useModals();
   const { toggleZenMode } = useAppStore();
 
@@ -175,6 +175,22 @@ export function Dashboard() {
     const activeTasks = tasks.filter((t) => t.status !== 'completed' && t.status !== 'archived');
     return TaskService.prioritizeTasks(activeTasks).slice(0, 5);
   }, [tasks]);
+
+  const dailyExecution = useMemo(() => {
+    const activeTasks = tasks.filter((t) => t.status !== 'completed' && t.status !== 'archived');
+    const nextActions = TaskService.prioritizeTasks(activeTasks)
+      .filter((t) => !mitTask || t.id !== mitTask.id)
+      .slice(0, 2);
+
+    const activeHabits = habits.filter((h) => h.isActive && !h.isPaused);
+    const mustWinHabit = activeHabits[0] || null;
+
+    return {
+      mit: mitTask,
+      nextActions,
+      mustWinHabit,
+    };
+  }, [tasks, habits, mitTask]);
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -289,6 +305,43 @@ export function Dashboard() {
       )}
 
       {/* Priority Tasks - Full Width */}
+      <Card className="mb-6 border border-indigo-100 bg-gradient-to-br from-indigo-50/70 via-white to-purple-50/40">
+        <CardHeader
+          title="Tages-Execution"
+          icon={<Target size={16} className="text-indigo-600" />}
+        />
+        <CardContent className="space-y-3">
+          <div className="p-3 rounded-lg bg-white border border-indigo-100">
+            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">1 MIT</p>
+            <p className="text-sm font-medium text-gray-900">
+              {dailyExecution.mit ? dailyExecution.mit.title : 'Kein MIT gesetzt – lege eine wichtige Aufgabe fest.'}
+            </p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-white border border-indigo-100">
+            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">2 Next Actions</p>
+            {dailyExecution.nextActions.length > 0 ? (
+              <ul className="space-y-1.5">
+                {dailyExecution.nextActions.map((task) => (
+                  <li key={task.id} className="text-sm text-gray-700">• {task.title}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-600">Keine weiteren offenen Prioritäten.</p>
+            )}
+          </div>
+
+          <div className="p-3 rounded-lg bg-white border border-indigo-100">
+            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide mb-1">1 Habit-Pflicht</p>
+            <p className="text-sm text-gray-700">
+              {dailyExecution.mustWinHabit
+                ? dailyExecution.mustWinHabit.title
+                : 'Lege eine tägliche Kerngewohnheit an (z. B. Bewegung, Lesen, Planung).'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="overflow-hidden">
         <CardHeader
           title="Prioritäten"

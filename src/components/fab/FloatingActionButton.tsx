@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { FormEvent, useState, useEffect, useRef } from 'react';
 import { 
   Plus, 
   X, 
@@ -11,7 +11,7 @@ import {
   Timer, 
   Sparkles 
 } from 'lucide-react';
-import { useAppStore, useTimerStore, useMotivationStore } from '@/store';
+import { useAppStore, useTimerStore, useMotivationStore, useDataStore } from '@/store';
 
 interface FloatingActionButtonProps {
   onOpenTaskModal: () => void;
@@ -31,7 +31,11 @@ export function FloatingActionButton({
   const { fabMenuOpen, setFabMenuOpen, toggleZenMode } = useAppStore();
   const { timer } = useTimerStore();
   const { triggerMotivation } = useMotivationStore();
+  const { addTask } = useDataStore();
   const menuRef = useRef<HTMLDivElement>(null);
+  const quickInputRef = useRef<HTMLInputElement>(null);
+  const [quickCaptureTitle, setQuickCaptureTitle] = useState('');
+  const [quickCaptureLoading, setQuickCaptureLoading] = useState(false);
 
   const fabActions = [
     { 
@@ -135,6 +139,32 @@ export function FloatingActionButton({
     action.action();
   };
 
+  const handleQuickCapture = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const title = quickCaptureTitle.trim();
+    if (!title || quickCaptureLoading) return;
+
+    try {
+      setQuickCaptureLoading(true);
+      await addTask({
+        title,
+        description: '',
+        status: 'todo',
+        priority: 'medium',
+        tags: ['quick-capture'],
+      });
+
+      setQuickCaptureTitle('');
+      triggerMotivation('task-complete');
+    } catch (error) {
+      console.error('Quick capture failed:', error);
+    } finally {
+      setQuickCaptureLoading(false);
+      quickInputRef.current?.focus();
+    }
+  };
+
   return (
     <div ref={menuRef} className="fixed bottom-8 right-8 z-50">
       {/* Speed Dial Menu */}
@@ -157,6 +187,31 @@ export function FloatingActionButton({
               zum Öffnen
             </p>
           </div>
+
+          {/* Quick Capture */}
+          <form onSubmit={handleQuickCapture} className="px-4 py-3 border-b border-gray-100 bg-gray-50/70">
+            <label htmlFor="quick-capture" className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-2">
+              Quick Capture
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                id="quick-capture"
+                ref={quickInputRef}
+                type="text"
+                value={quickCaptureTitle}
+                onChange={(e) => setQuickCaptureTitle(e.target.value)}
+                placeholder="Aufgabe schnell notieren…"
+                className="flex-1 px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 bg-white"
+              />
+              <button
+                type="submit"
+                disabled={quickCaptureLoading || !quickCaptureTitle.trim()}
+                className="px-3 py-2.5 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                +
+              </button>
+            </div>
+          </form>
 
           {/* Actions List */}
           <div className="py-2">
