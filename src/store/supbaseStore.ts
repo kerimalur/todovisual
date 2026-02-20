@@ -451,7 +451,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const dateStr = date.toISOString().split('T')[0];
 
     // Delete completion record
-    const completions = await supabaseService.readMany<HabitCompletion>(TABLES.HABIT_COMPLETIONS, habitId);
+    const completions = await supabaseService.readByField<HabitCompletion>(TABLES.HABIT_COMPLETIONS, 'habit_id', habitId);
     const completion = completions.find(c => new Date(c.date).toISOString().split('T')[0] === dateStr);
     if (completion) {
       await supabaseService.delete(TABLES.HABIT_COMPLETIONS, completion.id);
@@ -476,14 +476,27 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   // === HABIT CATEGORY ACTIONS ===
   addHabitCategory: (category) => {
+    const userId = get().userId;
     const newCategory: HabitCategoryItem = {
       id: uuidv4(),
-      userId: '',
+      userId: userId || '',
       ...category,
     };
+
     set((state) => ({
       habitCategories: [...state.habitCategories, newCategory],
     }));
+
+    if (userId) {
+      void supabaseService.create(TABLES.HABIT_CATEGORIES, {
+        id: newCategory.id,
+        user_id: userId,
+        name: newCategory.name,
+        emoji: newCategory.emoji,
+        color: newCategory.color,
+      });
+    }
+
     return newCategory;
   },
 
@@ -491,6 +504,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
     set((state) => ({
       habitCategories: state.habitCategories.filter(cat => cat.id !== id),
     }));
+
+    void supabaseService.delete(TABLES.HABIT_CATEGORIES, id);
   },
 
   // === HABIT HELPER FUNCTIONS ===
@@ -665,7 +680,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
       await supabaseService.update(TABLES.TIME_ENTRIES, get().activeTimeEntry!.id, {
         end_time: endTime,
-        duration_minutes: durationMinutes,
+        duration: durationMinutes,
         is_running: false,
         updated_at: new Date(),
       });

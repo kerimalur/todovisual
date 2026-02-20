@@ -91,6 +91,20 @@ export const supabaseService = {
     return snakeToCamel(data || []) as T[];
   },
 
+  async readByField<T>(tableName: string, field: string, value: string): Promise<T[]> {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .eq(field, value);
+
+    if (error) {
+      console.error(`Error reading from ${tableName} by ${field}:`, error);
+      throw new Error(error.message);
+    }
+
+    return snakeToCamel(data || []) as T[];
+  },
+
   async update(tableName: string, id: string, data: Partial<any>): Promise<void> {
     const snakeData = camelToSnake(data);
     const { error } = await supabase
@@ -233,7 +247,7 @@ export const supabaseService = {
       .from(TABLES.JOURNAL_ENTRIES)
       .select('*')
       .eq('user_id', userId)
-      .eq('entry_date', dateStr)
+      .eq('date', dateStr)
       .single();
 
     if (error && error.code !== 'PGRST116') {
