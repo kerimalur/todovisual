@@ -3,21 +3,23 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import {
-  format,
-  startOfMonth,
-  endOfMonth,
+  addMinutes,
+  addDays,
+  addMonths,
+  addWeeks,
   eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isSameDay,
   isSameMonth,
   isToday,
-  isSameDay,
-  addMonths,
-  subMonths,
+  startOfDay,
+  startOfMonth,
   startOfWeek,
-  endOfWeek,
-  addWeeks,
-  subWeeks,
-  addDays,
   subDays,
+  subMonths,
+  subWeeks,
 } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { useDataStore } from '@/store';
@@ -30,8 +32,12 @@ export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewType, setViewType] = useState<ViewType>('month');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<Date | null>(null);
+  const [showQuickTaskForm, setShowQuickTaskForm] = useState(false);
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [quickTaskSaving, setQuickTaskSaving] = useState(false);
 
-  const { tasks, events, deleteEvent } = useDataStore();
+  const { tasks, events, deleteEvent, addTask, addEvent } = useDataStore();
   const { openTaskModal, openTaskDetailModal, openEventModal } = useModals();
 
   // Month view calculations
@@ -46,8 +52,8 @@ export default function CalendarPage() {
   const weekEnd = endOfWeek(currentDate, { weekStartsOn: 1 });
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Day view - hours from 6:00 to 22:00
-  const dayHours = Array.from({ length: 17 }, (_, i) => i + 6);
+  // Day view - hours from 6:00 to 23:00
+  const dayHours = Array.from({ length: 18 }, (_, i) => i + 6);
 
   // Navigation handlers
   const handlePrev = () => {
@@ -64,10 +70,75 @@ export default function CalendarPage() {
 
   const handleToday = () => setCurrentDate(new Date());
 
+  const closeSlotActions = () => {
+    setSelectedSlot(null);
+    setShowQuickTaskForm(false);
+    setQuickTaskTitle('');
+  };
+
+  const openSlotActions = (slotDate: Date) => {
+    setSelectedSlot(slotDate);
+    setShowQuickTaskForm(false);
+    setQuickTaskTitle('');
+  };
+
+  const openFullModalFromSlot = () => {
+    if (!selectedSlot) return;
+
+    const slotDate = new Date(selectedSlot);
+    closeSlotActions();
+    openEventModal(undefined, slotDate);
+  };
+
+  const createQuickTaskAtSlot = async () => {
+    if (!selectedSlot || !quickTaskTitle.trim()) return;
+
+    const slotDate = new Date(selectedSlot);
+    const endDate = addMinutes(slotDate, 60);
+    const taskTitle = quickTaskTitle.trim();
+
+    setQuickTaskSaving(true);
+
+    try {
+      await addTask({
+        title: taskTitle,
+        description: `Schnellaufgabe im Kalender (${format(slotDate, 'HH:mm')} Uhr)`,
+        dueDate: startOfDay(slotDate),
+        priority: 'medium',
+        status: 'todo',
+        tags: ['kalender', 'schnell'],
+      });
+
+      await addEvent({
+        title: `⏱ ${taskTitle}`,
+        description: 'Schnell hinzugefügt',
+        startTime: slotDate,
+        endTime: endDate,
+        allDay: false,
+        isTimeBlock: true,
+        eventType: 'focus-time',
+        color: '#6366f1',
+      });
+
+      closeSlotActions();
+    } catch (error) {
+      console.error('Fehler beim schnellen Erstellen im Kalender:', error);
+      alert('Konnte die Schnellaufgabe nicht erstellen.');
+    } finally {
+      setQuickTaskSaving(false);
+    }
+  };
+
   const getHeaderTitle = () => {
     if (viewType === 'month') return format(currentDate, 'MMMM yyyy', { locale: de });
     if (viewType === 'week') return `KW ${format(currentDate, 'w')} • ${format(weekStart, 'd. MMM', { locale: de })} - ${format(weekEnd, 'd. MMM yyyy', { locale: de })}`;
     return format(currentDate, 'EEEE, d. MMMM yyyy', { locale: de });
+  };
+
+  const getSlotDate = (day: Date, hour: number) => {
+    const slotDate = new Date(day);
+    slotDate.setHours(hour, 0, 0, 0);
+    return slotDate;
   };
 
   // Get all events for a specific day (for positioning them with proper duration)
@@ -254,6 +325,10 @@ export default function CalendarPage() {
               return (
                 <div
                   key={date.toISOString()}
+                  onClick={() => {
+                    setCurrentDate(date);
+                    setViewType('day');
+                  }}
                   className={`
                     min-h-[100px] p-2 border-b border-r border-gray-100 cursor-pointer
                     transition-all hover:bg-indigo-50/30
@@ -444,7 +519,7 @@ export default function CalendarPage() {
                 {weekDays.map((day) => (
                   <div
                     key={day.toISOString()}
-                    onClick={() => openTaskModal()}
+                    onClick={() => openSlotActions(getSlotDate(day, hour))}
                     className="border-r border-gray-50 last:border-r-0 hover:bg-indigo-50/30 cursor-pointer transition-all"
                   />
                 ))}
@@ -623,7 +698,7 @@ export default function CalendarPage() {
             {dayHours.map((hour) => (
               <div
                 key={hour}
-                onClick={() => openTaskModal()}
+                onClick={() => openSlotActions(getSlotDate(currentDate, hour))}
                 className="flex border-b border-gray-50 h-[60px] cursor-pointer hover:bg-indigo-50/30 transition-all"
               >
                 {/* Hour Label */}
@@ -754,6 +829,85 @@ export default function CalendarPage() {
       </div>
 
       {/* Delete Confirm Modal */}
+      {selectedSlot && (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          onClick={closeSlotActions}
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Zeitslot</p>
+            <h3 className="mt-1 text-lg font-semibold text-gray-900">
+              {format(selectedSlot, 'EEEE, d. MMMM yyyy', { locale: de })}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              Start: {format(selectedSlot, 'HH:mm')} Uhr
+            </p>
+
+            {!showQuickTaskForm ? (
+              <div className="mt-5 grid gap-2">
+                <button
+                  onClick={() => setShowQuickTaskForm(true)}
+                  className="w-full px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors text-sm"
+                >
+                  Schnellaufgabe hinzufügen
+                </button>
+                <button
+                  onClick={openFullModalFromSlot}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                >
+                  Vollständig planen
+                </button>
+                <button
+                  onClick={closeSlotActions}
+                  className="w-full px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            ) : (
+              <form
+                className="mt-5 space-y-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void createQuickTaskAtSlot();
+                }}
+              >
+                <label className="block text-sm font-medium text-gray-700">Titel der Schnellaufgabe</label>
+                <input
+                  value={quickTaskTitle}
+                  onChange={(e) => setQuickTaskTitle(e.target.value)}
+                  placeholder="z.B. Angebotsmail senden"
+                  autoFocus
+                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                />
+                <p className="text-xs text-gray-500">
+                  Erstellt direkt eine Aufgabe plus 60-Minuten-Zeitblock ab {format(selectedSlot, 'HH:mm')} Uhr.
+                </p>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickTaskForm(false)}
+                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    Zurück
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!quickTaskTitle.trim() || quickTaskSaving}
+                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {quickTaskSaving ? 'Erstelle...' : 'Schnell erstellen'}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       <ConfirmModal
         isOpen={!!showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(null)}

@@ -5,7 +5,7 @@ import { Modal, Input, Textarea, Button } from '../ui/Modal';
 import { useDataStore } from '@/store';
 import { CalendarEvent, Task } from '@/types';
 import { Trash2, Target, FolderKanban, AlertTriangle, Clock, Link2, CheckSquare, Timer } from 'lucide-react';
-import { startOfDay, parse } from 'date-fns';
+import { addHours, format, startOfDay, parse } from 'date-fns';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -35,7 +35,7 @@ const timeBlockColors = [
 ];
 
 export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: EventModalProps) {
-  const { addEvent, updateEvent, deleteEvent, addTask, updateTask, tasks, goals, projects } = useDataStore();
+  const { addEvent, updateEvent, deleteEvent, createTask, updateTask, tasks, goals, projects } = useDataStore();
 
   const [eventType, setEventType] = useState<EventType>('event');
   const [title, setTitle] = useState('');
@@ -71,15 +71,16 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       setGoalId('');
       setProjectId('');
     } else {
+      const baseDate = preselectedDate ? new Date(preselectedDate) : new Date();
+      const prefilledStartTime = preselectedDate ? format(baseDate, 'HH:mm') : '09:00';
+      const prefilledEndTime = preselectedDate ? format(addHours(baseDate, 1), 'HH:mm') : '10:00';
+
       setEventType('event');
       setTitle('');
       setDescription('');
-      setDate(preselectedDate
-        ? preselectedDate.toISOString().split('T')[0]
-        : new Date().toISOString().split('T')[0]
-      );
-      setStartTime('09:00');
-      setEndTime('10:00');
+      setDate(format(baseDate, 'yyyy-MM-dd'));
+      setStartTime(prefilledStartTime);
+      setEndTime(prefilledEndTime);
       setAllDay(false);
       setPriority('medium');
       setGoalId('');

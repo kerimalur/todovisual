@@ -16,7 +16,7 @@ import {
   BrainstormSession
 } from '@/types';
 import { supabaseService, TABLES } from '@/lib/supabaseService';
-import { isSameDay, startOfWeek, endOfWeek } from 'date-fns';
+import { addDays, format, isSameDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
 
 interface DataStore {
   // User
@@ -48,6 +48,7 @@ interface DataStore {
   cleanup: () => void;
 
   // Task Actions
+  createTask: (task: Omit<Task, 'id' | 'userId' | 'createdAt'>) => Promise<Task>;
   addTask: (task: Omit<Task, 'id' | 'userId' | 'createdAt'>) => Promise<void>;
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
@@ -55,6 +56,8 @@ interface DataStore {
   archiveTask: (id: string) => Promise<void>;
   reactivateTask: (id: string) => Promise<void>;
   deleteCompletedTasks: () => Promise<void>;
+  planInboxTasksForToday: (limit?: number) => Promise<number>;
+  rescheduleOverdueTasks: (maxPerDay?: number) => Promise<number>;
 
   // Goal Actions
   addGoal: (goal: Omit<Goal, 'id' | 'userId' | 'createdAt'>) => Promise<void>;
@@ -121,6 +124,23 @@ interface DataStore {
 
 // Unsubscribe functions for cleanup
 let unsubscribeFunctions: (() => void)[] = [];
+type HabitCompletionRecord = HabitCompletion & { completionDate?: Date | string };
+
+const toDateKey = (value: Date | string) => new Date(value).toISOString().split('T')[0];
+const parseCompletionDate = (completion: HabitCompletionRecord): Date | null => {
+  const rawDate = completion.date ?? completion.completionDate;
+  if (!rawDate) return null;
+
+  const parsedDate = new Date(rawDate);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  return parsedDate;
+};
+
+const getCompletionDateKey = (completion: HabitCompletionRecord): string | null => {
+  const parsedDate = parseCompletionDate(completion);
+  return parsedDate ? parsedDate.toISOString().split('T')[0] : null;
+};
 
 export const useDataStore = create<DataStore>((set, get) => ({
   // Initial State
@@ -249,7 +269,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   // === TASK ACTIONS ===
-  addTask: async (taskData) => {
+  createTask: async (taskData) => {
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
@@ -276,6 +296,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
         status: optimisticTask.status,
         tags: optimisticTask.tags,
       });
+      const createdTask: Task = {
+        ...optimisticTask,
+        id: createdId,
+      };
 
       set((state) => ({
         tasks: state.tasks.map((task) =>
@@ -287,6 +311,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
             : task
         ),
       }));
+      return createdTask;
     } catch (error) {
       console.error('Failed to add task:', error);
       set((state) => ({
@@ -294,6 +319,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
       }));
       throw error;
     }
+  },
+
+  addTask: async (taskData) => {
+    await get().createTask(taskData);
   },
 
   updateTask: async (id, updates) => {
@@ -485,29 +514,245 @@ export const useDataStore = create<DataStore>((set, get) => ({
     }
   },
 
+  planInboxTasksForToday: async (limit = 3) => {
+    const previousTasks = get().tasks;
+    const today = startOfDay(new Date());
+    const priorityWeight: Record<Task['priority'], number> = {
+      urgent: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
+
+    const inboxTasks = previousTasks
+      .filter((task) => task.status !== 'completed' && task.status !== 'archived' && !task.dueDate)
+      .sort((a, b) => {
+        const priorityDiff = priorityWeight[a.priority] - priorityWeight[b.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      })
+      .slice(0, limit);
+
+    if (inboxTasks.length === 0) return 0;
+
+    const taskIds = new Set(inboxTasks.map((task) => task.id));
+    set((state) => ({
+      tasks: state.tasks.map((task) =>
+        taskIds.has(task.id)
+          ? {
+              ...task,
+              dueDate: today,
+            }
+          : task
+      ),
+    }));
+
+    try {
+      await Promise.all(
+        inboxTasks.map((task) =>
+          supabaseService.update(TABLES.TASKS, task.id, {
+            due_date: today,
+            updated_at: new Date(),
+          })
+        )
+      );
+      return inboxTasks.length;
+    } catch (error) {
+      console.error('Failed to plan inbox tasks for today:', error);
+      set({ tasks: previousTasks });
+      throw error;
+    }
+  },
+
+  rescheduleOverdueTasks: async (maxPerDay = 3) => {
+    const previousTasks = get().tasks;
+    const today = startOfDay(new Date());
+    const priorityWeight: Record<Task['priority'], number> = {
+      urgent: 0,
+      high: 1,
+      medium: 2,
+      low: 3,
+    };
+
+    const overdueTasks = previousTasks
+      .filter((task) => {
+        if (task.status === 'completed' || task.status === 'archived') return false;
+        if (!task.dueDate) return false;
+        return new Date(task.dueDate) < today;
+      })
+      .sort((a, b) => {
+        const priorityDiff = priorityWeight[a.priority] - priorityWeight[b.priority];
+        if (priorityDiff !== 0) return priorityDiff;
+        return new Date(a.dueDate as Date).getTime() - new Date(b.dueDate as Date).getTime();
+      });
+
+    if (overdueTasks.length === 0) return 0;
+
+    const dailyLoad = new Map<string, number>();
+    previousTasks
+      .filter((task) => {
+        if (task.status === 'completed' || task.status === 'archived') return false;
+        if (!task.dueDate) return false;
+        return new Date(task.dueDate) >= today;
+      })
+      .forEach((task) => {
+        const key = format(startOfDay(new Date(task.dueDate as Date)), 'yyyy-MM-dd');
+        dailyLoad.set(key, (dailyLoad.get(key) || 0) + 1);
+      });
+
+    const assignments = new Map<string, Date>();
+    let cursor = new Date(today);
+    for (const task of overdueTasks) {
+      let guard = 0;
+      while (guard < 90) {
+        const key = format(cursor, 'yyyy-MM-dd');
+        const load = dailyLoad.get(key) || 0;
+        if (load < maxPerDay) {
+          assignments.set(task.id, new Date(cursor));
+          dailyLoad.set(key, load + 1);
+          break;
+        }
+        cursor = addDays(cursor, 1);
+        guard += 1;
+      }
+    }
+
+    if (assignments.size === 0) return 0;
+
+    set((state) => ({
+      tasks: state.tasks.map((task) => {
+        const nextDate = assignments.get(task.id);
+        if (!nextDate) return task;
+        return {
+          ...task,
+          dueDate: nextDate,
+        };
+      }),
+    }));
+
+    try {
+      await Promise.all(
+        Array.from(assignments.entries()).map(([taskId, dueDate]) =>
+          supabaseService.update(TABLES.TASKS, taskId, {
+            due_date: dueDate,
+            updated_at: new Date(),
+          })
+        )
+      );
+      return assignments.size;
+    } catch (error) {
+      console.error('Failed to reschedule overdue tasks:', error);
+      set({ tasks: previousTasks });
+      throw error;
+    }
+  },
+
   // === GOAL ACTIONS ===
   addGoal: async (goalData) => {
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.GOALS, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const createdAt = new Date();
+    const optimisticGoal: Goal = {
+      id: temporaryId,
+      userId,
+      createdAt,
       ...goalData,
-      user_id: userId,
-      created_at: new Date(),
-      progress: goalData.progress || 0,
-    });
+      progress: goalData.progress ?? 0,
+    };
+
+    set((state) => ({
+      goals: [optimisticGoal, ...state.goals],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.GOALS, {
+        ...goalData,
+        user_id: userId,
+        created_at: createdAt,
+        progress: optimisticGoal.progress,
+      });
+
+      set((state) => ({
+        goals: state.goals.map((goal) =>
+          goal.id === temporaryId
+            ? {
+                ...goal,
+                id: createdId,
+              }
+            : goal
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add goal:', error);
+      set((state) => ({
+        goals: state.goals.filter((goal) => goal.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateGoal: async (id, updates) => {
+    const previousGoal = get().goals.find((goal) => goal.id === id);
+    if (previousGoal) {
+      set((state) => ({
+        goals: state.goals.map((goal) =>
+          goal.id === id
+            ? {
+                ...goal,
+                ...updates,
+              }
+            : goal
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.GOALS, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.GOALS, id, updateData);
+    } catch (error) {
+      console.error('Failed to update goal:', error);
+      if (previousGoal) {
+        set((state) => ({
+          goals: state.goals.map((goal) => (goal.id === id ? previousGoal : goal)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteGoal: async (id) => {
-    await supabaseService.delete(TABLES.GOALS, id);
+    const goalsSnapshot = get().goals;
+    const removedIndex = goalsSnapshot.findIndex((goal) => goal.id === id);
+    const removedGoal = removedIndex >= 0 ? goalsSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      goals: state.goals.filter((goal) => goal.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.GOALS, id);
+    } catch (error) {
+      console.error('Failed to delete goal:', error);
+      if (removedGoal) {
+        set((state) => {
+          if (state.goals.some((goal) => goal.id === id)) {
+            return state;
+          }
+
+          const restoredGoals = [...state.goals];
+          const insertAt = Math.min(removedIndex, restoredGoals.length);
+          restoredGoals.splice(insertAt, 0, removedGoal);
+          return { goals: restoredGoals };
+        });
+      }
+      throw error;
+    }
   },
 
   // === PROJECT ACTIONS ===
@@ -515,24 +760,107 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.PROJECTS, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const createdAt = new Date();
+    const optimisticProject: Project = {
+      id: temporaryId,
+      userId,
+      createdAt,
       ...projectData,
-      user_id: userId,
-      created_at: new Date(),
-      status: projectData.status || 'planning',
-    });
+      status: projectData.status ?? 'planning',
+    };
+
+    set((state) => ({
+      projects: [optimisticProject, ...state.projects],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.PROJECTS, {
+        ...projectData,
+        user_id: userId,
+        created_at: createdAt,
+        status: optimisticProject.status,
+      });
+
+      set((state) => ({
+        projects: state.projects.map((project) =>
+          project.id === temporaryId
+            ? {
+                ...project,
+                id: createdId,
+              }
+            : project
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add project:', error);
+      set((state) => ({
+        projects: state.projects.filter((project) => project.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateProject: async (id, updates) => {
+    const previousProject = get().projects.find((project) => project.id === id);
+    if (previousProject) {
+      set((state) => ({
+        projects: state.projects.map((project) =>
+          project.id === id
+            ? {
+                ...project,
+                ...updates,
+              }
+            : project
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.PROJECTS, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.PROJECTS, id, updateData);
+    } catch (error) {
+      console.error('Failed to update project:', error);
+      if (previousProject) {
+        set((state) => ({
+          projects: state.projects.map((project) => (project.id === id ? previousProject : project)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteProject: async (id) => {
-    await supabaseService.delete(TABLES.PROJECTS, id);
+    const projectsSnapshot = get().projects;
+    const removedIndex = projectsSnapshot.findIndex((project) => project.id === id);
+    const removedProject = removedIndex >= 0 ? projectsSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      projects: state.projects.filter((project) => project.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.PROJECTS, id);
+    } catch (error) {
+      console.error('Failed to delete project:', error);
+      if (removedProject) {
+        set((state) => {
+          if (state.projects.some((project) => project.id === id)) {
+            return state;
+          }
+
+          const restoredProjects = [...state.projects];
+          const insertAt = Math.min(removedIndex, restoredProjects.length);
+          restoredProjects.splice(insertAt, 0, removedProject);
+          return { projects: restoredProjects };
+        });
+      }
+      throw error;
+    }
   },
 
   // === EVENT ACTIONS ===
@@ -540,22 +868,102 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.EVENTS, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const optimisticEvent: CalendarEvent = {
+      id: temporaryId,
+      userId,
       ...eventData,
-      user_id: userId,
-    });
+    };
+
+    set((state) => ({
+      events: [optimisticEvent, ...state.events],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.EVENTS, {
+        ...eventData,
+        user_id: userId,
+      });
+
+      set((state) => ({
+        events: state.events.map((event) =>
+          event.id === temporaryId
+            ? {
+                ...event,
+                id: createdId,
+              }
+            : event
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add event:', error);
+      set((state) => ({
+        events: state.events.filter((event) => event.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateEvent: async (id, updates) => {
+    const previousEvent = get().events.find((event) => event.id === id);
+    if (previousEvent) {
+      set((state) => ({
+        events: state.events.map((event) =>
+          event.id === id
+            ? {
+                ...event,
+                ...updates,
+              }
+            : event
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.EVENTS, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.EVENTS, id, updateData);
+    } catch (error) {
+      console.error('Failed to update event:', error);
+      if (previousEvent) {
+        set((state) => ({
+          events: state.events.map((event) => (event.id === id ? previousEvent : event)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteEvent: async (id) => {
-    await supabaseService.delete(TABLES.EVENTS, id);
+    const eventsSnapshot = get().events;
+    const removedIndex = eventsSnapshot.findIndex((event) => event.id === id);
+    const removedEvent = removedIndex >= 0 ? eventsSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      events: state.events.filter((event) => event.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.EVENTS, id);
+    } catch (error) {
+      console.error('Failed to delete event:', error);
+      if (removedEvent) {
+        set((state) => {
+          if (state.events.some((event) => event.id === id)) {
+            return state;
+          }
+
+          const restoredEvents = [...state.events];
+          const insertAt = Math.min(removedIndex, restoredEvents.length);
+          restoredEvents.splice(insertAt, 0, removedEvent);
+          return { events: restoredEvents };
+        });
+      }
+      throw error;
+    }
   },
 
   // === JOURNAL ACTIONS ===
@@ -563,22 +971,102 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.JOURNAL_ENTRIES, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const optimisticEntry: JournalEntry = {
+      id: temporaryId,
+      userId,
       ...entryData,
-      user_id: userId,
-    });
+    };
+
+    set((state) => ({
+      journalEntries: [optimisticEntry, ...state.journalEntries],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.JOURNAL_ENTRIES, {
+        ...entryData,
+        user_id: userId,
+      });
+
+      set((state) => ({
+        journalEntries: state.journalEntries.map((entry) =>
+          entry.id === temporaryId
+            ? {
+                ...entry,
+                id: createdId,
+              }
+            : entry
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add journal entry:', error);
+      set((state) => ({
+        journalEntries: state.journalEntries.filter((entry) => entry.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateJournalEntry: async (id, updates) => {
+    const previousEntry = get().journalEntries.find((entry) => entry.id === id);
+    if (previousEntry) {
+      set((state) => ({
+        journalEntries: state.journalEntries.map((entry) =>
+          entry.id === id
+            ? {
+                ...entry,
+                ...updates,
+              }
+            : entry
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.JOURNAL_ENTRIES, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.JOURNAL_ENTRIES, id, updateData);
+    } catch (error) {
+      console.error('Failed to update journal entry:', error);
+      if (previousEntry) {
+        set((state) => ({
+          journalEntries: state.journalEntries.map((entry) => (entry.id === id ? previousEntry : entry)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteJournalEntry: async (id) => {
-    await supabaseService.delete(TABLES.JOURNAL_ENTRIES, id);
+    const entriesSnapshot = get().journalEntries;
+    const removedIndex = entriesSnapshot.findIndex((entry) => entry.id === id);
+    const removedEntry = removedIndex >= 0 ? entriesSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      journalEntries: state.journalEntries.filter((entry) => entry.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.JOURNAL_ENTRIES, id);
+    } catch (error) {
+      console.error('Failed to delete journal entry:', error);
+      if (removedEntry) {
+        set((state) => {
+          if (state.journalEntries.some((entry) => entry.id === id)) {
+            return state;
+          }
+
+          const restoredEntries = [...state.journalEntries];
+          const insertAt = Math.min(removedIndex, restoredEntries.length);
+          restoredEntries.splice(insertAt, 0, removedEntry);
+          return { journalEntries: restoredEntries };
+        });
+      }
+      throw error;
+    }
   },
 
   // === HABIT ACTIONS ===
@@ -586,72 +1074,320 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.HABITS, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const createdAt = new Date();
+    const optimisticHabit: Habit = {
+      id: temporaryId,
+      userId,
+      createdAt,
       ...habitData,
-      user_id: userId,
-      current_streak: 0,
-      longest_streak: 0,
-      total_completions: 0,
-      created_at: new Date(),
-    });
+      reminderEnabled: habitData.reminderEnabled ?? false,
+      currentStreak: 0,
+      longestStreak: 0,
+      totalCompletions: 0,
+      completions: [],
+      isActive: habitData.isActive ?? true,
+      isPaused: habitData.isPaused ?? false,
+    };
+
+    set((state) => ({
+      habits: [optimisticHabit, ...state.habits],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.HABITS, {
+        ...habitData,
+        user_id: userId,
+        current_streak: 0,
+        longest_streak: 0,
+        total_completions: 0,
+        completions: [],
+        created_at: createdAt,
+      });
+
+      set((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === temporaryId
+            ? {
+                ...habit,
+                id: createdId,
+              }
+            : habit
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add habit:', error);
+      set((state) => ({
+        habits: state.habits.filter((habit) => habit.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateHabit: async (id, updates) => {
+    const previousHabit = get().habits.find((habit) => habit.id === id);
+    if (previousHabit) {
+      set((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === id
+            ? {
+                ...habit,
+                ...updates,
+              }
+            : habit
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.HABITS, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.HABITS, id, updateData);
+    } catch (error) {
+      console.error('Failed to update habit:', error);
+      if (previousHabit) {
+        set((state) => ({
+          habits: state.habits.map((habit) => (habit.id === id ? previousHabit : habit)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteHabit: async (id) => {
-    await supabaseService.delete(TABLES.HABITS, id);
+    const habitsSnapshot = get().habits;
+    const removedIndex = habitsSnapshot.findIndex((habit) => habit.id === id);
+    const removedHabit = removedIndex >= 0 ? habitsSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      habits: state.habits.filter((habit) => habit.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.HABITS, id);
+    } catch (error) {
+      console.error('Failed to delete habit:', error);
+      if (removedHabit) {
+        set((state) => {
+          if (state.habits.some((habit) => habit.id === id)) {
+            return state;
+          }
+
+          const restoredHabits = [...state.habits];
+          const insertAt = Math.min(removedIndex, restoredHabits.length);
+          restoredHabits.splice(insertAt, 0, removedHabit);
+          return { habits: restoredHabits };
+        });
+      }
+      throw error;
+    }
   },
 
   completeHabit: async (habitId, date = new Date()) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const previousHabit = get().habits.find((habit) => habit.id === habitId);
+    if (!previousHabit) return;
 
-    // Add completion record
-    await supabaseService.create(TABLES.HABIT_COMPLETIONS, {
-      habit_id: habitId,
-      completion_date: dateStr,
-      created_at: new Date(),
-    });
+    const dateKey = toDateKey(date);
+    const alreadyCompleted = (previousHabit.completions || []).some(
+      (completion) => getCompletionDateKey(completion as HabitCompletionRecord) === dateKey
+    );
+    if (alreadyCompleted) return;
 
-    // Update habit streak
-    const habit = get().habits.find(h => h.id === habitId);
-    if (habit) {
-      await get().updateHabit(habitId, {
-        totalCompletions: (habit.totalCompletions || 0) + 1,
+    const temporaryCompletionId = `temp-${uuidv4()}`;
+    const optimisticCompletion: HabitCompletion = {
+      id: temporaryCompletionId,
+      date: new Date(dateKey),
+    };
+    const optimisticCompletions = [...(previousHabit.completions || []), optimisticCompletion];
+    const optimisticHabitBase: Habit = {
+      ...previousHabit,
+      completions: optimisticCompletions,
+      totalCompletions: optimisticCompletions.length,
+    };
+    const optimisticStreak = get().calculateStreak(optimisticHabitBase);
+    const optimisticHabit: Habit = {
+      ...optimisticHabitBase,
+      currentStreak: optimisticStreak,
+      longestStreak: Math.max(previousHabit.longestStreak || 0, optimisticStreak),
+    };
+
+    set((state) => ({
+      habits: state.habits.map((habit) => (habit.id === habitId ? optimisticHabit : habit)),
+    }));
+
+    try {
+      await supabaseService.update(TABLES.HABITS, habitId, {
+        completions: optimisticHabit.completions,
+        total_completions: optimisticHabit.totalCompletions,
+        current_streak: optimisticHabit.currentStreak,
+        longest_streak: optimisticHabit.longestStreak,
+        updated_at: new Date(),
       });
+    } catch (error) {
+      console.error('Failed to complete habit:', error);
+      set((state) => ({
+        habits: state.habits.map((habit) => (habit.id === habitId ? previousHabit : habit)),
+      }));
+      throw error;
+    }
+
+    try {
+      const completionId = await supabaseService.create(TABLES.HABIT_COMPLETIONS, {
+        habit_id: habitId,
+        completion_date: dateKey,
+        created_at: new Date(),
+      });
+
+      set((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === habitId
+            ? {
+                ...habit,
+                completions: (habit.completions || []).map((completion) =>
+                  completion.id === temporaryCompletionId
+                    ? {
+                        ...completion,
+                        id: completionId,
+                      }
+                    : completion
+                ),
+              }
+            : habit
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to persist habit completion row:', error);
     }
   },
 
   uncompleteHabit: async (habitId, date = new Date()) => {
-    const dateStr = date.toISOString().split('T')[0];
+    const previousHabit = get().habits.find((habit) => habit.id === habitId);
+    if (!previousHabit) return;
 
-    // Delete completion record
-    const completions = await supabaseService.readByField<HabitCompletion>(TABLES.HABIT_COMPLETIONS, 'habit_id', habitId);
-    const completion = completions.find(c => new Date(c.date).toISOString().split('T')[0] === dateStr);
-    if (completion) {
-      await supabaseService.delete(TABLES.HABIT_COMPLETIONS, completion.id);
+    const dateKey = toDateKey(date);
+    const previousCompletions = previousHabit.completions || [];
+    const optimisticCompletions = previousCompletions.filter(
+      (completion) => getCompletionDateKey(completion as HabitCompletionRecord) !== dateKey
+    );
+    if (optimisticCompletions.length === previousCompletions.length) return;
+
+    const optimisticHabitBase: Habit = {
+      ...previousHabit,
+      completions: optimisticCompletions,
+      totalCompletions: optimisticCompletions.length,
+    };
+    const optimisticStreak = get().calculateStreak(optimisticHabitBase);
+    const optimisticHabit: Habit = {
+      ...optimisticHabitBase,
+      currentStreak: optimisticStreak,
+      longestStreak: Math.max(previousHabit.longestStreak || 0, optimisticStreak),
+    };
+
+    set((state) => ({
+      habits: state.habits.map((habit) => (habit.id === habitId ? optimisticHabit : habit)),
+    }));
+
+    try {
+      await supabaseService.update(TABLES.HABITS, habitId, {
+        completions: optimisticHabit.completions,
+        total_completions: optimisticHabit.totalCompletions,
+        current_streak: optimisticHabit.currentStreak,
+        longest_streak: optimisticHabit.longestStreak,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to uncomplete habit:', error);
+      set((state) => ({
+        habits: state.habits.map((habit) => (habit.id === habitId ? previousHabit : habit)),
+      }));
+      throw error;
+    }
+
+    try {
+      const completionRows = await supabaseService.readByField<HabitCompletionRecord>(
+        TABLES.HABIT_COMPLETIONS,
+        'habit_id',
+        habitId
+      );
+      const completionRow = completionRows.find((completion) => {
+        return getCompletionDateKey(completion) === dateKey;
+      });
+
+      if (completionRow) {
+        await supabaseService.delete(TABLES.HABIT_COMPLETIONS, completionRow.id);
+      }
+    } catch (error) {
+      console.error('Failed to remove habit completion row:', error);
     }
   },
 
   pauseHabit: async (habitId, until) => {
-    await supabaseService.update(TABLES.HABITS, habitId, {
-      is_paused: true,
-      paused_until: until,
-      updated_at: new Date(),
-    });
+    const previousHabit = get().habits.find((habit) => habit.id === habitId);
+    if (previousHabit) {
+      set((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === habitId
+            ? {
+                ...habit,
+                isPaused: true,
+                pausedUntil: until,
+              }
+            : habit
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.HABITS, habitId, {
+        is_paused: true,
+        paused_until: until,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to pause habit:', error);
+      if (previousHabit) {
+        set((state) => ({
+          habits: state.habits.map((habit) => (habit.id === habitId ? previousHabit : habit)),
+        }));
+      }
+      throw error;
+    }
   },
 
   resumeHabit: async (habitId) => {
-    await supabaseService.update(TABLES.HABITS, habitId, {
-      is_paused: false,
-      paused_until: null,
-      updated_at: new Date(),
-    });
+    const previousHabit = get().habits.find((habit) => habit.id === habitId);
+    if (previousHabit) {
+      set((state) => ({
+        habits: state.habits.map((habit) =>
+          habit.id === habitId
+            ? {
+                ...habit,
+                isPaused: false,
+                pausedUntil: undefined,
+              }
+            : habit
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.HABITS, habitId, {
+        is_paused: false,
+        paused_until: null,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to resume habit:', error);
+      if (previousHabit) {
+        set((state) => ({
+          habits: state.habits.map((habit) => (habit.id === habitId ? previousHabit : habit)),
+        }));
+      }
+      throw error;
+    }
   },
 
   // === HABIT CATEGORY ACTIONS ===
@@ -691,7 +1427,13 @@ export const useDataStore = create<DataStore>((set, get) => ({
   // === HABIT HELPER FUNCTIONS ===
   isHabitCompletedToday: (habitId) => {
     const today = new Date().toISOString().split('T')[0];
-    return get().habits.some(h => h.id === habitId && h.completions?.some(c => new Date(c.date).toISOString().split('T')[0] === today));
+    return get().habits.some(
+      (habit) =>
+        habit.id === habitId &&
+        (habit.completions || []).some(
+          (completion) => getCompletionDateKey(completion as HabitCompletionRecord) === today
+        )
+    );
   },
 
   getHabitCompletionsThisWeek: (habitId) => {
@@ -702,9 +1444,10 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const weekStart = startOfWeek(now);
     const weekEnd = endOfWeek(now);
 
-    return (habit.completions || []).filter(c => {
-      const compDate = new Date(c.date);
-      return compDate >= weekStart && compDate <= weekEnd;
+    return (habit.completions || []).filter((completion) => {
+      const completionDate = parseCompletionDate(completion as HabitCompletionRecord);
+      if (!completionDate) return false;
+      return completionDate >= weekStart && completionDate <= weekEnd;
     }).length;
   },
 
@@ -712,11 +1455,17 @@ export const useDataStore = create<DataStore>((set, get) => ({
     if (!habit.completions || habit.completions.length === 0) return 0;
 
     let streak = 0;
-    const sortedCompletions = [...(habit.completions || [])].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedCompletions = [...(habit.completions || [])].sort((a, b) => {
+      const dateA = parseCompletionDate(a as HabitCompletionRecord)?.getTime() || 0;
+      const dateB = parseCompletionDate(b as HabitCompletionRecord)?.getTime() || 0;
+      return dateB - dateA;
+    });
 
     let currentDate = new Date();
     for (const completion of sortedCompletions) {
-      const compDate = new Date(completion.date);
+      const compDate = parseCompletionDate(completion as HabitCompletionRecord);
+      if (!compDate) continue;
+
       if (isSameDay(currentDate, compDate) || isSameDay(new Date(currentDate.getTime() - 86400000), compDate)) {
         streak++;
         currentDate = compDate;
