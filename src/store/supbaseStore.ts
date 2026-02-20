@@ -253,56 +253,236 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    await supabaseService.create(TABLES.TASKS, {
+    const temporaryId = `temp-${uuidv4()}`;
+    const createdAt = new Date();
+    const optimisticTask: Task = {
+      id: temporaryId,
+      userId,
+      createdAt,
       ...taskData,
-      user_id: userId,
-      created_at: new Date(),
-      status: taskData.status || 'todo',
-      tags: taskData.tags || [],
-    });
+      status: taskData.status ?? 'todo',
+      tags: taskData.tags ?? [],
+    };
+
+    set((state) => ({
+      tasks: [optimisticTask, ...state.tasks],
+    }));
+
+    try {
+      const createdId = await supabaseService.create(TABLES.TASKS, {
+        ...taskData,
+        user_id: userId,
+        created_at: createdAt,
+        status: optimisticTask.status,
+        tags: optimisticTask.tags,
+      });
+
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === temporaryId
+            ? {
+                ...task,
+                id: createdId,
+              }
+            : task
+        ),
+      }));
+    } catch (error) {
+      console.error('Failed to add task:', error);
+      set((state) => ({
+        tasks: state.tasks.filter((task) => task.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateTask: async (id, updates) => {
+    const previousTask = get().tasks.find((task) => task.id === id);
+    if (previousTask) {
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                ...updates,
+              }
+            : task
+        ),
+      }));
+    }
+
     const updateData = {
       ...updates,
       updated_at: new Date(),
     };
-    await supabaseService.update(TABLES.TASKS, id, updateData);
+
+    try {
+      await supabaseService.update(TABLES.TASKS, id, updateData);
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      if (previousTask) {
+        set((state) => ({
+          tasks: state.tasks.map((task) => (task.id === id ? previousTask : task)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteTask: async (id) => {
-    await supabaseService.delete(TABLES.TASKS, id);
+    const tasksSnapshot = get().tasks;
+    const removedIndex = tasksSnapshot.findIndex((task) => task.id === id);
+    const removedTask = removedIndex >= 0 ? tasksSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      tasks: state.tasks.filter((task) => task.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.TASKS, id);
+    } catch (error) {
+      console.error('Failed to delete task:', error);
+      if (removedTask) {
+        set((state) => {
+          if (state.tasks.some((task) => task.id === id)) {
+            return state;
+          }
+
+          const restoredTasks = [...state.tasks];
+          const insertAt = Math.min(removedIndex, restoredTasks.length);
+          restoredTasks.splice(insertAt, 0, removedTask);
+          return { tasks: restoredTasks };
+        });
+      }
+      throw error;
+    }
   },
 
   completeTask: async (id) => {
-    await supabaseService.update(TABLES.TASKS, id, {
-      status: 'completed',
-      completed_at: new Date(),
-      updated_at: new Date(),
-    });
+    const previousTask = get().tasks.find((task) => task.id === id);
+    const completedAt = new Date();
+
+    if (previousTask) {
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                status: 'completed',
+                completedAt,
+              }
+            : task
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.TASKS, id, {
+        status: 'completed',
+        completed_at: completedAt,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to complete task:', error);
+      if (previousTask) {
+        set((state) => ({
+          tasks: state.tasks.map((task) => (task.id === id ? previousTask : task)),
+        }));
+      }
+      throw error;
+    }
   },
 
   archiveTask: async (id) => {
-    await supabaseService.update(TABLES.TASKS, id, {
-      status: 'archived',
-      archived_at: new Date(),
-      updated_at: new Date(),
-    });
+    const previousTask = get().tasks.find((task) => task.id === id);
+    const archivedAt = new Date();
+
+    if (previousTask) {
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                status: 'archived',
+                archivedAt,
+              }
+            : task
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.TASKS, id, {
+        status: 'archived',
+        archived_at: archivedAt,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to archive task:', error);
+      if (previousTask) {
+        set((state) => ({
+          tasks: state.tasks.map((task) => (task.id === id ? previousTask : task)),
+        }));
+      }
+      throw error;
+    }
   },
 
   reactivateTask: async (id) => {
-    await supabaseService.update(TABLES.TASKS, id, {
-      status: 'todo',
-      archived_at: null,
-      updated_at: new Date(),
-    });
+    const previousTask = get().tasks.find((task) => task.id === id);
+
+    if (previousTask) {
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === id
+            ? {
+                ...task,
+                status: 'todo',
+                archivedAt: undefined,
+                completedAt: undefined,
+              }
+            : task
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.TASKS, id, {
+        status: 'todo',
+        archived_at: null,
+        completed_at: null,
+        updated_at: new Date(),
+      });
+    } catch (error) {
+      console.error('Failed to reactivate task:', error);
+      if (previousTask) {
+        set((state) => ({
+          tasks: state.tasks.map((task) => (task.id === id ? previousTask : task)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteCompletedTasks: async () => {
-    const completedTasks = get().tasks.filter((t) => t.status === 'completed');
-    await Promise.all(
-      completedTasks.map((task) => supabaseService.delete(TABLES.TASKS, task.id))
-    );
+    const previousTasks = get().tasks;
+    const completedTaskIds = previousTasks
+      .filter((task) => task.status === 'completed')
+      .map((task) => task.id);
+
+    if (completedTaskIds.length === 0) return;
+
+    set((state) => ({
+      tasks: state.tasks.filter((task) => task.status !== 'completed'),
+    }));
+
+    try {
+      await supabaseService.batchDeleteTasks(completedTaskIds);
+    } catch (error) {
+      console.error('Failed to delete completed tasks:', error);
+      set({ tasks: previousTasks });
+      throw error;
+    }
   },
 
   // === GOAL ACTIONS ===
