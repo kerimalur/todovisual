@@ -3,7 +3,7 @@
 import { 
   User, Bell, Timer, Database, Download, Palette, Globe, Trash2, Check, 
   Moon, Clock, Volume2, Calendar, ListTodo, Shield, Sparkles, Coffee,
-  ChevronRight, Upload
+  ChevronRight, Upload, Smartphone, Send
 } from 'lucide-react';
 import { useSettingsStore, useDataStore } from '@/store';
 import { useState } from 'react';
@@ -54,6 +54,8 @@ export default function SettingsPage() {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [showDeleteDataConfirm, setShowDeleteDataConfirm] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [smsSending, setSmsSending] = useState(false);
+  const [smsStatus, setSmsStatus] = useState('');
   const [activeTab, setActiveTab] = useState<'general' | 'focus' | 'appearance' | 'data'>('general');
 
   const showSavedFeedback = () => {
@@ -90,6 +92,41 @@ export default function SettingsPage() {
   const handleDeleteAllData = () => {
     localStorage.clear();
     window.location.reload();
+  };
+
+  const handleSendTestSms = async () => {
+    const phoneNumber = settings.smsPhoneNumber.trim();
+    if (!phoneNumber) {
+      setSmsStatus('Bitte zuerst eine Mobilnummer eintragen.');
+      return;
+    }
+
+    setSmsSending(true);
+    setSmsStatus('');
+    try {
+      const response = await fetch('/api/reminders/sms/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber,
+          reminderTime: settings.reminderTime,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || 'SMS Test fehlgeschlagen.');
+      }
+
+      setSmsStatus('Test-SMS wurde erfolgreich versendet.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'SMS Test fehlgeschlagen.';
+      setSmsStatus(message);
+    } finally {
+      setSmsSending(false);
+    }
   };
 
   const tabs = [
@@ -218,6 +255,69 @@ export default function SettingsPage() {
                   />
                 </SettingRow>
               )}
+
+              <div className="py-4">
+                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-indigo-100 flex items-center justify-center">
+                      <Smartphone size={16} className="text-indigo-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">SMS Erinnerungen</p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        Versand erfolgt ueber Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
+                      </p>
+                    </div>
+                  </div>
+
+                  <SettingRow label="SMS aktivieren" description="Ergaenzt die taegliche Erinnerung per SMS">
+                    <Toggle
+                      enabled={settings.smsRemindersEnabled}
+                      onChange={(v) => handleChange('smsRemindersEnabled', v)}
+                      label="SMS aktivieren"
+                    />
+                  </SettingRow>
+
+                  {settings.smsRemindersEnabled && (
+                    <>
+                      <SettingRow label="Mobilnummer" description="Format: +491234567890">
+                        <input
+                          type="tel"
+                          value={settings.smsPhoneNumber}
+                          onChange={(e) => handleChange('smsPhoneNumber', e.target.value)}
+                          placeholder="+491234567890"
+                          className="input w-52"
+                        />
+                      </SettingRow>
+
+                      <SettingRow label="Vorlaufzeit (Min)" description="Wie viele Minuten vor dem Termin erinnert wird">
+                        <input
+                          type="number"
+                          value={settings.smsLeadMinutes}
+                          onChange={(e) => handleChange('smsLeadMinutes', parseInt(e.target.value, 10) || 0)}
+                          min={0}
+                          max={240}
+                          className="input w-20"
+                        />
+                      </SettingRow>
+
+                      <div className="pt-3">
+                        <button
+                          onClick={() => void handleSendTestSms()}
+                          disabled={smsSending}
+                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Send size={14} />
+                          {smsSending ? 'Sende Test...' : 'Test SMS senden'}
+                        </button>
+                        {smsStatus && (
+                          <p className="text-xs text-gray-600 mt-2">{smsStatus}</p>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
             </Section>
           </>
         )}

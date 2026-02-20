@@ -1509,40 +1509,149 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    const noteId = await supabaseService.create(TABLES.NOTES, {
-      ...noteData,
-      user_id: userId,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
-    return {
-      id: noteId,
+    const temporaryId = `temp-${uuidv4()}`;
+    const now = new Date();
+    const optimisticNote: Note = {
+      id: temporaryId,
       userId,
       ...noteData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    } as Note;
+      tags: noteData.tags ?? [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    set((state) => ({
+      notes: [optimisticNote, ...state.notes],
+    }));
+
+    try {
+      const noteId = await supabaseService.create(TABLES.NOTES, {
+        ...noteData,
+        user_id: userId,
+        created_at: now,
+        updated_at: now,
+      });
+
+      set((state) => ({
+        notes: state.notes.map((note) =>
+          note.id === temporaryId
+            ? {
+                ...note,
+                id: noteId,
+              }
+            : note
+        ),
+      }));
+
+      return {
+        ...optimisticNote,
+        id: noteId,
+      };
+    } catch (error) {
+      console.error('Failed to add note:', error);
+      set((state) => ({
+        notes: state.notes.filter((note) => note.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateNote: async (id, updates) => {
-    const updateData = {
-      ...updates,
-      updated_at: new Date(),
-    };
-    await supabaseService.update(TABLES.NOTES, id, updateData);
+    const previousNote = get().notes.find((note) => note.id === id);
+    const updatedAt = new Date();
+
+    if (previousNote) {
+      set((state) => ({
+        notes: state.notes.map((note) =>
+          note.id === id
+            ? {
+                ...note,
+                ...updates,
+                updatedAt,
+              }
+            : note
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.NOTES, id, {
+        ...updates,
+        updated_at: updatedAt,
+      });
+    } catch (error) {
+      console.error('Failed to update note:', error);
+      if (previousNote) {
+        set((state) => ({
+          notes: state.notes.map((note) => (note.id === id ? previousNote : note)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteNote: async (id) => {
-    await supabaseService.delete(TABLES.NOTES, id);
+    const notesSnapshot = get().notes;
+    const removedIndex = notesSnapshot.findIndex((note) => note.id === id);
+    const removedNote = removedIndex >= 0 ? notesSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      notes: state.notes.filter((note) => note.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.NOTES, id);
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      if (removedNote) {
+        set((state) => {
+          if (state.notes.some((note) => note.id === id)) {
+            return state;
+          }
+
+          const restoredNotes = [...state.notes];
+          const insertAt = Math.min(removedIndex, restoredNotes.length);
+          restoredNotes.splice(insertAt, 0, removedNote);
+          return { notes: restoredNotes };
+        });
+      }
+      throw error;
+    }
   },
 
   archiveNote: async (id) => {
-    await supabaseService.update(TABLES.NOTES, id, {
-      is_archived: true,
-      archived_at: new Date(),
-      updated_at: new Date(),
-    });
+    const previousNote = get().notes.find((note) => note.id === id);
+    const archivedAt = new Date();
+
+    if (previousNote) {
+      set((state) => ({
+        notes: state.notes.map((note) =>
+          note.id === id
+            ? {
+                ...note,
+                archivedAt,
+                updatedAt: archivedAt,
+              }
+            : note
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.NOTES, id, {
+        is_archived: true,
+        archived_at: archivedAt,
+        updated_at: archivedAt,
+      });
+    } catch (error) {
+      console.error('Failed to archive note:', error);
+      if (previousNote) {
+        set((state) => ({
+          notes: state.notes.map((note) => (note.id === id ? previousNote : note)),
+        }));
+      }
+      throw error;
+    }
   },
 
   // === BRAINSTORM ACTIONS ===
@@ -1550,33 +1659,114 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
 
-    const sessionId = await supabaseService.create(TABLES.BRAINSTORM_SESSIONS, {
-      ...sessionData,
-      user_id: userId,
-      created_at: new Date(),
-      updated_at: new Date(),
-    });
-
-    return {
-      id: sessionId,
+    const temporaryId = `temp-${uuidv4()}`;
+    const now = new Date();
+    const optimisticSession: BrainstormSession = {
+      id: temporaryId,
       userId,
       ...sessionData,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      ideas: [],
-    } as BrainstormSession;
+      ideas: sessionData.ideas ?? [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    set((state) => ({
+      brainstormSessions: [optimisticSession, ...state.brainstormSessions],
+    }));
+
+    try {
+      const sessionId = await supabaseService.create(TABLES.BRAINSTORM_SESSIONS, {
+        ...sessionData,
+        user_id: userId,
+        created_at: now,
+        updated_at: now,
+      });
+
+      set((state) => ({
+        brainstormSessions: state.brainstormSessions.map((session) =>
+          session.id === temporaryId
+            ? {
+                ...session,
+                id: sessionId,
+              }
+            : session
+        ),
+      }));
+
+      return {
+        ...optimisticSession,
+        id: sessionId,
+      };
+    } catch (error) {
+      console.error('Failed to add brainstorm session:', error);
+      set((state) => ({
+        brainstormSessions: state.brainstormSessions.filter((session) => session.id !== temporaryId),
+      }));
+      throw error;
+    }
   },
 
   updateBrainstormSession: async (id, updates) => {
-    const updateData = {
-      ...updates,
-      updated_at: new Date(),
-    };
-    await supabaseService.update(TABLES.BRAINSTORM_SESSIONS, id, updateData);
+    const previousSession = get().brainstormSessions.find((session) => session.id === id);
+    const updatedAt = new Date();
+
+    if (previousSession) {
+      set((state) => ({
+        brainstormSessions: state.brainstormSessions.map((session) =>
+          session.id === id
+            ? {
+                ...session,
+                ...updates,
+                updatedAt,
+              }
+            : session
+        ),
+      }));
+    }
+
+    try {
+      await supabaseService.update(TABLES.BRAINSTORM_SESSIONS, id, {
+        ...updates,
+        updated_at: updatedAt,
+      });
+    } catch (error) {
+      console.error('Failed to update brainstorm session:', error);
+      if (previousSession) {
+        set((state) => ({
+          brainstormSessions: state.brainstormSessions.map((session) => (session.id === id ? previousSession : session)),
+        }));
+      }
+      throw error;
+    }
   },
 
   deleteBrainstormSession: async (id) => {
-    await supabaseService.delete(TABLES.BRAINSTORM_SESSIONS, id);
+    const sessionsSnapshot = get().brainstormSessions;
+    const removedIndex = sessionsSnapshot.findIndex((session) => session.id === id);
+    const removedSession = removedIndex >= 0 ? sessionsSnapshot[removedIndex] : null;
+
+    set((state) => ({
+      brainstormSessions: state.brainstormSessions.filter((session) => session.id !== id),
+    }));
+
+    try {
+      await supabaseService.delete(TABLES.BRAINSTORM_SESSIONS, id);
+    } catch (error) {
+      console.error('Failed to delete brainstorm session:', error);
+      if (removedSession) {
+        set((state) => {
+          if (state.brainstormSessions.some((session) => session.id === id)) {
+            return state;
+          }
+
+          const restoredSessions = [...state.brainstormSessions];
+          const insertAt = Math.min(removedIndex, restoredSessions.length);
+          restoredSessions.splice(insertAt, 0, removedSession);
+          return { brainstormSessions: restoredSessions };
+        });
+      }
+      throw error;
+    }
   },
 
   // === TIME TRACKING ACTIONS ===

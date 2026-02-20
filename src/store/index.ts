@@ -201,6 +201,9 @@ interface UserSettings {
   motivationToastsEnabled: boolean;
   dailyReminderEnabled: boolean;
   reminderTime: string;
+  smsRemindersEnabled: boolean;
+  smsPhoneNumber: string;
+  smsLeadMinutes: number;
 
   // Calendar
   weekStartsOnMonday: boolean;
@@ -251,6 +254,9 @@ const defaultSettings: UserSettings = {
   motivationToastsEnabled: true,
   dailyReminderEnabled: false,
   reminderTime: '09:00',
+  smsRemindersEnabled: false,
+  smsPhoneNumber: '',
+  smsLeadMinutes: 30,
   weekStartsOnMonday: true,
   zenShowClock: true,
   zenShowStats: true,

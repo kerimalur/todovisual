@@ -420,6 +420,20 @@ export default function JournalPage() {
     { title: 'Nächste Woche', icon: Target, description: 'Was planst du?' },
   ];
 
+  const handleConfirmDelete = () => {
+    const entryId = showDeleteConfirm;
+    if (!entryId) return;
+
+    setShowDeleteConfirm(null);
+    void (async () => {
+      try {
+        await deleteJournalEntry(entryId);
+      } catch (error) {
+        console.error('Fehler beim Loeschen des Journal-Eintrags:', error);
+        alert('Loeschen fehlgeschlagen. Bitte erneut versuchen.');
+      }
+    })();
+  };
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
@@ -945,15 +959,12 @@ export default function JournalPage() {
       <ConfirmModal
         isOpen={!!showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(null)}
-        onConfirm={() => {
-          if (showDeleteConfirm) {
-            deleteJournalEntry(showDeleteConfirm);
-            setShowDeleteConfirm(null);
-          }
-        }}
+        onConfirm={handleConfirmDelete}
         title="Eintrag löschen"
         message="Möchtest du diesen Journal-Eintrag wirklich löschen?"
       />
     </div>
   );
 }
+
+

@@ -16,7 +16,7 @@ import {
 import { useDataStore, useTimerStore, useMotivationStore, useAppStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { Task } from '@/types';
-import { format, isToday, isBefore, startOfDay, subDays } from 'date-fns';
+import { format, isToday, isBefore, startOfDay, subDays, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from 'date-fns';
 import { de } from 'date-fns/locale';
 import { TaskService } from '@/services/taskService';
 import Link from 'next/link';
@@ -122,7 +122,7 @@ function StatCard({ label, value, icon: Icon, trend, color = 'gray' }: {
 
 /* Main Dashboard */
 export function Dashboard() {
-  const { tasks, goals, habits } = useDataStore();
+  const { tasks, goals, habits, events } = useDataStore();
   const { openTaskModal } = useModals();
   const { toggleZenMode } = useAppStore();
 
@@ -192,6 +192,35 @@ export function Dashboard() {
     };
   }, [tasks, habits, mitTask]);
 
+  const calendarPreview = useMemo(() => {
+    const now = new Date();
+    const weekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
+    const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+
+    const activeTasks = tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived');
+    const dayCards = days.map((day) => {
+      const eventCount = events.filter((event) => isSameDay(new Date(event.startTime), day)).length;
+      const taskCount = activeTasks.filter((task) => task.dueDate && isSameDay(new Date(task.dueDate), day)).length;
+
+      return {
+        day,
+        eventCount,
+        taskCount,
+      };
+    });
+
+    const upcomingEvents = events
+      .filter((event) => new Date(event.startTime) >= now)
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+      .slice(0, 4);
+
+    return {
+      dayCards,
+      upcomingEvents,
+    };
+  }, [events, tasks]);
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -254,6 +283,56 @@ export function Dashboard() {
           </div>
         </div>
       )}
+
+      <Card className="mb-6 border border-sky-100 bg-gradient-to-br from-sky-50/80 via-white to-indigo-50/60">
+        <CardHeader
+          title="Kalender kompakt"
+          icon={<Calendar size={16} className="text-sky-600" />}
+          action={
+            <Link href="/calendar" className="text-sm text-sky-700 hover:text-sky-800 font-medium flex items-center gap-1 interactive">
+              Vollansicht
+              <ArrowRight size={14} />
+            </Link>
+          }
+        />
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-7 gap-2">
+            {calendarPreview.dayCards.map((item) => (
+              <div
+                key={item.day.toISOString()}
+                className={`rounded-lg border px-2 py-3 text-center ${
+                  isToday(item.day) ? 'border-sky-300 bg-white shadow-sm' : 'border-sky-100 bg-white/80'
+                }`}
+              >
+                <p className="text-[10px] uppercase tracking-wide text-gray-500">{format(item.day, 'EEE', { locale: de })}</p>
+                <p className={`text-base font-semibold mt-0.5 ${isToday(item.day) ? 'text-sky-700' : 'text-gray-900'}`}>
+                  {format(item.day, 'd')}
+                </p>
+                <p className="text-[11px] text-gray-600 mt-1">{item.eventCount} Termine</p>
+                <p className="text-[11px] text-gray-500">{item.taskCount} Aufgaben</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="rounded-lg border border-sky-100 bg-white/90 px-3 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 mb-2">Naechste Termine</p>
+            {calendarPreview.upcomingEvents.length > 0 ? (
+              <div className="space-y-1.5">
+                {calendarPreview.upcomingEvents.map((event) => (
+                  <div key={event.id} className="flex items-center justify-between gap-3 text-sm">
+                    <span className="truncate text-gray-800">{event.title}</span>
+                    <span className="text-xs text-gray-500 whitespace-nowrap">
+                      {format(new Date(event.startTime), 'EEE, HH:mm', { locale: de })}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">Keine anstehenden Termine in den naechsten Tagen.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* MIT Card */}
       {mitTask && (

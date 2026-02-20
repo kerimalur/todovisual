@@ -188,6 +188,27 @@ export default function NotesPage() {
     setBrainstormIdeas(brainstormIdeas.filter((_, i) => i !== index));
   };
 
+  const handleConfirmDelete = () => {
+    const targetId = showDeleteConfirm;
+    const targetTab = activeTab;
+    if (!targetId) return;
+
+    setShowDeleteConfirm(null);
+
+    void (async () => {
+      try {
+        if (targetTab === 'notes') {
+          await deleteNote(targetId);
+        } else {
+          await deleteBrainstormSession(targetId);
+        }
+      } catch (error) {
+        console.error('Fehler beim Loeschen:', error);
+        alert('Loeschen fehlgeschlagen. Bitte erneut versuchen.');
+      }
+    })();
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
@@ -634,14 +655,7 @@ export default function NotesPage() {
           title="Löschen bestätigen"
           message="Möchtest du diesen Eintrag wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden."
           confirmText="Löschen"
-          onConfirm={() => {
-            if (activeTab === 'notes') {
-              deleteNote(showDeleteConfirm);
-            } else {
-              deleteBrainstormSession(showDeleteConfirm);
-            }
-            setShowDeleteConfirm(null);
-          }}
+          onConfirm={handleConfirmDelete}
           onClose={() => setShowDeleteConfirm(null)}
           variant="danger"
         />
