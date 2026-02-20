@@ -1,321 +1,213 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { 
-  Plus, 
-  FolderKanban, 
-  TrendingUp, 
-  DollarSign, 
-  Dumbbell, 
-  Heart, 
-  Code2, 
-  Sparkles,
-  ChevronRight,
-  Edit2,
-  Trash2,
-  Calendar,
-  Target,
-  CheckCircle2,
-  Clock,
+import { useMemo, useState } from 'react';
+import {
   BarChart3,
-  Filter
+  Calendar,
+  Code2,
+  DollarSign,
+  Dumbbell,
+  Edit2,
+  FolderKanban,
+  Heart,
+  Plus,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp,
 } from 'lucide-react';
 import { useDataStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { ConfirmModal } from '@/components/modals';
-import { Project, ProjectCategory } from '@/types';
-import { format } from 'date-fns';
+import { Project, ProjectCategory, Task } from '@/types';
+import { addDays, differenceInCalendarDays, format, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Button, Card, ProgressBar, EmptyState } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, ProgressBar, EmptyState } from '@/components/ui';
 
-const categoryConfig: Record<ProjectCategory, { 
-  label: string; 
-  icon: React.ReactNode; 
-  color: string;
-  bgColor: string;
-  description: string;
-}> = {
-  trading: { 
-    label: 'Trading & Investment', 
-    icon: <TrendingUp size={18} />, 
-    color: 'text-emerald-600',
-    bgColor: 'bg-emerald-50 border-emerald-200',
-    description: 'Trading-Strategien, Marktanalysen, Portfolio-Management'
-  },
-  finance: { 
-    label: 'Finanzen & Budget', 
-    icon: <DollarSign size={18} />, 
-    color: 'text-green-600',
-    bgColor: 'bg-green-50 border-green-200',
-    description: 'Budgetierung, Sparziele, finanzielle Planung'
-  },
-  fitness: { 
-    label: 'Fitness & Gym', 
-    icon: <Dumbbell size={18} />, 
-    color: 'text-orange-600',
-    bgColor: 'bg-orange-50 border-orange-200',
-    description: 'Trainingspläne, Kraftaufbau, Ausdauer'
-  },
-  health: { 
-    label: 'Gesundheit & Wellness', 
-    icon: <Heart size={18} />, 
-    color: 'text-red-500',
-    bgColor: 'bg-red-50 border-red-200',
-    description: 'Ernährung, Schlaf, mentale Gesundheit'
-  },
-  wealth: { 
-    label: 'Vermögensaufbau', 
-    icon: <BarChart3 size={18} />, 
-    color: 'text-amber-600',
-    bgColor: 'bg-amber-50 border-amber-200',
-    description: 'Langfristiger Vermögensaufbau, Investments'
-  },
-  programming: { 
-    label: 'Programmieren & Tech', 
-    icon: <Code2 size={18} />, 
-    color: 'text-indigo-600',
-    bgColor: 'bg-indigo-50 border-indigo-200',
-    description: 'Softwareprojekte, Lernen, Side-Projects'
-  },
-  improvement: { 
-    label: 'Stetige Verbesserung', 
-    icon: <Sparkles size={18} />, 
-    color: 'text-purple-600',
-    bgColor: 'bg-purple-50 border-purple-200',
-    description: 'Persönliche Entwicklung, Gewohnheiten, Skills'
-  },
-  other: { 
-    label: 'Sonstiges', 
-    icon: <FolderKanban size={18} />, 
-    color: 'text-gray-600',
-    bgColor: 'bg-gray-50 border-gray-200',
-    description: 'Andere Projekte'
-  },
+type ProjectFilterStatus = 'all' | 'planning' | 'active' | 'on-hold' | 'completed';
+
+const categoryConfig: Record<
+  ProjectCategory,
+  {
+    label: string;
+    icon: React.ReactNode;
+    tone: string;
+  }
+> = {
+  trading: { label: 'Trading', icon: <TrendingUp size={15} />, tone: 'text-emerald-700 bg-emerald-100 border-emerald-200' },
+  finance: { label: 'Finanzen', icon: <DollarSign size={15} />, tone: 'text-green-700 bg-green-100 border-green-200' },
+  fitness: { label: 'Fitness', icon: <Dumbbell size={15} />, tone: 'text-orange-700 bg-orange-100 border-orange-200' },
+  health: { label: 'Gesundheit', icon: <Heart size={15} />, tone: 'text-red-700 bg-red-100 border-red-200' },
+  wealth: { label: 'Vermögen', icon: <BarChart3 size={15} />, tone: 'text-amber-700 bg-amber-100 border-amber-200' },
+  programming: { label: 'Tech', icon: <Code2 size={15} />, tone: 'text-indigo-700 bg-indigo-100 border-indigo-200' },
+  improvement: { label: 'Verbesserung', icon: <Sparkles size={15} />, tone: 'text-purple-700 bg-purple-100 border-purple-200' },
+  other: { label: 'Sonstiges', icon: <FolderKanban size={15} />, tone: 'text-slate-700 bg-slate-100 border-slate-200' },
 };
 
-const statusConfig = {
-  planning: { label: 'Planung', color: 'bg-slate-100 text-slate-600' },
-  active: { label: 'Aktiv', color: 'bg-emerald-100 text-emerald-700' },
-  'on-hold': { label: 'Pausiert', color: 'bg-amber-100 text-amber-700' },
-  completed: { label: 'Abgeschlossen', color: 'bg-blue-100 text-blue-700' },
-  archived: { label: 'Archiviert', color: 'bg-gray-100 text-gray-500' },
+const statusConfig: Record<Project['status'], { label: string; tone: string }> = {
+  planning: { label: 'Planung', tone: 'bg-slate-100 text-slate-800 border-slate-200' },
+  active: { label: 'Aktiv', tone: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  'on-hold': { label: 'On Hold', tone: 'bg-amber-100 text-amber-800 border-amber-200' },
+  completed: { label: 'Abgeschlossen', tone: 'bg-blue-100 text-blue-800 border-blue-200' },
+  archived: { label: 'Archiv', tone: 'bg-gray-100 text-gray-700 border-gray-200' },
 };
 
 function ProjectCard({ project }: { project: Project }) {
-  const { tasks, deleteProject } = useDataStore();
-  const { openProjectModal, openTaskModal } = useModals();
+  const { tasks, deleteProject, createTask } = useDataStore();
+  const { openProjectModal, openTaskDetailModal } = useModals();
   const [expanded, setExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [quickTaskBusy, setQuickTaskBusy] = useState(false);
 
+  const projectTasks = tasks.filter((task) => task.projectId === project.id);
+  const openTasks = projectTasks.filter((task) => task.status !== 'completed' && task.status !== 'archived');
+  const completedTasks = projectTasks.filter((task) => task.status === 'completed');
+  const progress = projectTasks.length > 0 ? Math.round((completedTasks.length / projectTasks.length) * 100) : 0;
   const config = categoryConfig[project.category] || categoryConfig.other;
   const status = statusConfig[project.status];
-  
-  const projectTasks = tasks.filter(t => t.projectId === project.id);
-  const completedTasks = projectTasks.filter(t => t.status === 'completed').length;
-  const progress = projectTasks.length > 0 ? Math.round((completedTasks / projectTasks.length) * 100) : 0;
+
+  const daysLeft = project.deadline ? differenceInCalendarDays(new Date(project.deadline), new Date()) : null;
+
+  const handleQuickTask = async () => {
+    const title = quickTaskTitle.trim();
+    if (!title) return;
+
+    setQuickTaskBusy(true);
+    try {
+      await createTask({
+        title,
+        description: `Projekt: ${project.title}`,
+        dueDate: startOfDay(new Date()),
+        priority: 'medium',
+        projectId: project.id,
+        goalId: project.goalId,
+        status: 'todo',
+        tags: ['projekt'],
+      });
+      setQuickTaskTitle('');
+    } catch (error) {
+      console.error('Project quick task failed:', error);
+      alert('Aufgabe konnte nicht erstellt werden.');
+    } finally {
+      setQuickTaskBusy(false);
+    }
+  };
 
   return (
     <>
-      <div className={`border rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all ${expanded ? 'ring-2 ring-indigo-200' : ''}`}>
-        {/* Project Header */}
-        <div 
-          className="group p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
-          onClick={() => setExpanded(!expanded)}
+      <div className={`rounded-xl border bg-white ${expanded ? 'border-indigo-300 shadow-sm' : 'border-gray-200'}`}>
+        <button
+          onClick={() => setExpanded((value) => !value)}
+          className="w-full text-left p-4 hover:bg-gray-50/60 transition-colors"
         >
-          <div className="flex items-start gap-4">
-            <div className={`w-12 h-12 rounded-xl ${config.bgColor} border flex items-center justify-center flex-shrink-0`}>
-              <span className={config.color}>{config.icon}</span>
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <div className="flex items-center gap-2">
-                  <h3 className="font-semibold text-gray-800">{project.title}</h3>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${status.color}`}>
-                    {status.label}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openProjectModal(project); }}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                  <ChevronRight 
-                    size={16} 
-                    className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
-                  />
-                </div>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 flex-wrap mb-1">
+                <h3 className="text-base font-semibold text-gray-900 truncate">{project.title}</h3>
+                <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${config.tone}`}>
+                  {config.icon}
+                  {config.label}
+                </span>
+                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${status.tone}`}>
+                  {status.label}
+                </span>
               </div>
 
-              <p className="text-sm text-gray-500 line-clamp-1 mb-3">{project.description}</p>
+              <p className="text-sm text-gray-700 line-clamp-1">{project.description}</p>
 
-              {/* Progress & Stats */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-gray-500">{completedTasks}/{projectTasks.length} Aufgaben</span>
-                    <span className={`font-medium ${config.color}`}>{progress}%</span>
-                  </div>
-                  <ProgressBar 
-                    value={progress} 
-                    max={100} 
-                    size="sm"
-                    animated
-                  />
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs text-gray-700 mb-1">
+                  <span>{openTasks.length} offen · {completedTasks.length} erledigt</span>
+                  <span className="font-semibold text-gray-900">{progress}%</span>
                 </div>
+                <ProgressBar value={progress} max={100} size="sm" animated />
+              </div>
 
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-700">
                 {project.deadline && (
-                  <div className="flex items-center gap-1 text-xs text-gray-500">
-                    <Calendar size={12} />
-                    {format(new Date(project.deadline), 'd. MMM', { locale: de })}
-                  </div>
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${daysLeft !== null && daysLeft < 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}>
+                    <Calendar size={11} />
+                    {daysLeft !== null && daysLeft < 0
+                      ? `${Math.abs(daysLeft)} Tage drüber`
+                      : `Deadline ${format(new Date(project.deadline), 'd. MMM yyyy', { locale: de })}`}
+                  </span>
+                )}
+                {project.goalId && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
+                    <Target size={11} />
+                    Mit Ziel verknüpft
+                  </span>
                 )}
               </div>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* Expanded Content */}
         {expanded && (
-          <div className="border-t border-gray-100 bg-gray-50/30 p-4 animate-fadeIn">
-            {/* Category-specific data */}
-            {project.category === 'trading' && project.tradingData && (
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Strategie</p>
-                  <p className="font-medium text-sm">{project.tradingData.strategy || '-'}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Risiko-Level</p>
-                  <p className="font-medium text-sm capitalize">{project.tradingData.riskLevel || '-'}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Ziel-Return</p>
-                  <p className="font-medium text-sm">{project.tradingData.targetReturn ? `${project.tradingData.targetReturn}%` : '-'}</p>
-                </div>
-              </div>
-            )}
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openProjectModal(project)}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50"
+              >
+                <Edit2 size={12} />
+                Projekt bearbeiten
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+              >
+                <Trash2 size={12} />
+                Löschen
+              </button>
+            </div>
 
-            {project.category === 'fitness' && project.fitnessData && (
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Trainingstage/Woche</p>
-                  <p className="font-medium text-sm">{project.fitnessData.workoutDays?.length || 0}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Trainingsart</p>
-                  <p className="font-medium text-sm">{project.fitnessData.exerciseType || '-'}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Zielgewicht</p>
-                  <p className="font-medium text-sm">{project.fitnessData.targetWeight ? `${project.fitnessData.targetWeight} kg` : '-'}</p>
-                </div>
-              </div>
-            )}
-
-            {project.category === 'finance' && project.financeData && (
-              <div className="grid grid-cols-3 gap-3 mb-4">
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Budget</p>
-                  <p className="font-medium text-sm">{project.financeData.budget ? `${project.financeData.budget}€` : '-'}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Ausgegeben</p>
-                  <p className="font-medium text-sm">{project.financeData.spent ? `${project.financeData.spent}€` : '-'}</p>
-                </div>
-                <div className="bg-white p-3 rounded-lg border">
-                  <p className="text-xs text-gray-500 mb-1">Sparziel</p>
-                  <p className="font-medium text-sm">{project.financeData.savingsTarget ? `${project.financeData.savingsTarget}€` : '-'}</p>
-                </div>
-              </div>
-            )}
-
-            {project.category === 'programming' && project.programmingData && (
-              <div className="space-y-3 mb-4">
-                {project.programmingData.techStack && project.programmingData.techStack.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {project.programmingData.techStack.map((tech, i) => (
-                      <span key={i} className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-md font-medium">
-                        {tech}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {project.programmingData.repository && (
-                  <div className="bg-white p-3 rounded-lg border">
-                    <p className="text-xs text-gray-500 mb-1">Repository</p>
-                    <a href={project.programmingData.repository} target="_blank" rel="noopener noreferrer" 
-                       className="text-sm text-indigo-600 hover:underline truncate block">
-                      {project.programmingData.repository}
-                    </a>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tasks */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium text-gray-700">Aufgaben</h4>
+            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Nächste Projekt-Aufgabe</p>
+              <div className="flex items-center gap-2">
+                <input
+                  value={quickTaskTitle}
+                  onChange={(event) => setQuickTaskTitle(event.target.value)}
+                  placeholder="Konkreten nächsten Schritt eintragen..."
+                  className="flex-1 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
                 <button
-                  onClick={() => openTaskModal()}
-                  className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
+                  onClick={() => void handleQuickTask()}
+                  disabled={quickTaskBusy}
+                  className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                 >
                   <Plus size={12} />
                   Hinzufügen
                 </button>
               </div>
+            </div>
 
-              {projectTasks.length > 0 ? (
-                <div className="space-y-1">
-                  {projectTasks.slice(0, 5).map((task) => (
-                    <div 
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-2">Aktive Aufgaben</p>
+              {openTasks.length > 0 ? (
+                <div className="space-y-1.5">
+                  {openTasks.slice(0, 6).map((task: Task) => (
+                    <button
                       key={task.id}
-                      onClick={() => openTaskModal(task)}
-                      className="flex items-center gap-2 p-2 bg-white rounded-lg border hover:border-indigo-200 cursor-pointer transition-colors"
+                      onClick={() => openTaskDetailModal(task)}
+                      className="w-full flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-200"
                     >
-                      <CheckCircle2 
-                        size={14} 
-                        className={task.status === 'completed' ? 'text-emerald-500' : 'text-gray-300'} 
-                      />
-                      <span className={`text-sm flex-1 ${task.status === 'completed' ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                        {task.title}
-                      </span>
+                      <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
                       {task.dueDate && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-700 whitespace-nowrap">
                           {format(new Date(task.dueDate), 'd. MMM', { locale: de })}
                         </span>
                       )}
-                    </div>
+                    </button>
                   ))}
-                  {projectTasks.length > 5 && (
-                    <p className="text-xs text-gray-400 text-center py-1">
-                      +{projectTasks.length - 5} weitere Aufgaben
-                    </p>
-                  )}
                 </div>
               ) : (
-                <p className="text-xs text-gray-400 text-center py-4">
-                  Noch keine Aufgaben
-                </p>
+                <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-700">
+                  Keine aktive Projekt-Aufgabe vorhanden.
+                </div>
               )}
             </div>
-
-            {/* Notes */}
-            {project.notes && (
-              <div className="mt-4 p-3 bg-white rounded-lg border">
-                <p className="text-xs text-gray-500 mb-1">Notizen</p>
-                <p className="text-sm text-gray-700 whitespace-pre-wrap">{project.notes}</p>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -325,207 +217,185 @@ function ProjectCard({ project }: { project: Project }) {
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => deleteProject(project.id)}
         title="Projekt löschen"
-        message={`Möchtest du "${project.title}" wirklich löschen? Alle zugehörigen Aufgaben bleiben erhalten.`}
+        message={`Möchtest du "${project.title}" wirklich löschen?`}
       />
     </>
   );
 }
 
 export default function ProjectsPage() {
-  const { projects } = useDataStore();
-  const { openProjectModal, openTaskModal } = useModals();
-  const [selectedCategory, setSelectedCategory] = useState<ProjectCategory | 'all'>('all');
-  const [statusFilter, setStatusFilter] = useState<string>('active');
-  const [showQuickStart, setShowQuickStart] = useState(false);
+  const { projects, tasks } = useDataStore();
+  const { openProjectModal } = useModals();
+  const [categoryFilter, setCategoryFilter] = useState<ProjectCategory | 'all'>('all');
+  const [statusFilter, setStatusFilter] = useState<ProjectFilterStatus>('active');
+  const [search, setSearch] = useState('');
+
+  const activeProjects = useMemo(() => projects.filter((project) => project.status === 'active'), [projects]);
+  const blockedProjects = useMemo(() => projects.filter((project) => project.status === 'on-hold'), [projects]);
+  const completedProjects = useMemo(() => projects.filter((project) => project.status === 'completed'), [projects]);
+
+  const dueSoonProjects = useMemo(() => {
+    const now = new Date();
+    const nextWeek = addDays(now, 7);
+    return projects.filter((project) => {
+      if (!project.deadline) return false;
+      if (project.status === 'completed' || project.status === 'archived') return false;
+      const deadline = new Date(project.deadline);
+      return deadline >= now && deadline <= nextWeek;
+    });
+  }, [projects]);
+
+  const withoutNextStep = useMemo(() => {
+    return projects
+      .filter((project) => project.status !== 'completed' && project.status !== 'archived')
+      .filter((project) => {
+        const openTasks = tasks.filter(
+          (task) => task.projectId === project.id && task.status !== 'completed' && task.status !== 'archived'
+        );
+        return openTasks.length === 0;
+      })
+      .slice(0, 6);
+  }, [projects, tasks]);
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(p => {
-      const categoryMatch = selectedCategory === 'all' || p.category === selectedCategory;
-      const statusMatch = statusFilter === 'all' || p.status === statusFilter;
-      return categoryMatch && statusMatch;
+    return projects.filter((project) => {
+      const categoryMatch = categoryFilter === 'all' || project.category === categoryFilter;
+      const statusMatch = statusFilter === 'all' || project.status === statusFilter;
+      const searchMatch =
+        !search ||
+        project.title.toLowerCase().includes(search.toLowerCase()) ||
+        project.description.toLowerCase().includes(search.toLowerCase());
+      return categoryMatch && statusMatch && searchMatch;
     });
-  }, [projects, selectedCategory, statusFilter]);
-
-  const projectsByCategory = useMemo(() => {
-    const grouped: Record<ProjectCategory, Project[]> = {
-      trading: [], finance: [], fitness: [], health: [], 
-      wealth: [], programming: [], improvement: [], other: []
-    };
-    
-    filteredProjects.forEach(p => {
-      if (grouped[p.category]) {
-        grouped[p.category].push(p);
-      }
-    });
-    
-    return grouped;
-  }, [filteredProjects]);
+  }, [projects, categoryFilter, statusFilter, search]);
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Projekte</h1>
-            <p className="text-gray-500 mt-1">{projects.length} Projekte insgesamt</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowQuickStart(!showQuickStart)}
-              className={`inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
-                showQuickStart 
-                  ? 'bg-indigo-50 text-indigo-600 border border-indigo-200' 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              <Sparkles size={16} className="text-indigo-500" />
-              Quick-Start
-            </button>
-            <Button
-              onClick={() => openProjectModal()}
-              variant="primary"
-              leftIcon={<Plus size={16} />}
-            >
-              Neues Projekt
-            </Button>
-          </div>
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Projekte</h1>
+          <p className="text-gray-700 mt-1">Arbeite projektbasiert mit klaren nächsten Schritten und Statuskontrolle.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => openProjectModal()} variant="primary" leftIcon={<Plus size={16} />}>
+            Neues Projekt
+          </Button>
         </div>
       </div>
 
-      {/* Quick Start Panel - Vertiefte Projekt-Vorlagen */}
-      {showQuickStart && (
-        <div className="mb-6 p-4 bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl border border-indigo-100 animate-fadeIn">
-          <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-500" />
-            Starte ein vertieftes Projekt
-          </h3>
-          <p className="text-sm text-gray-600 mb-4">
-            Wähle eine Kategorie für ein fokussiertes Deep-Work-Projekt mit vordefinierten Meilensteinen und Best Practices.
-          </p>
-          
-          <div className="grid grid-cols-4 gap-3">
-            {(Object.entries(categoryConfig) as [ProjectCategory, typeof categoryConfig[ProjectCategory]][]).slice(0, -1).map(([key, config]) => (
-              <button
-                key={key}
-                onClick={() => {
-                  openProjectModal(undefined, key);
-                  setShowQuickStart(false);
-                }}
-                className={`p-4 rounded-xl border-2 ${config.bgColor} hover:shadow-md transition-all text-left group`}
-              >
-                <div className={`w-10 h-10 rounded-lg bg-white flex items-center justify-center mb-2 ${config.color}`}>
-                  {config.icon}
-                </div>
-                <h4 className="font-medium text-gray-800 text-sm mb-1">{config.label}</h4>
-                <p className="text-xs text-gray-500 line-clamp-2">{config.description}</p>
-              </button>
-            ))}
-          </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        <Card className="p-4 border border-emerald-200 bg-emerald-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">Aktiv</p>
+          <p className="text-2xl font-bold text-emerald-900 mt-1">{activeProjects.length}</p>
+        </Card>
+        <Card className="p-4 border border-amber-200 bg-amber-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">On Hold</p>
+          <p className="text-2xl font-bold text-amber-900 mt-1">{blockedProjects.length}</p>
+        </Card>
+        <Card className="p-4 border border-blue-200 bg-blue-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-blue-800">Abgeschlossen</p>
+          <p className="text-2xl font-bold text-blue-900 mt-1">{completedProjects.length}</p>
+        </Card>
+        <Card className="p-4 border border-red-200 bg-red-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-red-800">Deadline ≤ 7 Tage</p>
+          <p className="text-2xl font-bold text-red-900 mt-1">{dueSoonProjects.length}</p>
+        </Card>
+      </div>
 
-          {/* Deep Work Tipps */}
-          <div className="mt-4 p-3 bg-white/50 rounded-lg border border-indigo-100">
-            <p className="text-xs text-indigo-700 font-medium mb-2">💡 Deep Work Tipps:</p>
-            <ul className="text-xs text-indigo-600 space-y-1">
-              <li>• Setze klare Meilensteine für messbare Fortschritte</li>
-              <li>• Verknüpfe Aufgaben mit deinen Zielen für mehr Fokus</li>
-              <li>• Nutze Zeitblöcke (Pomodoro) für konzentrierte Arbeit</li>
-              <li>• Reflektiere wöchentlich über deine Fortschritte</li>
-            </ul>
+      <Card className="border border-indigo-100 bg-indigo-50/60">
+        <CardHeader
+          title="Project Operating Board"
+          subtitle="Wichtige Lücken und Risiken im laufenden Betrieb"
+          icon={<Sparkles size={16} className="text-indigo-700" />}
+        />
+        <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-amber-100 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">Projekte ohne nächsten Schritt</p>
+            {withoutNextStep.length > 0 ? (
+              <div className="space-y-1.5">
+                {withoutNextStep.map((project) => (
+                  <div key={project.id} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-gray-900 truncate">{project.title}</span>
+                    <span className="text-xs text-amber-800">0 Aufgaben</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700">Alle aktiven Projekte haben Aufgaben im Backlog.</p>
+            )}
           </div>
-        </div>
-      )}
+          <div className="rounded-lg border border-red-100 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-red-700 mb-2">Deadline-Risiko</p>
+            {dueSoonProjects.length > 0 ? (
+              <div className="space-y-1.5">
+                {dueSoonProjects.slice(0, 5).map((project) => (
+                  <div key={project.id} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-gray-900 truncate">{project.title}</span>
+                    <span className="text-xs text-red-800">
+                      {project.deadline ? format(new Date(project.deadline), 'd. MMM', { locale: de }) : '-'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700">Keine kurzfristigen Deadline-Risiken erkannt.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Category Tabs */}
-      <div className="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
-        <button
-          onClick={() => setSelectedCategory('all')}
-          className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-            ${selectedCategory === 'all' 
-              ? 'bg-gray-900 text-white' 
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <input
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Projekt durchsuchen..."
+          className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <select
+          value={categoryFilter}
+          onChange={(event) => setCategoryFilter(event.target.value as ProjectCategory | 'all')}
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          title="Kategorie Filter"
         >
-          Alle
-        </button>
-        {(Object.entries(categoryConfig) as [ProjectCategory, typeof categoryConfig[ProjectCategory]][]).map(([key, config]) => {
-          const count = projectsByCategory[key]?.length || 0;
-          return (
-            <button
-              key={key}
-              onClick={() => setSelectedCategory(key)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2
-                ${selectedCategory === key 
-                  ? `${config.bgColor} ${config.color} border` 
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-            >
-              {config.icon}
+          <option value="all">Alle Kategorien</option>
+          {Object.entries(categoryConfig).map(([key, config]) => (
+            <option key={key} value={key}>
               {config.label}
-              {count > 0 && (
-                <span className={`text-xs px-1.5 rounded-full ${selectedCategory === key ? 'bg-white/50' : 'bg-gray-200'}`}>
-                  {count}
-                </span>
-              )}
-            </button>
-          );
-        })}
+            </option>
+          ))}
+        </select>
+        <select
+          value={statusFilter}
+          onChange={(event) => setStatusFilter(event.target.value as ProjectFilterStatus)}
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          title="Status Filter"
+        >
+          <option value="all">Alle Status</option>
+          <option value="planning">Planung</option>
+          <option value="active">Aktiv</option>
+          <option value="on-hold">On Hold</option>
+          <option value="completed">Abgeschlossen</option>
+        </select>
       </div>
 
-      {/* Status Filter */}
-      <div className="flex items-center gap-2 mb-6">
-        <Filter size={14} className="text-gray-400" />
-        <span className="text-sm text-gray-500">Status:</span>
-        {['all', 'active', 'planning', 'on-hold', 'completed'].map((status) => (
-          <button
-            key={status}
-            onClick={() => setStatusFilter(status)}
-            className={`px-2 py-1 rounded text-xs font-medium transition-colors
-              ${statusFilter === status 
-                ? 'bg-indigo-100 text-indigo-700' 
-                : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {status === 'all' ? 'Alle' : statusConfig[status as keyof typeof statusConfig]?.label || status}
-          </button>
-        ))}
-      </div>
-
-      {/* Projects Grid */}
       {filteredProjects.length > 0 ? (
-        <div className="space-y-4">
-          {selectedCategory === 'all' ? (
-            // Show by category
-            Object.entries(projectsByCategory).map(([category, categoryProjects]) => {
-              if (categoryProjects.length === 0) return null;
-              const config = categoryConfig[category as ProjectCategory];
-              return (
-                <div key={category} className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <span className={config.color}>{config.icon}</span>
-                    <h2 className="font-semibold text-gray-700">{config.label}</h2>
-                    <span className="text-xs text-gray-400">({categoryProjects.length})</span>
-                  </div>
-                  <div className="grid gap-3">
-                    {categoryProjects.map(project => (
-                      <ProjectCard key={project.id} project={project} />
-                    ))}
-                  </div>
-                </div>
-              );
+        <div className="space-y-3">
+          {filteredProjects
+            .slice()
+            .sort((a, b) => {
+              if (a.status !== b.status) return a.status.localeCompare(b.status);
+              return a.title.localeCompare(b.title, 'de');
             })
-          ) : (
-            // Show filtered
-            <div className="grid gap-3">
-              {filteredProjects.map(project => (
-                <ProjectCard key={project.id} project={project} />
-              ))}
-            </div>
-          )}
+            .map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
         </div>
       ) : (
         <EmptyState
           type="folder"
-          title="Noch keine Projekte"
-          description="Erstelle dein erstes Projekt, um loszulegen."
-          action={{ label: "Projekt erstellen", onClick: () => openProjectModal() }}
+          title="Keine Projekte gefunden"
+          description="Passe Filter an oder starte ein neues Projekt."
+          action={{ label: 'Projekt erstellen', onClick: () => openProjectModal() }}
         />
       )}
     </div>

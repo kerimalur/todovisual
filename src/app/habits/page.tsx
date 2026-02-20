@@ -11,11 +11,8 @@ import {
   Circle,
   ChevronLeft,
   ChevronRight,
-  Pause,
-  Play,
   CalendarDays,
   Sparkles,
-  AlertCircle,
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, subWeeks, addWeeks, endOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -35,8 +32,6 @@ export default function HabitsPage() {
     goals,
     completeHabit,
     uncompleteHabit,
-    pauseHabit,
-    resumeHabit,
     calculateStreak,
   } = useDataStore();
   const { openHabitModal } = useModals();
@@ -82,28 +77,21 @@ export default function HabitsPage() {
   };
 
   const filteredHabits = useMemo(() => {
-    const activeHabits = habits.filter((habit) => habit.isActive);
+    const activeHabits = habits.filter((habit) => habit.isActive && !habit.isPaused);
     if (categoryFilter === 'all') return activeHabits;
     return activeHabits.filter((habit) => habit.category === categoryFilter);
   }, [habits, categoryFilter]);
 
-  const todayHabits = filteredHabits.filter((habit) => !habit.isPaused && isHabitDueOnDay(habit, today));
+  const todayHabits = filteredHabits.filter((habit) => isHabitDueOnDay(habit, today));
 
   const completedToday = todayHabits.filter((habit) => wasCompletedOnDay(habit, today)).length;
   const completionRate = todayHabits.length > 0 ? Math.round((completedToday / todayHabits.length) * 100) : 0;
-  const activeHabitsCount = filteredHabits.filter((habit) => !habit.isPaused).length;
-  const pausedHabitsCount = filteredHabits.filter((habit) => habit.isPaused).length;
-  const topStreakCount = filteredHabits.length > 0 ? Math.max(...filteredHabits.map((habit) => calculateStreak(habit)), 0) : 0;
-
-  const topStreakHabits = useMemo(() => {
-    return [...filteredHabits]
-      .sort((a, b) => calculateStreak(b) - calculateStreak(a))
-      .slice(0, 5);
-  }, [calculateStreak, filteredHabits]);
+  const activeHabitsCount = filteredHabits.length;
+  const averageStreak = filteredHabits.length > 0
+    ? Math.round(filteredHabits.reduce((sum, habit) => sum + calculateStreak(habit), 0) / filteredHabits.length)
+    : 0;
 
   const toggleHabitCompletion = async (habit: Habit, date: Date = new Date()) => {
-    if (habit.isPaused) return;
-
     const isCompleted = wasCompletedOnDay(habit, date);
     try {
       if (isCompleted) {
@@ -113,18 +101,6 @@ export default function HabitsPage() {
       }
     } catch (error) {
       console.error('Failed to toggle habit completion:', error);
-    }
-  };
-
-  const toggleHabitPause = async (habit: Habit) => {
-    try {
-      if (habit.isPaused) {
-        await resumeHabit(habit.id);
-      } else {
-        await pauseHabit(habit.id);
-      }
-    } catch (error) {
-      console.error('Failed to toggle habit pause state:', error);
     }
   };
 
@@ -171,16 +147,16 @@ export default function HabitsPage() {
           <p className="text-2xl font-bold text-emerald-600 mt-1">{completionRate}%</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Aktiv / pausiert</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Aktive Gewohnheiten</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {activeHabitsCount} / {pausedHabitsCount}
+            {activeHabitsCount}
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bester Streak</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ø Streak</p>
           <p className="text-2xl font-bold text-orange-600 mt-1 flex items-center gap-1">
             <Flame size={20} />
-            {topStreakCount}
+            {averageStreak}
           </p>
         </div>
       </div>
@@ -226,8 +202,7 @@ export default function HabitsPage() {
                     completed ? 'border-emerald-200 bg-emerald-50/60' : 'border-gray-200 bg-white'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
+                  <div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => void toggleHabitCompletion(habit)}
@@ -265,14 +240,6 @@ export default function HabitsPage() {
                           </span>
                         )}
                       </div>
-                    </div>
-                    <button
-                      onClick={() => void toggleHabitPause(habit)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-700"
-                    >
-                      {habit.isPaused ? <Play size={12} /> : <Pause size={12} />}
-                      {habit.isPaused ? 'Fortsetzen' : 'Pausieren'}
-                    </button>
                   </div>
                 </div>
               );
@@ -371,12 +338,12 @@ export default function HabitsPage() {
                           {due ? (
                             <button
                               onClick={() => !inFuture && void toggleHabitCompletion(habit, day)}
-                              disabled={habit.isPaused || inFuture}
+                              disabled={inFuture}
                               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
                                 completed
                                   ? 'bg-emerald-600 text-white'
                                   : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                              } ${(habit.isPaused || inFuture) ? 'opacity-40 cursor-not-allowed' : ''}`}
+                              } ${inFuture ? 'opacity-40 cursor-not-allowed' : ''}`}
                               title={completed ? 'Als offen markieren' : 'Als erledigt markieren'}
                             >
                               {completed ? <CheckCircle2 size={16} /> : <Circle size={16} />}
@@ -395,33 +362,6 @@ export default function HabitsPage() {
                 );
               })}
             </div>
-          </div>
-        )}
-      </section>
-
-      <section className="bg-white border border-gray-200 rounded-2xl p-5">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-3">
-          <Flame size={18} className="text-orange-500" />
-          Streak Ranking
-        </h2>
-
-        {topStreakHabits.length === 0 ? (
-          <div className="text-sm text-gray-600 flex items-center gap-2">
-            <AlertCircle size={15} />
-            Noch keine aktiven Gewohnheiten fuer ein Ranking.
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-            {topStreakHabits.map((habit, index) => (
-              <div key={habit.id} className="rounded-xl border border-gray-200 p-3 bg-gray-50">
-                <p className="text-xs font-semibold text-gray-500">#{index + 1}</p>
-                <p className="font-medium text-gray-900 mt-1 line-clamp-1">{habit.title}</p>
-                <p className="text-sm text-orange-600 mt-2 flex items-center gap-1 font-semibold">
-                  <Flame size={14} />
-                  {calculateStreak(habit)} Tage
-                </p>
-              </div>
-            ))}
           </div>
         )}
       </section>

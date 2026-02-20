@@ -1,240 +1,240 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { Target, Plus, ChevronRight, Edit2, Trash2, CheckCircle2, Calendar, AlertTriangle, Zap, Clock, Info } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import {
+  Calendar,
+  CheckCircle2,
+  ChevronRight,
+  Edit2,
+  Plus,
+  Target,
+  Trash2,
+  Zap,
+} from 'lucide-react';
 import { useDataStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { ConfirmModal } from '@/components/modals';
-import { Goal, Milestone, Task } from '@/types';
-import { format, differenceInDays, startOfDay, endOfDay } from 'date-fns';
+import { Goal } from '@/types';
+import { differenceInCalendarDays, format, isBefore, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { Button, Card, ProgressBar, GoalsEmptyState } from '@/components/ui';
+import { Button, Card, CardContent, CardHeader, ProgressBar, GoalsEmptyState } from '@/components/ui';
 
-// Konstante für max freie Aufgaben pro Tag
-const MAX_FREE_TASKS_PER_DAY = 2;
+type GoalHealth = 'on-track' | 'at-risk' | 'overdue' | 'done';
+type GoalFilter = 'all' | 'on-track' | 'at-risk' | 'overdue';
 
-// Goal Card
-function GoalCard({ goal, freeTasksToday }: { goal: Goal; freeTasksToday: number }) {
-  const { tasks, deleteGoal, updateGoal } = useDataStore();
-  const { openGoalModal, openTaskModal } = useModals();
+const getGoalHealth = (goal: Goal): GoalHealth => {
+  if (goal.progress >= 100) return 'done';
+
+  const today = new Date();
+  const deadline = new Date(goal.deadline);
+  if (isBefore(deadline, today)) return 'overdue';
+
+  const createdAt = new Date(goal.createdAt);
+  const totalDays = Math.max(1, differenceInCalendarDays(deadline, createdAt));
+  const elapsedDays = Math.max(0, differenceInCalendarDays(today, createdAt));
+  const expectedProgress = Math.min(100, Math.round((elapsedDays / totalDays) * 100));
+
+  return goal.progress >= expectedProgress - 15 ? 'on-track' : 'at-risk';
+};
+
+const healthStyle: Record<GoalHealth, string> = {
+  'on-track': 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  'at-risk': 'bg-amber-100 text-amber-800 border-amber-200',
+  overdue: 'bg-red-100 text-red-800 border-red-200',
+  done: 'bg-slate-100 text-slate-700 border-slate-200',
+};
+
+function GoalCard({ goal }: { goal: Goal }) {
+  const { tasks, deleteGoal, updateGoal, createTask } = useDataStore();
+  const { openGoalModal, openTaskDetailModal } = useModals();
   const [expanded, setExpanded] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [quickTaskTitle, setQuickTaskTitle] = useState('');
+  const [quickTaskBusy, setQuickTaskBusy] = useState(false);
 
-  const goalTasks = tasks.filter(t => t.goalId === goal.id);
-  const completedTasks = goalTasks.filter(t => t.status === 'completed').length;
-  const pendingTasks = goalTasks.filter(t => t.status !== 'completed');
-  
-  const daysRemaining = differenceInDays(new Date(goal.deadline), new Date());
-  const isOverdue = daysRemaining < 0;
+  const goalTasks = tasks.filter((task) => task.goalId === goal.id);
+  const openTasks = goalTasks.filter((task) => task.status !== 'completed' && task.status !== 'archived');
+  const completedTasks = goalTasks.filter((task) => task.status === 'completed');
 
-  const toggleMilestone = (milestoneId: string) => {
-    if (!goal.milestones) return;
-    const updatedMilestones = goal.milestones.map(m => 
-      m.id === milestoneId ? { ...m, completed: !m.completed } : m
+  const health = getGoalHealth(goal);
+  const daysLeft = differenceInCalendarDays(new Date(goal.deadline), new Date());
+  const completedMilestones = (goal.milestones || []).filter((milestone) => milestone.completed).length;
+  const totalMilestones = goal.milestones?.length || 0;
+
+  const handleToggleMilestone = async (milestoneId: string) => {
+    if (!goal.milestones || goal.milestones.length === 0) return;
+
+    const updatedMilestones = goal.milestones.map((milestone) =>
+      milestone.id === milestoneId ? { ...milestone, completed: !milestone.completed } : milestone
     );
-    const completedMilestones = updatedMilestones.filter(m => m.completed).length;
-    const newProgress = Math.round((completedMilestones / updatedMilestones.length) * 100);
-    updateGoal(goal.id, { milestones: updatedMilestones, progress: newProgress });
+    const nextCompleted = updatedMilestones.filter((milestone) => milestone.completed).length;
+    const nextProgress = Math.round((nextCompleted / updatedMilestones.length) * 100);
+
+    try {
+      await updateGoal(goal.id, {
+        milestones: updatedMilestones,
+        progress: nextProgress,
+      });
+    } catch (error) {
+      console.error('Milestone update failed:', error);
+      alert('Meilenstein konnte nicht aktualisiert werden.');
+    }
+  };
+
+  const handleQuickTask = async () => {
+    const title = quickTaskTitle.trim();
+    if (!title) return;
+
+    setQuickTaskBusy(true);
+    try {
+      await createTask({
+        title,
+        description: `Ziel: ${goal.title}`,
+        dueDate: startOfDay(new Date()),
+        priority: 'high',
+        goalId: goal.id,
+        status: 'todo',
+        tags: ['ziel'],
+      });
+      setQuickTaskTitle('');
+    } catch (error) {
+      console.error('Quick task creation failed:', error);
+      alert('Aufgabe konnte nicht erstellt werden.');
+    } finally {
+      setQuickTaskBusy(false);
+    }
   };
 
   return (
     <>
-      <div className={`border rounded-xl bg-white overflow-hidden shadow-sm hover:shadow-md transition-all ${expanded ? 'ring-2 ring-indigo-200' : ''}`}>
-        {/* Goal Header */}
-        <div 
-          className="group p-4 cursor-pointer hover:bg-gray-50/50 transition-colors"
-          onClick={() => setExpanded(!expanded)}
+      <div className={`rounded-xl border bg-white ${expanded ? 'border-indigo-300 shadow-sm' : 'border-gray-200'}`}>
+        <button
+          onClick={() => setExpanded((value) => !value)}
+          className="w-full text-left p-4 hover:bg-gray-50/60 transition-colors"
         >
-          <div className="flex items-start gap-4">
-            <div 
-              className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: `${goal.color}15` }}
-            >
-              <Target size={20} style={{ color: goal.color }} />
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="font-semibold text-gray-800">{goal.title}</h3>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => { e.stopPropagation(); openGoalModal(goal); }}
-                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(true); }}
-                    className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                  <ChevronRight 
-                    size={16} 
-                    className={`text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
-                  />
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <h3 className="text-base font-semibold text-gray-900 truncate">{goal.title}</h3>
+                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${healthStyle[health]}`}>
+                  {health === 'on-track' && 'On Track'}
+                  {health === 'at-risk' && 'At Risk'}
+                  {health === 'overdue' && 'Überfällig'}
+                  {health === 'done' && 'Erreicht'}
+                </span>
+              </div>
+              {goal.description && <p className="text-sm text-gray-700 line-clamp-1">{goal.description}</p>}
+
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs text-gray-700 mb-1">
+                  <span>{openTasks.length} offen · {completedTasks.length} erledigt</span>
+                  <span className="font-semibold text-gray-900">{goal.progress}%</span>
                 </div>
+                <ProgressBar value={goal.progress} max={100} color={goal.color} size="sm" animated />
               </div>
 
-              {goal.description && (
-                <p className="text-sm text-gray-500 line-clamp-1 mb-3">{goal.description}</p>
-              )}
-
-              {/* Progress & Stats */}
-              <div className="flex items-center gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="text-gray-500">
-                      {completedTasks}/{goalTasks.length} Aufgaben
-                      {goal.milestones && goal.milestones.length > 0 && (
-                        <> · {goal.milestones.filter(m => m.completed).length}/{goal.milestones.length} Meilensteine</>
-                      )}
-                    </span>
-                    <span style={{ color: goal.color }} className="font-medium">
-                      {goal.progress}%
-                    </span>
-                  </div>
-                  <ProgressBar 
-                    value={goal.progress} 
-                    max={100} 
-                    color={goal.color}
-                    size="sm"
-                    animated
-                  />
-                </div>
-
-                <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded-lg ${isOverdue ? 'bg-red-50 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
-                  <Calendar size={12} />
-                  {isOverdue 
-                    ? `${Math.abs(daysRemaining)} Tage überfällig`
-                    : `${daysRemaining} Tage übrig`
-                  }
-                </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-700">
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
+                  <Calendar size={11} />
+                  Deadline {format(new Date(goal.deadline), 'd. MMM yyyy', { locale: de })}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5">
+                  {totalMilestones > 0 ? `${completedMilestones}/${totalMilestones} Meilensteine` : 'Keine Meilensteine'}
+                </span>
+                <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${daysLeft < 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-700'}`}>
+                  {daysLeft < 0 ? `${Math.abs(daysLeft)} Tage drüber` : `${daysLeft} Tage offen`}
+                </span>
               </div>
             </div>
+
+            <ChevronRight size={18} className={`text-gray-500 transition-transform ${expanded ? 'rotate-90' : ''}`} />
           </div>
-        </div>
+        </button>
 
-        {/* Expanded Content */}
         {expanded && (
-          <div className="border-t border-gray-100 bg-gray-50/30 p-4 animate-fadeIn space-y-4">
-            {/* Quick Summary Box */}
-            <div className="p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
-              <h4 className="text-sm font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                <Info size={14} className="text-indigo-500" />
-                Ziel-Zusammenfassung
-              </h4>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold" style={{ color: goal.color }}>{goal.progress}%</p>
-                  <p className="text-xs text-gray-500">Fortschritt</p>
-                </div>
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-700">{pendingTasks.length}</p>
-                  <p className="text-xs text-gray-500">Offene Aufgaben</p>
-                </div>
-                <div className={`p-2 rounded-lg ${isOverdue ? 'bg-red-50' : 'bg-gray-50'}`}>
-                  <p className={`text-2xl font-bold ${isOverdue ? 'text-red-600' : 'text-gray-700'}`}>
-                    {Math.abs(daysRemaining)}
-                  </p>
-                  <p className="text-xs text-gray-500">{isOverdue ? 'Tage überfällig' : 'Tage übrig'}</p>
-                </div>
-              </div>
-              
-              {/* Description */}
-              {goal.description && (
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <p className="text-sm text-gray-600">{goal.description}</p>
-                </div>
-              )}
+          <div className="border-t border-gray-100 p-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => openGoalModal(goal)}
+                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50"
+              >
+                <Edit2 size={12} />
+                Ziel bearbeiten
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+              >
+                <Trash2 size={12} />
+                Löschen
+              </button>
             </div>
 
-            {/* Motivation */}
-            {goal.motivation && (
-              <div className="p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
-                <p className="text-xs text-indigo-600 font-medium mb-1">💪 Warum ist dieses Ziel wichtig?</p>
-                <p className="text-sm text-gray-700">{goal.motivation}</p>
+            <div className="rounded-lg border border-indigo-100 bg-indigo-50/60 p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Nächste Aufgabe</p>
+              <div className="flex items-center gap-2">
+                <input
+                  value={quickTaskTitle}
+                  onChange={(event) => setQuickTaskTitle(event.target.value)}
+                  placeholder="Nächsten Schritt formulieren..."
+                  className="flex-1 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  onClick={() => void handleQuickTask()}
+                  disabled={quickTaskBusy}
+                  className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-2 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  <Plus size={12} />
+                  Hinzufügen
+                </button>
               </div>
-            )}
+            </div>
 
-            {/* Milestones */}
             {goal.milestones && goal.milestones.length > 0 && (
               <div>
-                <h4 className="text-sm font-medium text-gray-700 mb-2">Meilensteine</h4>
-                <div className="space-y-1">
+                <p className="text-sm font-semibold text-gray-900 mb-2">Meilensteine</p>
+                <div className="space-y-1.5">
                   {goal.milestones.map((milestone) => (
-                    <div 
+                    <button
                       key={milestone.id}
-                      onClick={() => toggleMilestone(milestone.id)}
-                      className="flex items-center gap-2 p-2 bg-white rounded-lg border hover:border-indigo-200 cursor-pointer transition-colors"
+                      onClick={() => void handleToggleMilestone(milestone.id)}
+                      className="w-full flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-200"
                     >
-                      <CheckCircle2 
-                        size={16} 
-                        className={milestone.completed ? 'text-emerald-500' : 'text-gray-300'} 
-                      />
-                      <span className={`text-sm flex-1 ${milestone.completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                      <span className={`text-sm ${milestone.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                         {milestone.title}
                       </span>
-                      {milestone.targetDate && (
-                        <span className="text-xs text-gray-400">
-                          {format(new Date(milestone.targetDate), 'd. MMM', { locale: de })}
-                        </span>
-                      )}
-                    </div>
+                      <CheckCircle2 size={15} className={milestone.completed ? 'text-emerald-600' : 'text-gray-400'} />
+                    </button>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Pending Tasks */}
-            {pendingTasks.length > 0 && (
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-sm font-medium text-gray-700">Offene Aufgaben</h4>
-                  <button
-                    onClick={() => openTaskModal()}
-                    className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-                  >
-                    <Plus size={12} />
-                    Hinzufügen
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  {pendingTasks.slice(0, 5).map((task) => (
-                    <div 
+            <div>
+              <p className="text-sm font-semibold text-gray-900 mb-2">Aktive Aufgaben</p>
+              {openTasks.length > 0 ? (
+                <div className="space-y-1.5">
+                  {openTasks.slice(0, 5).map((task) => (
+                    <button
                       key={task.id}
-                      onClick={() => openTaskModal(task)}
-                      className="flex items-center gap-2 p-2 bg-white rounded-lg border hover:border-indigo-200 cursor-pointer transition-colors"
+                      onClick={() => openTaskDetailModal(task)}
+                      className="w-full flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-200"
                     >
-                      <div className={`w-2 h-2 rounded-full ${
-                        task.priority === 'urgent' ? 'bg-red-500' :
-                        task.priority === 'high' ? 'bg-orange-500' :
-                        task.priority === 'medium' ? 'bg-blue-500' : 'bg-gray-400'
-                      }`} />
-                      <span className="text-sm text-gray-700 flex-1">{task.title}</span>
+                      <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
                       {task.dueDate && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-gray-700 whitespace-nowrap">
                           {format(new Date(task.dueDate), 'd. MMM', { locale: de })}
                         </span>
                       )}
-                    </div>
+                    </button>
                   ))}
-                  {pendingTasks.length > 5 && (
-                    <p className="text-xs text-gray-400 text-center py-1">
-                      +{pendingTasks.length - 5} weitere Aufgaben
-                    </p>
-                  )}
                 </div>
-              </div>
-            )}
-
-            {/* Reward */}
-            {goal.reward && (
-              <div className="p-3 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-100">
-                <p className="text-xs text-amber-600 font-medium mb-1">🎁 Belohnung bei Erreichen</p>
-                <p className="text-sm text-gray-700">{goal.reward}</p>
-              </div>
-            )}
+              ) : (
+                <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-700">
+                  Kein nächster Schritt definiert. Lege oben direkt eine Aufgabe an.
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -244,7 +244,7 @@ function GoalCard({ goal, freeTasksToday }: { goal: Goal; freeTasksToday: number
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => deleteGoal(goal.id)}
         title="Ziel löschen"
-        message={`Möchtest du "${goal.title}" wirklich löschen? Alle zugehörigen Aufgaben bleiben erhalten.`}
+        message={`Möchtest du "${goal.title}" wirklich löschen?`}
       />
     </>
   );
@@ -253,98 +253,146 @@ function GoalCard({ goal, freeTasksToday }: { goal: Goal; freeTasksToday: number
 export default function GoalsPage() {
   const { goals, tasks } = useDataStore();
   const { openGoalModal, openTaskModal } = useModals();
+  const [filter, setFilter] = useState<GoalFilter>('all');
 
-  // Berechne freie Aufgaben (ohne Ziel/Projekt) für heute
-  const freeTasksToday = useMemo(() => {
-    const today = new Date();
-    const todayStart = startOfDay(today);
-    const todayEnd = endOfDay(today);
-    
-    return tasks.filter(t => {
-      if (!t.dueDate) return false;
-      if (t.status === 'completed') return false;
-      if (t.goalId || t.projectId) return false;
-      const due = new Date(t.dueDate);
-      return due >= todayStart && due <= todayEnd;
-    }).length;
-  }, [tasks]);
+  const stats = useMemo(() => {
+    const health = goals.map((goal) => getGoalHealth(goal));
+    const overdue = health.filter((state) => state === 'overdue').length;
+    const atRisk = health.filter((state) => state === 'at-risk').length;
+    const onTrack = health.filter((state) => state === 'on-track').length;
+    const done = health.filter((state) => state === 'done').length;
 
-  const hasExceededFreeTasks = freeTasksToday > MAX_FREE_TASKS_PER_DAY;
+    const openGoalTasks = tasks.filter(
+      (task) => task.goalId && task.status !== 'completed' && task.status !== 'archived'
+    ).length;
+    const goalTasksDueToday = tasks.filter(
+      (task) =>
+        task.goalId &&
+        task.status !== 'completed' &&
+        task.dueDate &&
+        isBefore(new Date(task.dueDate), new Date(new Date().setHours(23, 59, 59, 999)))
+    ).length;
 
-  // Sort goals by deadline
-  const sortedGoals = [...goals].sort((a, b) => 
-    new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
-  );
+    return {
+      overdue,
+      atRisk,
+      onTrack,
+      done,
+      openGoalTasks,
+      goalTasksDueToday,
+    };
+  }, [goals, tasks]);
+
+  const filteredGoals = useMemo(() => {
+    if (filter === 'all') return goals;
+    return goals.filter((goal) => getGoalHealth(goal) === filter);
+  }, [filter, goals]);
+
+  const goalBacklog = useMemo(() => {
+    return goals
+      .map((goal) => {
+        const openTasks = tasks.filter(
+          (task) => task.goalId === goal.id && task.status !== 'completed' && task.status !== 'archived'
+        );
+        return { goal, openTasks };
+      })
+      .filter((entry) => entry.openTasks.length === 0 && getGoalHealth(entry.goal) !== 'done')
+      .slice(0, 5);
+  }, [goals, tasks]);
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ziele</h1>
-            <p className="text-gray-500 mt-1">{goals.length} aktive Ziele</p>
-          </div>
-          <Button
-            onClick={() => openGoalModal()}
-            variant="primary"
-            leftIcon={<Plus size={16} />}
-          >
+    <div className="max-w-6xl mx-auto space-y-6">
+      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ziele</h1>
+          <p className="text-gray-700 mt-1">Steuere Fortschritt über den gesamten Zielzeitraum.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button onClick={() => openTaskModal()} variant="secondary" leftIcon={<Plus size={16} />}>
+            Aufgabe erstellen
+          </Button>
+          <Button onClick={() => openGoalModal()} variant="primary" leftIcon={<Target size={16} />}>
             Neues Ziel
           </Button>
         </div>
       </div>
 
-      {/* Free Tasks Warning */}
-      {freeTasksToday > 0 && (
-        <div className={`mb-4 p-4 rounded-xl border flex items-start gap-3 ${
-          hasExceededFreeTasks 
-            ? 'bg-red-50 border-red-200' 
-            : 'bg-amber-50 border-amber-200'
-        }`}>
-          <AlertTriangle size={20} className={hasExceededFreeTasks ? 'text-red-500' : 'text-amber-500'} />
-          <div className="flex-1">
-            <h4 className={`font-medium ${hasExceededFreeTasks ? 'text-red-700' : 'text-amber-700'}`}>
-              {hasExceededFreeTasks 
-                ? `Zu viele freie Aufgaben heute (${freeTasksToday}/${MAX_FREE_TASKS_PER_DAY})`
-                : `${freeTasksToday} freie Aufgabe(n) für heute`
-              }
-            </h4>
-            <p className={`text-sm mt-1 ${hasExceededFreeTasks ? 'text-red-600' : 'text-amber-600'}`}>
-              {hasExceededFreeTasks 
-                ? 'Versuche, Aufgaben mit deinen Zielen oder Projekten zu verknüpfen, um fokussiert zu bleiben.'
-                : `Du hast noch ${MAX_FREE_TASKS_PER_DAY - freeTasksToday} freie Aufgabe(n) für heute übrig.`
-              }
-            </p>
-            <div className="mt-2 flex gap-2">
-              <button
-                onClick={() => openTaskModal()}
-                className="text-xs font-medium text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
-              >
-                <Plus size={12} />
-                Aufgabe mit Ziel erstellen
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Productivity Tip */}
-      <div className="mb-4 p-3 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg border border-indigo-100">
-        <div className="flex items-center gap-2 mb-1">
-          <Zap size={14} className="text-indigo-500" />
-          <span className="text-xs font-medium text-indigo-600">Produktivitäts-Regel</span>
-        </div>
-        <p className="text-xs text-indigo-700">
-          Maximal {MAX_FREE_TASKS_PER_DAY} Aufgaben pro Tag, die nicht mit einem Ziel oder Projekt verbunden sind.
-          So bleibst du fokussiert auf das Wesentliche!
-        </p>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+        <Card className="p-4 border border-emerald-200 bg-emerald-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">On Track</p>
+          <p className="text-2xl font-bold text-emerald-900 mt-1">{stats.onTrack}</p>
+        </Card>
+        <Card className="p-4 border border-amber-200 bg-amber-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">At Risk</p>
+          <p className="text-2xl font-bold text-amber-900 mt-1">{stats.atRisk}</p>
+        </Card>
+        <Card className="p-4 border border-red-200 bg-red-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-red-800">Überfällig</p>
+          <p className="text-2xl font-bold text-red-900 mt-1">{stats.overdue}</p>
+        </Card>
+        <Card className="p-4 border border-indigo-200 bg-indigo-50">
+          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">Offene Ziel-Aufgaben</p>
+          <p className="text-2xl font-bold text-indigo-900 mt-1">{stats.openGoalTasks}</p>
+        </Card>
       </div>
 
-      {/* Goals List */}
+      <Card className="border border-indigo-100 bg-indigo-50/60">
+        <CardHeader
+          title="Goal Execution Board"
+          subtitle="Wo du jetzt eingreifen solltest"
+          icon={<Zap size={16} className="text-indigo-700" />}
+        />
+        <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-lg border border-indigo-100 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Heute fällige Ziel-Aufgaben</p>
+            <p className="text-sm text-gray-900 font-semibold">{stats.goalTasksDueToday}</p>
+            <p className="text-xs text-gray-700 mt-1">Halte den Tagesfluss eng an deinen Zielen.</p>
+          </div>
+          <div className="rounded-lg border border-amber-100 bg-white p-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">Ziele ohne nächsten Schritt</p>
+            {goalBacklog.length > 0 ? (
+              <div className="space-y-1.5">
+                {goalBacklog.map((entry) => (
+                  <div key={entry.goal.id} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="text-gray-900 truncate">{entry.goal.title}</span>
+                    <span className="text-xs text-amber-800">0 Aufgaben</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-700">Alle aktiven Ziele haben bereits konkrete Aufgaben.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex items-center gap-2 border-b border-gray-200">
+        {[
+          { key: 'all', label: 'Alle' },
+          { key: 'on-track', label: 'On Track' },
+          { key: 'at-risk', label: 'At Risk' },
+          { key: 'overdue', label: 'Überfällig' },
+        ].map((entry) => (
+          <button
+            key={entry.key}
+            onClick={() => setFilter(entry.key as GoalFilter)}
+            className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+              filter === entry.key
+                ? 'border-indigo-600 text-indigo-700'
+                : 'border-transparent text-gray-700 hover:text-gray-900'
+            }`}
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3">
-        {sortedGoals.length > 0 ? (
-          sortedGoals.map((goal) => <GoalCard key={goal.id} goal={goal} freeTasksToday={freeTasksToday} />)
+        {filteredGoals.length > 0 ? (
+          filteredGoals
+            .slice()
+            .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
+            .map((goal) => <GoalCard key={goal.id} goal={goal} />)
         ) : (
           <GoalsEmptyState onAdd={() => openGoalModal()} />
         )}
