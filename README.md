@@ -1,4 +1,4 @@
-# Productive
+﻿# Productive
 
 Persönlicher Productivity-Workspace für **Disziplin, Durchhaltevermögen und klare Struktur im Alltag**.
 
@@ -27,6 +27,17 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 > In Vercel dieselben Variablen im Project Settings Bereich hinterlegen.
+
+## Supabase Datenbank einrichten (wichtig)
+
+Wenn du frisch von Firebase auf Supabase gewechselt bist, musst du zuerst das SQL-Schema einspielen, sonst können Tasks/Goals/Projekte etc. nicht gespeichert werden.
+
+1. In Supabase das Projekt öffnen.
+2. **SQL Editor** öffnen.
+3. Inhalt aus `supabase/migrations/20260220120000_init_productive_schema.sql` ausführen.
+4. Danach App neu starten (`npm run dev`).
+
+Dieses Schema legt alle benötigten Tabellen, Indizes und RLS-Policies für die App an (inkl. `tasks`, `goals`, `projects`, `calendar_events`, `habits`, `notes`, `time_entries`, usw.).
 
 ## Lokale Entwicklung
 
