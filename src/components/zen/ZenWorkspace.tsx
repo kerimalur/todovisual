@@ -237,7 +237,7 @@ export function ZenWorkspace() {
       {settings.zenShowQuotes && (
         <div className="relative px-10 py-8 text-center">
           <p className="text-white/40 text-sm italic max-w-xl mx-auto">
-            "{currentQuote.text}"
+            &ldquo;{currentQuote.text}&rdquo;
           </p>
           <p className="text-white/20 text-xs mt-2">— {currentQuote.author}</p>
         </div>
