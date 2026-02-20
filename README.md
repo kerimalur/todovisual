@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Productive
 
-## Getting Started
+Persönlicher Productivity-Workspace für **Disziplin, Durchhaltevermögen und klare Struktur im Alltag**.
 
-First, run the development server:
+## Tech Stack
+
+- **Frontend/App**: Next.js 16, React 19, TypeScript
+- **Hosting/Deployment**: Vercel
+- **Backend & Auth & DB**: Supabase
+- **State**: Zustand
+- **UI/Charts**: TailwindCSS, Lucide, Recharts
+
+## Zusammenarbeit: Vercel + Supabase
+
+Damit die Zusammenarbeit schnell und konsistent bleibt, gehen wir von diesem Setup aus:
+
+- Deployments laufen über **Vercel**.
+- Daten, Realtime und Auth laufen über **Supabase**.
+- Neue Features sollten möglichst so gebaut werden, dass sie lokal und in Vercel mit denselben Env-Variablen funktionieren.
+
+### Empfohlene Env-Variablen
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> In Vercel dieselben Variablen im Project Settings Bereich hinterlegen.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Lokale Entwicklung
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+App öffnen: [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+## Quality Checks
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run lint
+npm run build
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Produktvision (kurz)
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Fokus auf **Execution** statt Over-Planning
+- Daily-System: **1 MIT + 2 Next Actions + 1 Habit-Pflicht**
+- Schnelles Erfassen per **Quick Capture** unten rechts
