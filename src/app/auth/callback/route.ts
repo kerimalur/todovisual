@@ -15,11 +15,18 @@ export async function GET(request: Request) {
     );
   }
 
-  if (code) {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    return NextResponse.redirect(
+      new URL(`/login?error=${encodeURIComponent('Supabase ist nicht konfiguriert.')}`, request.url)
     );
+  }
+
+  if (code) {
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     try {
       const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
