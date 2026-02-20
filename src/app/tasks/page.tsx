@@ -7,31 +7,40 @@ import { de } from 'date-fns/locale';
 import { 
   Plus, 
   CheckCircle2, 
-  Circle, 
-  Clock, 
   AlertTriangle,
   Calendar,
   Target,
-  FolderKanban,
   X,
-  Search
 } from 'lucide-react';
 import { useModals } from '@/components/layout/MainLayout';
-import { Button, Card, CardContent, PriorityBadge, SearchInput, TasksEmptyState, SearchEmptyState } from '@/components/ui';
+import { Button, Card, PriorityBadge, SearchInput, TasksEmptyState, SearchEmptyState } from '@/components/ui';
 
-type FilterType = 'all' | 'today' | 'upcoming' | 'overdue' | 'no-date';
+type FilterType = 'all' | 'inbox' | 'today' | 'upcoming' | 'overdue';
 type SortType = 'dueDate' | 'priority' | 'created' | 'title';
 
 export default function TasksPage() {
-  const { tasks, goals, projects, completeTask, deleteTask } = useDataStore();
+  const { tasks, goals, completeTask, deleteTask, planInboxTasksForToday, rescheduleOverdueTasks } = useDataStore();
   const { openTaskModal, openTaskDetailModal } = useModals();
   
   const [filter, setFilter] = useState<FilterType>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [sortBy, setSortBy] = useState<SortType>('priority');
   const [searchQuery, setSearchQuery] = useState('');
+  const [planningBusy, setPlanningBusy] = useState(false);
+  const [planningMessage, setPlanningMessage] = useState('');
 
   const activeTasks = tasks.filter(t => t.status !== 'completed');
+  const inboxTasks = activeTasks.filter(t => !t.dueDate);
+  const overdueTasks = activeTasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate)));
+  const mitCandidate = useMemo(() => {
+    const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
+    const pool = [...activeTasks].sort((a, b) => {
+      const priorityDiff = (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3);
+      if (priorityDiff !== 0) return priorityDiff;
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+    return pool[0] ?? null;
+  }, [activeTasks]);
 
   const filteredTasks = useMemo(() => {
     let result = activeTasks;
@@ -45,6 +54,9 @@ export default function TasksPage() {
     }
 
     switch (filter) {
+      case 'inbox':
+        result = result.filter(t => !t.dueDate);
+        break;
       case 'today':
         result = result.filter(t => t.dueDate && isToday(new Date(t.dueDate)));
         break;
@@ -53,9 +65,6 @@ export default function TasksPage() {
         break;
       case 'overdue':
         result = result.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate)));
-        break;
-      case 'no-date':
-        result = result.filter(t => !t.dueDate);
         break;
     }
 
@@ -87,10 +96,37 @@ export default function TasksPage() {
 
   const taskCounts = useMemo(() => ({
     all: activeTasks.length,
+    inbox: activeTasks.filter(t => !t.dueDate).length,
     today: activeTasks.filter(t => t.dueDate && isToday(new Date(t.dueDate))).length,
     upcoming: activeTasks.filter(t => t.dueDate && isThisWeek(new Date(t.dueDate), { weekStartsOn: 1 })).length,
     overdue: activeTasks.filter(t => t.dueDate && isPast(new Date(t.dueDate)) && !isToday(new Date(t.dueDate))).length,
   }), [activeTasks]);
+
+  const handlePlanInbox = async () => {
+    setPlanningBusy(true);
+    setPlanningMessage('');
+    try {
+      const planned = await planInboxTasksForToday(3);
+      setPlanningMessage(planned > 0 ? `${planned} Inbox-Aufgaben auf heute geplant.` : 'Keine Inbox-Aufgaben zum Planen.');
+    } catch {
+      setPlanningMessage('Inbox-Planung fehlgeschlagen.');
+    } finally {
+      setPlanningBusy(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    setPlanningBusy(true);
+    setPlanningMessage('');
+    try {
+      const moved = await rescheduleOverdueTasks(3);
+      setPlanningMessage(moved > 0 ? `${moved} überfällige Aufgaben neu geplant.` : 'Keine überfälligen Aufgaben gefunden.');
+    } catch {
+      setPlanningMessage('Neuplanung fehlgeschlagen.');
+    } finally {
+      setPlanningBusy(false);
+    }
+  };
 
   const formatDueDate = (dueDate: Date) => {
     const date = new Date(dueDate);
@@ -107,10 +143,47 @@ export default function TasksPage() {
         <p className="text-gray-500 mt-1">{activeTasks.length} aktive Aufgaben</p>
       </div>
 
+      <div className="mb-6 p-4 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-blue-50">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wide">Daily Planning Ritual</p>
+            <p className="text-sm text-gray-700 mt-1">
+              Inbox: <span className="font-semibold">{inboxTasks.length}</span> · Überfällig: <span className="font-semibold">{overdueTasks.length}</span>
+            </p>
+            {planningMessage && <p className="text-xs text-indigo-700 mt-2">{planningMessage}</p>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => void handlePlanInbox()}
+              disabled={planningBusy}
+              className="px-3 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Inbox nach Heute
+            </button>
+            <button
+              onClick={() => void handleReschedule()}
+              disabled={planningBusy}
+              className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Überfällige smart planen
+            </button>
+            {mitCandidate && (
+              <button
+                onClick={() => openTaskDetailModal(mitCandidate)}
+                className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                MIT öffnen
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Filter Tabs */}
       <div className="flex items-center gap-1 mb-6 border-b border-gray-200">
         {[
           { key: 'all', label: 'Alle', count: taskCounts.all },
+          { key: 'inbox', label: 'Inbox', count: taskCounts.inbox },
           { key: 'today', label: 'Heute', count: taskCounts.today },
           { key: 'upcoming', label: 'Diese Woche', count: taskCounts.upcoming },
           { key: 'overdue', label: 'Überfällig', count: taskCounts.overdue },

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar as CalendarIcon, Clock } from 'lucide-react';
 import {
   addMinutes,
@@ -36,8 +36,10 @@ export default function CalendarPage() {
   const [showQuickTaskForm, setShowQuickTaskForm] = useState(false);
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
   const [quickTaskSaving, setQuickTaskSaving] = useState(false);
+  const [replanBusy, setReplanBusy] = useState(false);
+  const [replanMessage, setReplanMessage] = useState('');
 
-  const { tasks, events, deleteEvent, addTask, addEvent } = useDataStore();
+  const { tasks, events, deleteEvent, createTask, addEvent, rescheduleOverdueTasks } = useDataStore();
   const { openTaskModal, openTaskDetailModal, openEventModal } = useModals();
 
   // Month view calculations
@@ -54,6 +56,50 @@ export default function CalendarPage() {
 
   // Day view - hours from 6:00 to 23:00
   const dayHours = Array.from({ length: 18 }, (_, i) => i + 6);
+  const todayStart = startOfDay(new Date());
+  const inboxCount = tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived' && !task.dueDate).length;
+  const overdueCount = tasks.filter((task) => {
+    if (task.status === 'completed' || task.status === 'archived') return false;
+    if (!task.dueDate) return false;
+    return new Date(task.dueDate) < todayStart;
+  }).length;
+
+  const weeklyReview = useMemo(() => {
+    const now = new Date();
+    const thisWeekStart = startOfWeek(now, { weekStartsOn: 1 });
+    const thisWeekEnd = endOfWeek(now, { weekStartsOn: 1 });
+
+    const plannedThisWeek = tasks.filter((task) => {
+      if (task.status === 'archived') return false;
+      if (!task.dueDate) return false;
+      const dueDate = new Date(task.dueDate);
+      return dueDate >= thisWeekStart && dueDate <= thisWeekEnd;
+    });
+
+    const completedThisWeek = tasks.filter((task) => {
+      if (task.status !== 'completed' || !task.completedAt) return false;
+      const completedDate = new Date(task.completedAt);
+      return completedDate >= thisWeekStart && completedDate <= thisWeekEnd;
+    });
+
+    const completionRate = plannedThisWeek.length > 0
+      ? Math.round((completedThisWeek.length / plannedThisWeek.length) * 100)
+      : 0;
+
+    const recommendations: string[] = [];
+    if (overdueCount > 0) recommendations.push(`${overdueCount} überfällige Aufgaben heute automatisch neu planen.`);
+    if (inboxCount > 0) recommendations.push(`${inboxCount} Inbox-Aufgaben in konkrete Zeitslots schieben.`);
+    if (completionRate < 60 && plannedThisWeek.length >= 5) recommendations.push('Weniger parallel planen: maximal 3 Prioritäten pro Tag.');
+    if (events.filter((event) => new Date(event.startTime) >= now).length === 0) recommendations.push('Keine Zeitblöcke geplant: starte mit 2 Fokusblöcken für morgen.');
+    if (recommendations.length === 0) recommendations.push('Wochenplan sieht stabil aus. Jetzt auf Konsistenz und Abschluss fokussieren.');
+
+    return {
+      planned: plannedThisWeek.length,
+      completed: completedThisWeek.length,
+      completionRate,
+      recommendations,
+    };
+  }, [events, inboxCount, overdueCount, tasks]);
 
   // Navigation handlers
   const handlePrev = () => {
@@ -69,6 +115,19 @@ export default function CalendarPage() {
   };
 
   const handleToday = () => setCurrentDate(new Date());
+
+  const handleSmartReplan = async () => {
+    setReplanBusy(true);
+    setReplanMessage('');
+    try {
+      const moved = await rescheduleOverdueTasks(3);
+      setReplanMessage(moved > 0 ? `${moved} Aufgaben wurden automatisch neu verteilt.` : 'Keine überfälligen Aufgaben gefunden.');
+    } catch {
+      setReplanMessage('Automatische Neuplanung fehlgeschlagen.');
+    } finally {
+      setReplanBusy(false);
+    }
+  };
 
   const closeSlotActions = () => {
     setSelectedSlot(null);
@@ -100,7 +159,7 @@ export default function CalendarPage() {
     setQuickTaskSaving(true);
 
     try {
-      await addTask({
+      const createdTask = await createTask({
         title: taskTitle,
         description: `Schnellaufgabe im Kalender (${format(slotDate, 'HH:mm')} Uhr)`,
         dueDate: startOfDay(slotDate),
@@ -118,6 +177,8 @@ export default function CalendarPage() {
         isTimeBlock: true,
         eventType: 'focus-time',
         color: '#6366f1',
+        taskId: createdTask.id,
+        linkedTaskId: createdTask.id,
       });
 
       closeSlotActions();
@@ -288,6 +349,29 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {(overdueCount > 0 || replanMessage) && (
+        <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-amber-800">Smart Rescheduler</p>
+              <p className="text-xs text-amber-700 mt-1">
+                {overdueCount > 0
+                  ? `${overdueCount} überfällige Aufgaben können automatisch auf die nächsten Tage verteilt werden.`
+                  : replanMessage}
+              </p>
+              {replanMessage && overdueCount > 0 && <p className="text-xs text-amber-700 mt-1">{replanMessage}</p>}
+            </div>
+            <button
+              onClick={() => void handleSmartReplan()}
+              disabled={replanBusy}
+              className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {replanBusy ? 'Plane...' : 'Jetzt neu planen'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* MONTH VIEW */}
       {viewType === 'month' && (
@@ -777,6 +861,30 @@ export default function CalendarPage() {
           </div>
         </div>
       )}
+
+      <div className="mt-6 p-5 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Weekly Review Assistant</p>
+            <p className="text-sm text-gray-700 mt-1">
+              Erledigt {weeklyReview.completed} von {weeklyReview.planned} geplanten Aufgaben (
+              <span className="font-semibold">{weeklyReview.completionRate}%</span>)
+            </p>
+          </div>
+          <button
+            onClick={() => void handleSmartReplan()}
+            disabled={replanBusy || overdueCount === 0}
+            className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Fokus-Replan
+          </button>
+        </div>
+        <ul className="mt-3 space-y-1.5">
+          {weeklyReview.recommendations.slice(0, 3).map((recommendation) => (
+            <li key={recommendation} className="text-sm text-gray-700">• {recommendation}</li>
+          ))}
+        </ul>
+      </div>
 
       {/* Upcoming Events */}
       <div className="mt-6">

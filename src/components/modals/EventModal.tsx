@@ -95,12 +95,13 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
 
     const startDateTime = new Date(`${date}T${allDay ? '00:00' : startTime}`);
     const endDateTime = new Date(`${date}T${allDay ? '23:59' : endTime}`);
-
+    const parsedDueDate = parse(date, 'yyyy-MM-dd', new Date());
+    const taskDueDate = startOfDay(parsedDueDate);
     const isTimeBlock = eventType === 'timeblock';
-    
+
     // Get linked task title if linking to existing task
-    const linkedTask = linkedTaskId ? tasks.find(t => t.id === linkedTaskId) : null;
-    const finalTitle = isTimeBlock && linkedTask ? `⏰ ${linkedTask.title}` : (isTimeBlock ? `⏰ ${title}` : title);
+    const linkedTask = linkedTaskId ? tasks.find((t) => t.id === linkedTaskId) : null;
+    const finalTitle = isTimeBlock && linkedTask ? `[Zeit] ${linkedTask.title}` : (isTimeBlock ? `[Zeit] ${title}` : title);
 
     const eventData = {
       title: finalTitle,
@@ -116,18 +117,31 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
 
     try {
       if (editEvent) {
-        await updateEvent(editEvent.id, eventData);
+        const taskToUpdateId = linkedTaskId || editEvent.taskId || editEvent.linkedTaskId;
+
+        await updateEvent(editEvent.id, {
+          ...eventData,
+          taskId: taskToUpdateId || undefined,
+          linkedTaskId: taskToUpdateId || undefined,
+        });
+
+        if (taskToUpdateId) {
+          await updateTask(taskToUpdateId, {
+            title: isTimeBlock ? title : `Termin: ${title}`,
+            description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
+            dueDate: taskDueDate,
+            priority,
+            goalId: goalId || undefined,
+            projectId: projectId || undefined,
+          });
+        }
       } else {
-        await addEvent(eventData);
+        let effectiveTaskId = linkedTaskId || undefined;
 
-        // Für normale Events: auch eine Task erstellen
-        // Für Time-Blocks mit neuer Aufgabe: auch Task erstellen
+        // For regular events and new time blocks, create and link a task.
         if (!isTimeBlock || (isTimeBlock && !linkedTaskId && title.trim())) {
-          const parsedDueDate = parse(date, 'yyyy-MM-dd', new Date());
-          const taskDueDate = startOfDay(parsedDueDate);
-
-          await addTask({
-            title: isTimeBlock ? title : `📅 ${title}`,
+          const createdTask = await createTask({
+            title: isTimeBlock ? title : `Termin: ${title}`,
             description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
             dueDate: taskDueDate,
             priority,
@@ -136,7 +150,14 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
             status: 'todo',
             tags: isTimeBlock ? ['fokuszeit'] : ['termin'],
           });
+          effectiveTaskId = createdTask.id;
         }
+
+        await addEvent({
+          ...eventData,
+          taskId: effectiveTaskId,
+          linkedTaskId: effectiveTaskId || linkedTaskId || undefined,
+        });
       }
       onClose();
     } catch (error) {
@@ -454,3 +475,4 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
     </Modal>
   );
 }
+
