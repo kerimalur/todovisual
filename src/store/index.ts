@@ -207,6 +207,7 @@ interface UserSettings {
   whatsappRemindersEnabled: boolean;
   whatsappPhoneNumber: string;
   whatsappTaskCreatedEnabled: boolean;
+  whatsappTaskStartReminderEnabled: boolean;
   whatsappWeeklyReviewEnabled: boolean;
   whatsappWeeklyReviewTime: string;
 
@@ -265,6 +266,7 @@ const defaultSettings: UserSettings = {
   whatsappRemindersEnabled: false,
   whatsappPhoneNumber: '',
   whatsappTaskCreatedEnabled: true,
+  whatsappTaskStartReminderEnabled: true,
   whatsappWeeklyReviewEnabled: true,
   whatsappWeeklyReviewTime: '22:00',
   weekStartsOnMonday: true,
@@ -294,7 +296,7 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'settings-storage',
-      version: 2,
+      version: 3,
       merge: (persistedState, currentState) => {
         const typedPersistedState = persistedState as Partial<SettingsStore> | undefined;
         return {

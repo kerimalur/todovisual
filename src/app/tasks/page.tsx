@@ -194,7 +194,7 @@ export default function TasksPage() {
         description:
           event.description ||
           `Aus dem Kalender übernommen (${format(new Date(event.startTime), 'd. MMM HH:mm', { locale: de })})`,
-        dueDate: startOfDay(new Date(event.startTime)),
+        dueDate: new Date(event.startTime),
         priority: 'medium',
         status: 'todo',
         tags: ['kalender', 'termin'],
@@ -214,9 +214,20 @@ export default function TasksPage() {
 
   const formatDueDate = (dueDate: Date) => {
     const date = new Date(dueDate);
-    if (isToday(date)) return 'Heute';
-    if (isTomorrow(date)) return 'Morgen';
-    return format(date, 'd. MMM', { locale: de });
+    const dayLabel = isToday(date)
+      ? 'Heute'
+      : isTomorrow(date)
+        ? 'Morgen'
+        : format(date, 'd. MMM', { locale: de });
+
+    return `${dayLabel}, ${format(date, 'HH:mm')} Uhr`;
+  };
+
+  const priorityLabel: Record<string, string> = {
+    urgent: 'Dringend',
+    high: 'Hoch',
+    medium: 'Mittel',
+    low: 'Niedrig',
   };
 
   return (
@@ -382,6 +393,8 @@ export default function TasksPage() {
             const linkedProjectIds = task.projectIds?.length ? task.projectIds : (task.projectId ? [task.projectId] : []);
             const linkedGoalTitles = goals.filter((goal) => linkedGoalIds.includes(goal.id)).map((goal) => goal.title);
             const linkedProjectTitles = projects.filter((project) => linkedProjectIds.includes(project.id)).map((project) => project.title);
+            const primaryProjectTitle = linkedProjectTitles[0] || 'Kein Projekt';
+            const importance = priorityLabel[task.priority] || task.priority;
 
             return (
               <div
@@ -408,6 +421,14 @@ export default function TasksPage() {
 
                   {task.description && (
                     <p className="text-xs text-gray-700 mb-2 line-clamp-1">{task.description}</p>
+                  )}
+
+                  {task.dueDate && (
+                    <p className="text-[11px] text-gray-700 mb-2">
+                      Start: <span className="font-medium">{formatDueDate(task.dueDate)}</span> · Projekt:{' '}
+                      <span className="font-medium">{primaryProjectTitle}</span> · Wichtigkeit:{' '}
+                      <span className="font-medium">{importance}</span>
+                    </p>
                   )}
 
                   <div className="flex flex-wrap items-center gap-3">

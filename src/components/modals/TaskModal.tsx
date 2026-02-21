@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import { useState, useEffect } from 'react';
-import { startOfDay, parse, format } from 'date-fns';
+import { parse, format } from 'date-fns';
 import { Modal, Input, Textarea, Select, Button } from '../ui/Modal';
 import { useDataStore, useAppStore } from '@/store';
 import { Task, TaskImpact } from '@/types';
@@ -131,9 +131,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
   // Populate form when editing
   useEffect(() => {
     if (editTask) {
+      const taskDueDate = editTask.dueDate ? new Date(editTask.dueDate) : null;
       setTitle(editTask.title);
       setDescription(editTask.description || '');
-      setDueDate(editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '');
+      setDueDate(taskDueDate ? format(taskDueDate, 'yyyy-MM-dd') : '');
       setPriority(editTask.priority);
       const initialGoalIds = editTask.goalIds?.length
         ? editTask.goalIds
@@ -172,6 +173,11 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         setSkipAutoCalc(true); // Prevent auto-calculation from overwriting estimatedMinutes
         setStartTime(format(startDate, 'HH:mm'));
         setEndTime(format(endDate, 'HH:mm'));
+      } else if (taskDueDate) {
+        const fallbackEnd = new Date(taskDueDate.getTime() + 60 * 60 * 1000);
+        setSkipAutoCalc(true);
+        setStartTime(format(taskDueDate, 'HH:mm'));
+        setEndTime(format(fallbackEnd, 'HH:mm'));
       } else {
         // Use default times if no linked event
         setStartTime('09:00');
@@ -181,7 +187,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       // Reset form for new task
       setTitle('');
       setDescription('');
-      setDueDate(new Date().toISOString().split('T')[0]);
+      setDueDate(format(new Date(), 'yyyy-MM-dd'));
       setPriority('medium');
       setGoalIds([]);
       setProjectIds([]);
@@ -208,13 +214,17 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Parse date string as local date (not UTC) using date-fns
-    // This ensures the date is always at the start of the day in local timezone
+    // Parse date string as local date and combine with start time
     let parsedDueDate: Date | undefined;
     if (dueDate) {
-      // Parse the YYYY-MM-DD string as local date
       parsedDueDate = parse(dueDate, 'yyyy-MM-dd', new Date());
-      parsedDueDate = startOfDay(parsedDueDate);
+      const [hours, minutes] = startTime.split(':').map(Number);
+      parsedDueDate.setHours(
+        Number.isFinite(hours) ? hours : 9,
+        Number.isFinite(minutes) ? minutes : 0,
+        0,
+        0
+      );
     }
 
     const taskData = {
@@ -374,7 +384,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
           <div className="relative">
             <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
               <Calendar size={12} />
-              Fälligkeitsdatum
+              Startdatum
             </label>
             <input
               type="date"

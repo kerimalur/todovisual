@@ -39,6 +39,7 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
   - `POST /api/reminders/whatsapp/test`
 - Automatisch:
   - Bei neuer Aufgabe optional sofortige WhatsApp-Nachricht
+  - 1 Stunde vor geplantem Aufgaben-Start optionale WhatsApp-Erinnerung
   - Wochenrueckblick am Sonntag (konfigurierbare Uhrzeit, Standard `22:00`) via WhatsApp
 - Konfiguration in der App unter `Einstellungen -> Benachrichtigungen`.
 

@@ -1,6 +1,7 @@
 export interface NotificationPreferences {
   whatsappRemindersEnabled: boolean;
   whatsappTaskCreatedEnabled: boolean;
+  whatsappTaskStartReminderEnabled: boolean;
   whatsappWeeklyReviewEnabled: boolean;
   whatsappPhoneNumber: string;
   whatsappWeeklyReviewTime: string;
@@ -9,6 +10,7 @@ export interface NotificationPreferences {
 const DEFAULT_PREFERENCES: NotificationPreferences = {
   whatsappRemindersEnabled: false,
   whatsappTaskCreatedEnabled: true,
+  whatsappTaskStartReminderEnabled: true,
   whatsappWeeklyReviewEnabled: true,
   whatsappPhoneNumber: '',
   whatsappWeeklyReviewTime: '22:00',
@@ -48,6 +50,10 @@ export const getNotificationPreferences = (): NotificationPreferences => {
         typeof settings.whatsappTaskCreatedEnabled === 'boolean'
           ? settings.whatsappTaskCreatedEnabled
           : DEFAULT_PREFERENCES.whatsappTaskCreatedEnabled,
+      whatsappTaskStartReminderEnabled:
+        typeof settings.whatsappTaskStartReminderEnabled === 'boolean'
+          ? settings.whatsappTaskStartReminderEnabled
+          : DEFAULT_PREFERENCES.whatsappTaskStartReminderEnabled,
       whatsappWeeklyReviewEnabled:
         typeof settings.whatsappWeeklyReviewEnabled === 'boolean'
           ? settings.whatsappWeeklyReviewEnabled

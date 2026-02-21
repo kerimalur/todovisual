@@ -8,7 +8,6 @@ import {
   Pencil, 
   Trash2, 
   Calendar, 
-  Clock, 
   Target, 
   FolderKanban,
   Tag,
@@ -176,15 +175,27 @@ export function TaskDetailModal({ isOpen, onClose, task, onEdit }: TaskDetailMod
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar size={16} className="text-gray-400 flex-shrink-0" />
                   <div className="text-gray-700">
-                    {task.dueDate && format(new Date(task.dueDate), 'EEEE, d. MMMM yyyy', { locale: de })}
-                    {linkedEvent && (
+                    {task.dueDate && (
+                      <>
+                        Geplanter Start:{' '}
+                        {format(new Date(task.dueDate), 'EEEE, d. MMMM yyyy HH:mm', { locale: de })} Uhr
+                      </>
+                    )}
+                    {linkedEvent && !task.dueDate && (
                       <span className="ml-2 text-gray-500">
-                        • {format(new Date(linkedEvent.startTime), 'HH:mm')} - {format(new Date(linkedEvent.endTime), 'HH:mm')} Uhr
+                        {format(new Date(linkedEvent.startTime), 'EEEE, d. MMMM yyyy HH:mm', { locale: de })} -{' '}
+                        {format(new Date(linkedEvent.endTime), 'HH:mm')} Uhr
                       </span>
                     )}
                   </div>
                 </div>
               )}
+
+              {/* Importance */}
+              <div className="flex items-center gap-3 text-sm">
+                <AlertTriangle size={16} className="text-gray-400 flex-shrink-0" />
+                <span className="text-gray-700">Wichtigkeit: {priority.label}</span>
+              </div>
 
               {/* Estimated Time */}
               {task.estimatedMinutes && (

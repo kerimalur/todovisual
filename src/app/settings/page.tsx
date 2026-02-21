@@ -397,6 +397,17 @@ export default function SettingsPage() {
                       </SettingRow>
 
                       <SettingRow
+                        label="1h vor Start erinnern"
+                        description="Wenn eine Aufgabe geplant ist, kommt 1 Stunde vor Start eine WhatsApp"
+                      >
+                        <Toggle
+                          enabled={settings.whatsappTaskStartReminderEnabled}
+                          onChange={(v) => handleChange('whatsappTaskStartReminderEnabled', v)}
+                          label="1h Start-Reminder"
+                        />
+                      </SettingRow>
+
+                      <SettingRow
                         label="Wochenrueckblick Sonntags"
                         description="Sonntag um konfigurierter Zeit mit Rueckblick + Vorschau fuer Ziele"
                       >
