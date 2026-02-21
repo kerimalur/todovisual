@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Calendar,
   Target,
+  FolderKanban,
   X,
   Link2,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ export default function TasksPage() {
     tasks,
     events,
     goals,
+    projects,
     completeTask,
     deleteTask,
     createTask,
@@ -376,6 +378,10 @@ export default function TasksPage() {
           {filteredTasks.map((task) => {
             const isOverdue =
               task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
+            const linkedGoalIds = task.goalIds?.length ? task.goalIds : (task.goalId ? [task.goalId] : []);
+            const linkedProjectIds = task.projectIds?.length ? task.projectIds : (task.projectId ? [task.projectId] : []);
+            const linkedGoalTitles = goals.filter((goal) => linkedGoalIds.includes(goal.id)).map((goal) => goal.title);
+            const linkedProjectTitles = projects.filter((project) => linkedProjectIds.includes(project.id)).map((project) => project.title);
 
             return (
               <div
@@ -415,10 +421,18 @@ export default function TasksPage() {
                         {formatDueDate(task.dueDate)}
                       </span>
                     )}
-                    {task.goalId && goals.find((goal) => goal.id === task.goalId) && (
+                    {linkedGoalTitles.length > 0 && (
                       <span className="text-xs text-gray-800 flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100">
                         <Target size={11} />
-                        {goals.find((goal) => goal.id === task.goalId)?.title}
+                        {linkedGoalTitles[0]}
+                        {linkedGoalTitles.length > 1 && ` +${linkedGoalTitles.length - 1}`}
+                      </span>
+                    )}
+                    {linkedProjectTitles.length > 0 && (
+                      <span className="text-xs text-gray-800 flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100">
+                        <FolderKanban size={11} />
+                        {linkedProjectTitles[0]}
+                        {linkedProjectTitles.length > 1 && ` +${linkedProjectTitles.length - 1}`}
                       </span>
                     )}
                   </div>

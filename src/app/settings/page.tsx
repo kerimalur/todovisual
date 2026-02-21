@@ -425,17 +425,10 @@ export default function SettingsPage() {
           <>
             {/* Theme */}
             <Section title="Design" icon={Palette}>
-              <SettingRow label="Farbschema">
-                <select
-                  value={settings.theme}
-                  onChange={(e) => handleChange('theme', e.target.value as 'light' | 'dark' | 'system')}
-                  className="select"
-                  title="Theme"
-                >
-                  <option value="light">☀️ Hell</option>
-                  <option value="dark">🌙 Dunkel</option>
-                  <option value="system">💻 System</option>
-                </select>
+              <SettingRow label="Farbschema" description="Aktuell ist nur heller Modus aktiv">
+                <div className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                  Hell
+                </div>
               </SettingRow>
               <SettingRow label="Akzentfarbe">
                 <div className="flex gap-2">

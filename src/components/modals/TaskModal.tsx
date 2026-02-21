@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { startOfDay, parse, format } from 'date-fns';
@@ -76,8 +76,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [priority, setPriority] = useState<Task['priority']>('medium');
-  const [goalId, setGoalId] = useState('');
-  const [projectId, setProjectId] = useState('');
+  const [goalIds, setGoalIds] = useState<string[]>([]);
+  const [projectIds, setProjectIds] = useState<string[]>([]);
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
   const [tags, setTags] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -135,8 +135,14 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       setDescription(editTask.description || '');
       setDueDate(editTask.dueDate ? new Date(editTask.dueDate).toISOString().split('T')[0] : '');
       setPriority(editTask.priority);
-      setGoalId(editTask.goalId || '');
-      setProjectId(editTask.projectId || '');
+      const initialGoalIds = editTask.goalIds?.length
+        ? editTask.goalIds
+        : (editTask.goalId ? [editTask.goalId] : []);
+      const initialProjectIds = editTask.projectIds?.length
+        ? editTask.projectIds
+        : (editTask.projectId ? [editTask.projectId] : []);
+      setGoalIds(initialGoalIds);
+      setProjectIds(initialProjectIds);
       setEstimatedMinutes(editTask.estimatedMinutes?.toString() || '');
       setTags(editTask.tags.join(', '));
       setSelectedTags(editTask.tags || []);
@@ -177,8 +183,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       setDescription('');
       setDueDate(new Date().toISOString().split('T')[0]);
       setPriority('medium');
-      setGoalId('');
-      setProjectId('');
+      setGoalIds([]);
+      setProjectIds([]);
       setEstimatedMinutes('');
       setTags('');
       setSelectedTags([]);
@@ -216,8 +222,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       description: description || undefined,
       dueDate: parsedDueDate,
       priority,
-      goalId: goalId || undefined,
-      projectId: projectId || undefined,
+      goalId: goalIds[0] || undefined,
+      projectId: projectIds[0] || undefined,
+      goalIds,
+      projectIds,
       estimatedMinutes: estimatedMinutes ? parseInt(estimatedMinutes) : undefined,
       tags: selectedTags.length > 0 ? selectedTags : (tags ? tags.split(',').map(t => t.trim()).filter(Boolean) : []),
       status: editTask?.status || 'todo' as const,
@@ -298,10 +306,29 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
     }
   };
 
-  // Filter projects based on selected goal
-  const filteredProjects = goalId 
-    ? projects.filter(p => p.goalId === goalId)
+  // Filter projects based on selected goals
+  const filteredProjects = goalIds.length > 0
+    ? projects.filter((project) => {
+        const linkedGoalIds = project.goalIds?.length
+          ? project.goalIds
+          : (project.goalId ? [project.goalId] : []);
+        return linkedGoalIds.some((linkedGoalId) => goalIds.includes(linkedGoalId));
+      })
     : projects;
+
+  const toggleGoalLink = (id: string) => {
+    const next = goalIds.includes(id)
+      ? goalIds.filter((goalLinkId) => goalLinkId !== id)
+      : [...goalIds, id];
+    setGoalIds(next);
+  };
+
+  const toggleProjectLink = (id: string) => {
+    const next = projectIds.includes(id)
+      ? projectIds.filter((projectLinkId) => projectLinkId !== id)
+      : [...projectIds, id];
+    setProjectIds(next);
+  };
 
   return (
     <Modal 
@@ -449,46 +476,69 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         </div>
 
         {/* Goal & Project Selection */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+        <div className="grid grid-cols-1 gap-3">
+          <div className="rounded-xl border border-gray-200 bg-white p-3">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
               <Target size={12} />
-              Ziel verknüpfen
+              Ziele zuordnen ({goalIds.length})
             </label>
-            <select
-              value={goalId}
-              onChange={(e) => {
-                setGoalId(e.target.value);
-                setProjectId('');
-              }}
-              className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                         transition-all cursor-pointer"
-            >
-              <option value="">Kein Ziel</option>
-              {goals.map(g => (
-                <option key={g.id} value={g.id}>{g.title}</option>
-              ))}
-            </select>
+            {goals.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {goals.map((goal) => {
+                  const active = goalIds.includes(goal.id);
+                  return (
+                    <button
+                      key={goal.id}
+                      type="button"
+                      onClick={() => toggleGoalLink(goal.id)}
+                      className={
+                        active
+                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-indigo-300 bg-indigo-100 text-indigo-800'
+                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      }
+                    >
+                      {goal.title}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-700">Noch keine Ziele vorhanden.</p>
+            )}
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+          <div className="rounded-xl border border-gray-200 bg-white p-3">
+            <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
               <FolderKanban size={12} />
-              Projekt verknüpfen
+              Projekte zuordnen ({projectIds.length})
             </label>
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                         transition-all cursor-pointer"
-            >
-              <option value="">Kein Projekt</option>
-              {filteredProjects.map(p => (
-                <option key={p.id} value={p.id}>{p.title}</option>
-              ))}
-            </select>
+            {filteredProjects.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {filteredProjects.map((project) => {
+                  const active = projectIds.includes(project.id);
+                  return (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() => toggleProjectLink(project.id)}
+                      className={
+                        active
+                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-emerald-300 bg-emerald-100 text-emerald-800'
+                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                      }
+                    >
+                      {project.title}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-700">
+                {goalIds.length > 0
+                  ? 'Keine passenden Projekte zu den gewählten Zielen.'
+                  : 'Noch keine Projekte vorhanden.'}
+              </p>
+            )}
           </div>
         </div>
 

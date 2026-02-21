@@ -28,13 +28,17 @@ create table if not exists public.goals (
   priority text,
   milestones jsonb not null default '[]'::jsonb,
   motivation text,
-  reward text
+  reward text,
+  smart_criteria jsonb not null default '{}'::jsonb,
+  weekly_plan jsonb not null default '[]'::jsonb,
+  workflow_mode text not null default 'smart-hybrid'
 );
 
 create table if not exists public.projects (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
   goal_id uuid references public.goals(id) on delete set null,
+  goal_ids uuid[] not null default '{}',
   title text not null,
   description text default '',
   deadline timestamptz,
@@ -46,6 +50,10 @@ create table if not exists public.projects (
   priority text not null default 'medium',
   color text,
   milestones jsonb not null default '[]'::jsonb,
+  timeline_phases jsonb not null default '[]'::jsonb,
+  workflow_mode text not null default 'timeline',
+  review_cadence text not null default 'weekly',
+  risk_level text not null default 'medium',
   metrics jsonb not null default '[]'::jsonb,
   tags text[] not null default '{}',
   notes text,
@@ -60,6 +68,8 @@ create table if not exists public.tasks (
   user_id uuid not null references auth.users(id) on delete cascade,
   project_id uuid references public.projects(id) on delete set null,
   goal_id uuid references public.goals(id) on delete set null,
+  project_ids uuid[] not null default '{}',
+  goal_ids uuid[] not null default '{}',
   parent_task_id uuid references public.tasks(id) on delete set null,
   title text not null,
   description text,
@@ -290,8 +300,11 @@ create table if not exists public.daily_stats (
 
 -- Generic index for realtime + filtering
 create index if not exists idx_tasks_user_id on public.tasks(user_id);
+create index if not exists idx_tasks_goal_ids on public.tasks using gin(goal_ids);
+create index if not exists idx_tasks_project_ids on public.tasks using gin(project_ids);
 create index if not exists idx_goals_user_id on public.goals(user_id);
 create index if not exists idx_projects_user_id on public.projects(user_id);
+create index if not exists idx_projects_goal_ids on public.projects using gin(goal_ids);
 create index if not exists idx_events_user_id on public.calendar_events(user_id);
 create index if not exists idx_journal_entries_user_id on public.journal_entries(user_id);
 create index if not exists idx_focus_sessions_user_id on public.focus_sessions(user_id);

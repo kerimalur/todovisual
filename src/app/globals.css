@@ -2,7 +2,15 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0f172a;
+  --background-secondary: #f8fafc;
+  --surface: #ffffff;
+  --muted-surface: #f8fafc;
+  --border-default: #d1d5db;
+  --border-strong: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #1f2937;
+  --text-muted: #334155;
   
   /* Priority Colors */
   --priority-low: #6b7280;
@@ -18,17 +26,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 /* ===== TYPOGRAPHY ===== */
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -69,6 +70,12 @@ body {
   color: #1f2937;
 }
 
+input::placeholder,
+textarea::placeholder {
+  color: #475569;
+  opacity: 1;
+}
+
 /* Legacy Notion-like tones used across pages */
 [class*="text-[#9b9a97]"] {
   color: #4b5563 !important;
@@ -80,6 +87,76 @@ body {
 
 [class*="text-[#c3c3c1]"] {
   color: #6b7280 !important;
+}
+
+[class*="text-[#37352f]"] {
+  color: #0f172a !important;
+}
+
+[class*="bg-[#f7f6f3]"] {
+  background-color: #f8fafc !important;
+}
+
+[class*="border-[#e9e9e7]"] {
+  border-color: #d1d5db !important;
+}
+
+/* Shared controls used in settings/calendar legacy pages */
+.input,
+.select {
+  background: #ffffff;
+  color: #0f172a;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.input:hover,
+.select:hover {
+  border-color: #94a3b8;
+}
+
+.input:focus,
+.select:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+  outline: none;
+}
+
+.btn {
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  background: #ffffff;
+  color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.btn-ghost:hover {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.btn-primary {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background: #4338ca;
 }
 
 h1, h2, h3, h4, h5, h6 {

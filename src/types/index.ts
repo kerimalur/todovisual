@@ -23,6 +23,22 @@ export interface Milestone {
   completed: boolean;
 }
 
+export interface SmartCriteria {
+  specific?: string;
+  measurable?: string;
+  achievable?: string;
+  relevant?: string;
+  timeBound?: string;
+}
+
+export interface WeeklyPlanItem {
+  id: string;
+  weekday: number; // 0=Sonntag, 1=Montag ... 6=Samstag
+  title: string;
+  estimatedMinutes?: number;
+  autoCreateTask?: boolean;
+}
+
 export interface ProjectMilestone {
   id: string;
   title: string;
@@ -55,12 +71,16 @@ export interface Goal {
   milestones?: Milestone[];
   motivation?: string; // Warum ist dieses Ziel wichtig?
   reward?: string; // Belohnung bei Erreichen
+  smartCriteria?: SmartCriteria;
+  weeklyPlan?: WeeklyPlanItem[];
+  workflowMode?: 'smart-hybrid';
 }
 
 export interface Project {
   id: string;
   userId: string;
   goalId?: string; // Optional - Projects can be independent
+  goalIds?: string[]; // Mehrfach-Verknüpfung mit Zielen
   title: string;
   description: string;
   deadline?: Date;
@@ -71,6 +91,10 @@ export interface Project {
   priority: ProjectPriority;
   color?: string;
   milestones?: ProjectMilestone[];
+  timelinePhases?: ProjectMilestone[];
+  workflowMode?: 'timeline';
+  reviewCadence?: 'daily' | 'weekly' | 'biweekly';
+  riskLevel?: 'low' | 'medium' | 'high';
   metrics?: ProjectMetric[];
   tags?: string[];
   notes?: string;
@@ -114,6 +138,8 @@ export interface Task {
   userId: string;
   projectId?: string;
   goalId?: string;
+  projectIds?: string[];
+  goalIds?: string[];
   title: string;
   description?: string;
   dueDate?: Date;

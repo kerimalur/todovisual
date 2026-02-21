@@ -50,8 +50,10 @@ export function TaskDetailModal({ isOpen, onClose, task, onEdit }: TaskDetailMod
 
   if (!isOpen || !task) return null;
 
-  const goal = task.goalId ? goals.find(g => g.id === task.goalId) : null;
-  const project = task.projectId ? projects.find(p => p.id === task.projectId) : null;
+  const linkedGoalIds = task.goalIds?.length ? task.goalIds : (task.goalId ? [task.goalId] : []);
+  const linkedProjectIds = task.projectIds?.length ? task.projectIds : (task.projectId ? [task.projectId] : []);
+  const linkedGoals = goals.filter((goal) => linkedGoalIds.includes(goal.id));
+  const linkedProjects = projects.filter((project) => linkedProjectIds.includes(project.id));
   const linkedEvent = events.find(e => e.taskId === task.id);
   const priority = priorityConfig[task.priority] || priorityConfig.medium;
   const isCompleted = task.status === 'completed';
@@ -197,19 +199,31 @@ export function TaskDetailModal({ isOpen, onClose, task, onEdit }: TaskDetailMod
                 </div>
               )}
 
-              {/* Goal */}
-              {goal && (
+              {/* Goals */}
+              {linkedGoals.length > 0 && (
                 <div className="flex items-center gap-3 text-sm">
                   <Target size={16} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-700">{goal.title}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {linkedGoals.map((goal) => (
+                      <span key={goal.id} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                        {goal.title}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Project */}
-              {project && (
+              {/* Projects */}
+              {linkedProjects.length > 0 && (
                 <div className="flex items-center gap-3 text-sm">
                   <FolderKanban size={16} className="text-gray-400 flex-shrink-0" />
-                  <span className="text-gray-700">{project.title}</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {linkedProjects.map((project) => (
+                      <span key={project.id} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">
+                        {project.title}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               )}
 

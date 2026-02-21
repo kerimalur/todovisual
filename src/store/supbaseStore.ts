@@ -142,6 +142,45 @@ const getCompletionDateKey = (completion: HabitCompletionRecord): string | null 
   return parsedDate ? parsedDate.toISOString().split('T')[0] : null;
 };
 
+const hasOwn = (obj: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(obj, key);
+
+const uniqueIds = (ids: Array<string | undefined | null>): string[] =>
+  Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)));
+
+const normalizeTaskLinks = <T extends Partial<Task>>(input: T): T => {
+  const normalized: T = { ...input };
+  const touchesGoalLinks = hasOwn(input, 'goalId') || hasOwn(input, 'goalIds');
+  const touchesProjectLinks = hasOwn(input, 'projectId') || hasOwn(input, 'projectIds');
+
+  if (touchesGoalLinks) {
+    const goalIds = uniqueIds([...(input.goalIds ?? []), input.goalId]);
+    (normalized as Partial<Task>).goalIds = goalIds;
+    (normalized as Partial<Task>).goalId = goalIds[0];
+  }
+
+  if (touchesProjectLinks) {
+    const projectIds = uniqueIds([...(input.projectIds ?? []), input.projectId]);
+    (normalized as Partial<Task>).projectIds = projectIds;
+    (normalized as Partial<Task>).projectId = projectIds[0];
+  }
+
+  return normalized;
+};
+
+const normalizeProjectLinks = <T extends Partial<Project>>(input: T): T => {
+  const normalized: T = { ...input };
+  const touchesGoalLinks = hasOwn(input, 'goalId') || hasOwn(input, 'goalIds');
+
+  if (touchesGoalLinks) {
+    const goalIds = uniqueIds([...(input.goalIds ?? []), input.goalId]);
+    (normalized as Partial<Project>).goalIds = goalIds;
+    (normalized as Partial<Project>).goalId = goalIds[0];
+  }
+
+  return normalized;
+};
+
 export const useDataStore = create<DataStore>((set, get) => ({
   // Initial State
   userId: null,
@@ -272,6 +311,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   createTask: async (taskData) => {
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
+    const normalizedTaskData = normalizeTaskLinks(taskData);
 
     const temporaryId = `temp-${uuidv4()}`;
     const createdAt = new Date();
@@ -279,9 +319,9 @@ export const useDataStore = create<DataStore>((set, get) => ({
       id: temporaryId,
       userId,
       createdAt,
-      ...taskData,
-      status: taskData.status ?? 'todo',
-      tags: taskData.tags ?? [],
+      ...normalizedTaskData,
+      status: normalizedTaskData.status ?? 'todo',
+      tags: normalizedTaskData.tags ?? [],
     };
 
     set((state) => ({
@@ -290,7 +330,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
     try {
       const createdId = await supabaseService.create(TABLES.TASKS, {
-        ...taskData,
+        ...normalizedTaskData,
         user_id: userId,
         created_at: createdAt,
         status: optimisticTask.status,
@@ -326,6 +366,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   updateTask: async (id, updates) => {
+    const normalizedUpdates = normalizeTaskLinks(updates);
     const previousTask = get().tasks.find((task) => task.id === id);
     if (previousTask) {
       set((state) => ({
@@ -333,7 +374,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
           task.id === id
             ? {
                 ...task,
-                ...updates,
+                ...normalizedUpdates,
               }
             : task
         ),
@@ -341,7 +382,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     }
 
     const updateData = {
-      ...updates,
+      ...normalizedUpdates,
       updated_at: new Date(),
     };
 
@@ -759,6 +800,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   addProject: async (projectData) => {
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
+    const normalizedProjectData = normalizeProjectLinks(projectData);
 
     const temporaryId = `temp-${uuidv4()}`;
     const createdAt = new Date();
@@ -766,8 +808,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
       id: temporaryId,
       userId,
       createdAt,
-      ...projectData,
-      status: projectData.status ?? 'planning',
+      ...normalizedProjectData,
+      status: normalizedProjectData.status ?? 'planning',
     };
 
     set((state) => ({
@@ -776,7 +818,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
     try {
       const createdId = await supabaseService.create(TABLES.PROJECTS, {
-        ...projectData,
+        ...normalizedProjectData,
         user_id: userId,
         created_at: createdAt,
         status: optimisticProject.status,
@@ -802,6 +844,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
   },
 
   updateProject: async (id, updates) => {
+    const normalizedUpdates = normalizeProjectLinks(updates);
     const previousProject = get().projects.find((project) => project.id === id);
     if (previousProject) {
       set((state) => ({
@@ -809,7 +852,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
           project.id === id
             ? {
                 ...project,
-                ...updates,
+                ...normalizedUpdates,
               }
             : project
         ),
@@ -817,7 +860,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     }
 
     const updateData = {
-      ...updates,
+      ...normalizedUpdates,
       updated_at: new Date(),
     };
 
