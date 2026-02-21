@@ -3,24 +3,19 @@ import { isValidE164PhoneNumber, sendTwilioMessage, TwilioError } from '@/lib/tw
 
 export const runtime = 'nodejs';
 
-interface SmsRequestBody {
+interface WeeklyReviewRequestBody {
   phoneNumber?: string;
   message?: string;
-  reminderTime?: string;
 }
 
-const buildDefaultMessage = (reminderTime?: string) => {
-  if (reminderTime) {
-    return `Erinnerung: Heute um ${reminderTime} Uhr steht deine Planung an.`;
-  }
-  return 'Erinnerung: Bitte pruefe heute deine offenen Aufgaben und Termine.';
-};
+const buildFallbackMessage = () =>
+  'Wochenrueckblick: Bitte pruefe deine erledigten Aufgaben und plane die naechste Woche.';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as SmsRequestBody;
+    const body = (await request.json()) as WeeklyReviewRequestBody;
     const phoneNumber = body.phoneNumber?.trim() || '';
-    const message = body.message?.trim() || buildDefaultMessage(body.reminderTime);
+    const message = body.message?.trim() || buildFallbackMessage();
 
     if (!isValidE164PhoneNumber(phoneNumber)) {
       return NextResponse.json(
@@ -30,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     const twilioResult = await sendTwilioMessage({
-      channel: 'sms',
+      channel: 'whatsapp',
       to: phoneNumber,
       body: message,
     });
@@ -44,7 +39,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    console.error('SMS test endpoint failed:', error);
-    return NextResponse.json({ error: 'Interner Fehler beim Senden der Test-SMS.' }, { status: 500 });
+    console.error('Weekly review WhatsApp endpoint failed:', error);
+    return NextResponse.json(
+      { error: 'Interner Fehler beim Senden des Wochenrueckblicks.' },
+      { status: 500 }
+    );
   }
 }

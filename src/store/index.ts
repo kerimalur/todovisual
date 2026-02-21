@@ -204,6 +204,11 @@ interface UserSettings {
   smsRemindersEnabled: boolean;
   smsPhoneNumber: string;
   smsLeadMinutes: number;
+  whatsappRemindersEnabled: boolean;
+  whatsappPhoneNumber: string;
+  whatsappTaskCreatedEnabled: boolean;
+  whatsappWeeklyReviewEnabled: boolean;
+  whatsappWeeklyReviewTime: string;
 
   // Calendar
   weekStartsOnMonday: boolean;
@@ -257,6 +262,11 @@ const defaultSettings: UserSettings = {
   smsRemindersEnabled: false,
   smsPhoneNumber: '',
   smsLeadMinutes: 30,
+  whatsappRemindersEnabled: false,
+  whatsappPhoneNumber: '',
+  whatsappTaskCreatedEnabled: true,
+  whatsappWeeklyReviewEnabled: true,
+  whatsappWeeklyReviewTime: '22:00',
   weekStartsOnMonday: true,
   zenShowClock: true,
   zenShowStats: true,
@@ -284,7 +294,18 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'settings-storage',
-      version: 1,
+      version: 2,
+      merge: (persistedState, currentState) => {
+        const typedPersistedState = persistedState as Partial<SettingsStore> | undefined;
+        return {
+          ...currentState,
+          ...typedPersistedState,
+          settings: {
+            ...currentState.settings,
+            ...(typedPersistedState?.settings || {}),
+          },
+        };
+      },
     }
   )
 );

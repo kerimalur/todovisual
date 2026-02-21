@@ -17,6 +17,7 @@ import {
 } from '@/types';
 import { supabaseService, TABLES } from '@/lib/supabaseService';
 import { addDays, format, isSameDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
+import { getNotificationPreferences } from '@/lib/notificationPreferences';
 
 interface DataStore {
   // User
@@ -179,6 +180,37 @@ const normalizeProjectLinks = <T extends Partial<Project>>(input: T): T => {
   }
 
   return normalized;
+};
+
+const sendTaskCreatedWhatsAppReminder = async (task: Task): Promise<void> => {
+  if (typeof window === 'undefined') return;
+
+  const preferences = getNotificationPreferences();
+  if (!preferences.whatsappRemindersEnabled || !preferences.whatsappTaskCreatedEnabled) return;
+
+  const phoneNumber = preferences.whatsappPhoneNumber.trim();
+  const taskTitle = task.title.trim();
+  if (!phoneNumber || !taskTitle) return;
+
+  try {
+    const response = await fetch('/api/reminders/whatsapp/task-created', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        phoneNumber,
+        taskTitle,
+      }),
+    });
+
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error || 'Task WhatsApp konnte nicht gesendet werden.');
+    }
+  } catch (error) {
+    console.error('Failed to send task-created WhatsApp reminder:', error);
+  }
 };
 
 export const useDataStore = create<DataStore>((set, get) => ({
@@ -351,6 +383,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
             : task
         ),
       }));
+      void sendTaskCreatedWhatsAppReminder(createdTask);
       return createdTask;
     } catch (error) {
       console.error('Failed to add task:', error);

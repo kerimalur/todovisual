@@ -2,8 +2,8 @@
 
 import { 
   User, Bell, Timer, Database, Download, Palette, Globe, Trash2, Check, 
-  Moon, Clock, Volume2, Calendar, ListTodo, Shield, Sparkles, Coffee,
-  ChevronRight, Upload, Smartphone, Send
+  Clock, Volume2, ListTodo, Shield, Sparkles, Coffee,
+  Upload, Smartphone, Send
 } from 'lucide-react';
 import { useSettingsStore, useDataStore } from '@/store';
 import { useState } from 'react';
@@ -56,6 +56,8 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [smsSending, setSmsSending] = useState(false);
   const [smsStatus, setSmsStatus] = useState('');
+  const [whatsappSending, setWhatsappSending] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState('');
   const [activeTab, setActiveTab] = useState<'general' | 'focus' | 'appearance' | 'data'>('general');
 
   const showSavedFeedback = () => {
@@ -126,6 +128,40 @@ export default function SettingsPage() {
       setSmsStatus(message);
     } finally {
       setSmsSending(false);
+    }
+  };
+
+  const handleSendTestWhatsApp = async () => {
+    const phoneNumber = settings.whatsappPhoneNumber.trim();
+    if (!phoneNumber) {
+      setWhatsappStatus('Bitte zuerst eine WhatsApp-Nummer eintragen.');
+      return;
+    }
+
+    setWhatsappSending(true);
+    setWhatsappStatus('');
+    try {
+      const response = await fetch('/api/reminders/whatsapp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber,
+        }),
+      });
+
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(result?.error || 'WhatsApp Test fehlgeschlagen.');
+      }
+
+      setWhatsappStatus('Test-WhatsApp wurde erfolgreich versendet.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'WhatsApp Test fehlgeschlagen.';
+      setWhatsappStatus(message);
+    } finally {
+      setWhatsappSending(false);
     }
   };
 
@@ -256,7 +292,7 @@ export default function SettingsPage() {
                 </SettingRow>
               )}
 
-              <div className="py-4">
+              <div className="py-4 space-y-3">
                 <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
                   <div className="flex items-start gap-3 mb-2">
                     <div className="w-8 h-8 rounded-lg bg-white border border-indigo-100 flex items-center justify-center">
@@ -265,12 +301,12 @@ export default function SettingsPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">SMS Erinnerungen</p>
                       <p className="text-xs text-gray-600 mt-0.5">
-                        Versand erfolgt über Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
+                        Versand via Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
                       </p>
                     </div>
                   </div>
 
-                  <SettingRow label="SMS aktivieren" description="Ergänzt die tägliche Erinnerung per SMS">
+                  <SettingRow label="SMS aktivieren" description="Ergaenzt die taegliche Erinnerung per SMS">
                     <Toggle
                       enabled={settings.smsRemindersEnabled}
                       onChange={(v) => handleChange('smsRemindersEnabled', v)}
@@ -310,9 +346,88 @@ export default function SettingsPage() {
                           <Send size={14} />
                           {smsSending ? 'Sende Test...' : 'Test SMS senden'}
                         </button>
-                        {smsStatus && (
-                          <p className="text-xs text-gray-600 mt-2">{smsStatus}</p>
-                        )}
+                        {smsStatus && <p className="text-xs text-gray-600 mt-2">{smsStatus}</p>}
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                  <div className="flex items-start gap-3 mb-2">
+                    <div className="w-8 h-8 rounded-lg bg-white border border-emerald-100 flex items-center justify-center">
+                      <Smartphone size={16} className="text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">WhatsApp Erinnerungen</p>
+                      <p className="text-xs text-gray-600 mt-0.5">
+                        ENV fuer Sender: `TWILIO_WHATSAPP_FROM` (z.B. `whatsapp:+14155238886`).
+                      </p>
+                    </div>
+                  </div>
+
+                  <SettingRow label="WhatsApp aktivieren" description="Aktiviert alle WhatsApp-Benachrichtigungen">
+                    <Toggle
+                      enabled={settings.whatsappRemindersEnabled}
+                      onChange={(v) => handleChange('whatsappRemindersEnabled', v)}
+                      label="WhatsApp aktivieren"
+                    />
+                  </SettingRow>
+
+                  {settings.whatsappRemindersEnabled && (
+                    <>
+                      <SettingRow label="WhatsApp Nummer" description="Format: +491234567890">
+                        <input
+                          type="tel"
+                          value={settings.whatsappPhoneNumber}
+                          onChange={(e) => handleChange('whatsappPhoneNumber', e.target.value)}
+                          placeholder="+491234567890"
+                          className="input w-52"
+                        />
+                      </SettingRow>
+
+                      <SettingRow
+                        label="Bei neuer Aufgabe erinnern"
+                        description="Bei jeder neu angelegten Aufgabe wird sofort eine kurze WhatsApp gesendet"
+                      >
+                        <Toggle
+                          enabled={settings.whatsappTaskCreatedEnabled}
+                          onChange={(v) => handleChange('whatsappTaskCreatedEnabled', v)}
+                          label="Neue Aufgabe"
+                        />
+                      </SettingRow>
+
+                      <SettingRow
+                        label="Wochenrueckblick Sonntags"
+                        description="Sonntag um konfigurierter Zeit mit Rueckblick + Vorschau fuer Ziele"
+                      >
+                        <Toggle
+                          enabled={settings.whatsappWeeklyReviewEnabled}
+                          onChange={(v) => handleChange('whatsappWeeklyReviewEnabled', v)}
+                          label="Wochenrueckblick"
+                        />
+                      </SettingRow>
+
+                      {settings.whatsappWeeklyReviewEnabled && (
+                        <SettingRow label="Zeit am Sonntag">
+                          <input
+                            type="time"
+                            value={settings.whatsappWeeklyReviewTime}
+                            onChange={(e) => handleChange('whatsappWeeklyReviewTime', e.target.value)}
+                            className="input w-28"
+                          />
+                        </SettingRow>
+                      )}
+
+                      <div className="pt-3">
+                        <button
+                          onClick={() => void handleSendTestWhatsApp()}
+                          disabled={whatsappSending}
+                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <Send size={14} />
+                          {whatsappSending ? 'Sende Test...' : 'Test WhatsApp senden'}
+                        </button>
+                        {whatsappStatus && <p className="text-xs text-gray-600 mt-2">{whatsappStatus}</p>}
                       </div>
                     </>
                   )}
@@ -648,3 +763,4 @@ export default function SettingsPage() {
     </div>
   );
 }
+

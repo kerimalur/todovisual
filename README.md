@@ -24,9 +24,23 @@ Damit die Zusammenarbeit schnell und konsistent bleibt, gehen wir von diesem Set
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
+TWILIO_ACCOUNT_SID=
+TWILIO_AUTH_TOKEN=
+TWILIO_FROM_NUMBER=
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 ```
 
 > In Vercel dieselben Variablen im Project Settings Bereich hinterlegen.
+
+## WhatsApp/SMS Reminder
+
+- Test-Endpoints:
+  - `POST /api/reminders/sms/test`
+  - `POST /api/reminders/whatsapp/test`
+- Automatisch:
+  - Bei neuer Aufgabe optional sofortige WhatsApp-Nachricht
+  - Wochenrueckblick am Sonntag (konfigurierbare Uhrzeit, Standard `22:00`) via WhatsApp
+- Konfiguration in der App unter `Einstellungen -> Benachrichtigungen`.
 
 ## Supabase Datenbank einrichten (wichtig)
 

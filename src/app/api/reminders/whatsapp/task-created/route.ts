@@ -3,24 +3,19 @@ import { isValidE164PhoneNumber, sendTwilioMessage, TwilioError } from '@/lib/tw
 
 export const runtime = 'nodejs';
 
-interface SmsRequestBody {
+interface TaskCreatedWhatsAppBody {
   phoneNumber?: string;
-  message?: string;
-  reminderTime?: string;
+  taskTitle?: string;
 }
 
-const buildDefaultMessage = (reminderTime?: string) => {
-  if (reminderTime) {
-    return `Erinnerung: Heute um ${reminderTime} Uhr steht deine Planung an.`;
-  }
-  return 'Erinnerung: Bitte pruefe heute deine offenen Aufgaben und Termine.';
-};
+const buildTaskCreatedMessage = (taskTitle: string) =>
+  `Neue Aufgabe gespeichert: "${taskTitle}". Kurz planen und direkt starten.`;
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as SmsRequestBody;
+    const body = (await request.json()) as TaskCreatedWhatsAppBody;
     const phoneNumber = body.phoneNumber?.trim() || '';
-    const message = body.message?.trim() || buildDefaultMessage(body.reminderTime);
+    const taskTitle = body.taskTitle?.trim() || '';
 
     if (!isValidE164PhoneNumber(phoneNumber)) {
       return NextResponse.json(
@@ -29,10 +24,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!taskTitle) {
+      return NextResponse.json({ error: 'taskTitle fehlt.' }, { status: 400 });
+    }
+
     const twilioResult = await sendTwilioMessage({
-      channel: 'sms',
+      channel: 'whatsapp',
       to: phoneNumber,
-      body: message,
+      body: buildTaskCreatedMessage(taskTitle),
     });
 
     return NextResponse.json({
@@ -44,7 +43,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: error.message }, { status: error.status });
     }
 
-    console.error('SMS test endpoint failed:', error);
-    return NextResponse.json({ error: 'Interner Fehler beim Senden der Test-SMS.' }, { status: 500 });
+    console.error('Task-created WhatsApp endpoint failed:', error);
+    return NextResponse.json(
+      { error: 'Interner Fehler beim Senden der Task-WhatsApp.' },
+      { status: 500 }
+    );
   }
 }
