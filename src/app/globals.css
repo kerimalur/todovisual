@@ -36,12 +36,50 @@ body {
 }
 
 /* ===== CONTRAST TUNING ===== */
-.text-gray-500 {
+.text-gray-300 {
   color: #4b5563;
 }
 
 .text-gray-400 {
-  color: #6b7280;
+  color: #374151;
+}
+
+.text-gray-500 {
+  color: #1f2937;
+}
+
+.text-gray-600 {
+  color: #111827;
+}
+
+.text-gray-700 {
+  color: #0f172a;
+}
+
+/* Tailwind placeholder utilities are often too light on white surfaces */
+.placeholder\:text-gray-300::placeholder {
+  color: #4b5563;
+}
+
+.placeholder\:text-gray-400::placeholder {
+  color: #374151;
+}
+
+.placeholder\:text-gray-500::placeholder {
+  color: #1f2937;
+}
+
+/* Legacy Notion-like tones used across pages */
+[class*="text-[#9b9a97]"] {
+  color: #4b5563 !important;
+}
+
+[class*="text-[#6b6b6b]"] {
+  color: #374151 !important;
+}
+
+[class*="text-[#c3c3c1]"] {
+  color: #6b7280 !important;
 }
 
 h1, h2, h3, h4, h5, h6 {

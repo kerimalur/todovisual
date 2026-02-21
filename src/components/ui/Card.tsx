@@ -78,7 +78,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
           )}
           <div>
             <h3 className="font-semibold text-gray-900">{title}</h3>
-            {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
+            {subtitle && <p className="text-sm text-gray-700">{subtitle}</p>}
           </div>
         </div>
         {action}

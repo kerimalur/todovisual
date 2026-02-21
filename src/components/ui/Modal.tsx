@@ -71,7 +71,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
             className="p-2 rounded-xl hover:bg-gray-100 transition-all duration-200"
             title="Schließen"
           >
-            <X size={18} className="text-gray-400" />
+            <X size={18} className="text-gray-700" />
           </button>
         </div>
 
@@ -93,14 +93,14 @@ export function Input({ label, className = '', ...props }: InputProps) {
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-900">
           {label}
         </label>
       )}
       <input
         className={`
-          w-full px-3 py-2.5 bg-white border border-gray-200
-          rounded-lg text-gray-900 placeholder:text-gray-400
+          w-full px-3 py-2.5 bg-white border border-gray-300
+          rounded-lg text-gray-900 placeholder:text-gray-500
           focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
           transition-all duration-150
           ${className}
@@ -120,14 +120,14 @@ export function Textarea({ label, className = '', ...props }: TextareaProps) {
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-900">
           {label}
         </label>
       )}
       <textarea
         className={`
-          w-full px-3 py-2.5 bg-white border border-gray-200
-          rounded-lg text-gray-900 placeholder:text-gray-400
+          w-full px-3 py-2.5 bg-white border border-gray-300
+          rounded-lg text-gray-900 placeholder:text-gray-500
           focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
           transition-all duration-150 resize-none
           ${className}
@@ -148,13 +148,13 @@ export function Select({ label, options, className = '', ...props }: SelectProps
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-900">
           {label}
         </label>
       )}
       <select
         className={`
-          w-full px-3 py-2.5 bg-white border border-gray-200
+          w-full px-3 py-2.5 bg-white border border-gray-300
           rounded-lg text-gray-900
           focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
           transition-all duration-150 cursor-pointer
@@ -187,7 +187,7 @@ export function Button({
     primary: 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white hover:from-indigo-700 hover:to-indigo-800 shadow-sm',
     secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 border border-gray-200',
     danger: 'bg-red-500 text-white hover:bg-red-600 shadow-sm',
-    ghost: 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
+    ghost: 'text-gray-800 hover:bg-gray-100 hover:text-gray-900',
   };
 
   const sizes = {

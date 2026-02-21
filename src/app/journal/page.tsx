@@ -429,8 +429,8 @@ export default function JournalPage() {
       try {
         await deleteJournalEntry(entryId);
       } catch (error) {
-        console.error('Fehler beim Loeschen des Journal-Eintrags:', error);
-        alert('Loeschen fehlgeschlagen. Bitte erneut versuchen.');
+        console.error('Fehler beim Löschen des Journal-Eintrags:', error);
+        alert('Löschen fehlgeschlagen. Bitte erneut versuchen.');
       }
     })();
   };

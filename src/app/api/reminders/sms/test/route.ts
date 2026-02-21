@@ -14,7 +14,7 @@ const buildDefaultMessage = (reminderTime?: string) => {
   if (reminderTime) {
     return `Erinnerung: Heute um ${reminderTime} Uhr steht deine Planung an.`;
   }
-  return 'Erinnerung: Bitte pruefe heute deine offenen Aufgaben und Termine.';
+  return 'Erinnerung: Bitte prüfe heute deine offenen Aufgaben und Termine.';
 };
 
 export async function POST(request: NextRequest) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
 
     if (!E164_PHONE_REGEX.test(phoneNumber)) {
       return NextResponse.json(
-        { error: 'Ungueltige Telefonnummer. Bitte im E.164-Format senden (z.B. +491234567890).' },
+        { error: 'Ungültige Telefonnummer. Bitte im E.164-Format senden (z.B. +491234567890).' },
         { status: 400 }
       );
     }

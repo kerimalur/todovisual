@@ -143,7 +143,7 @@ export default function HabitsPage() {
           </p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Erfuellungsquote</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Erfüllungsquote</p>
           <p className="text-2xl font-bold text-emerald-600 mt-1">{completionRate}%</p>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -172,7 +172,7 @@ export default function HabitsPage() {
 
         {todayHabits.length === 0 ? (
           <div className="border border-dashed border-gray-200 rounded-xl p-8 text-center">
-            <p className="text-sm text-gray-600">Keine aktiven Gewohnheiten fuer heute.</p>
+            <p className="text-sm text-gray-600">Keine aktiven Gewohnheiten für heute.</p>
             <button
               onClick={() => openHabitModal()}
               className="mt-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
@@ -190,7 +190,7 @@ export default function HabitsPage() {
               const linkedGoal = habit.goalId ? goals.find((goal) => goal.id === habit.goalId) : null;
               const frequencyLabel =
                 habit.frequency === 'daily'
-                  ? 'Taeglich'
+                  ? 'Täglich'
                   : habit.frequency === 'weekly'
                   ? `${habit.targetPerWeek || 1}x pro Woche`
                   : getSpecificDaysLabel(habit.specificDays);
@@ -268,7 +268,7 @@ export default function HabitsPage() {
             <button
               onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
               className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50"
-              title="Naechste Woche"
+              title="Nächste Woche"
             >
               <ChevronRight size={16} />
             </button>
@@ -283,7 +283,7 @@ export default function HabitsPage() {
 
         {filteredHabits.length === 0 ? (
           <div className="border border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-600">
-            Keine Gewohnheiten fuer den aktuellen Filter.
+            Keine Gewohnheiten für den aktuellen Filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -320,7 +320,7 @@ export default function HabitsPage() {
                         <p className="font-medium text-gray-900">{habit.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           {habit.frequency === 'daily'
-                            ? 'Taeglich'
+                            ? 'Täglich'
                             : habit.frequency === 'weekly'
                             ? `${weeklyTarget}x pro Woche`
                             : getSpecificDaysLabel(habit.specificDays)}

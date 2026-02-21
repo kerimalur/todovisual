@@ -265,12 +265,12 @@ export default function SettingsPage() {
                     <div>
                       <p className="text-sm font-medium text-gray-900">SMS Erinnerungen</p>
                       <p className="text-xs text-gray-600 mt-0.5">
-                        Versand erfolgt ueber Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
+                        Versand erfolgt über Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
                       </p>
                     </div>
                   </div>
 
-                  <SettingRow label="SMS aktivieren" description="Ergaenzt die taegliche Erinnerung per SMS">
+                  <SettingRow label="SMS aktivieren" description="Ergänzt die tägliche Erinnerung per SMS">
                     <Toggle
                       enabled={settings.smsRemindersEnabled}
                       onChange={(v) => handleChange('smsRemindersEnabled', v)}

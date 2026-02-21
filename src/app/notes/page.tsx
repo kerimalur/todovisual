@@ -203,8 +203,8 @@ export default function NotesPage() {
           await deleteBrainstormSession(targetId);
         }
       } catch (error) {
-        console.error('Fehler beim Loeschen:', error);
-        alert('Loeschen fehlgeschlagen. Bitte erneut versuchen.');
+        console.error('Fehler beim Löschen:', error);
+        alert('Löschen fehlgeschlagen. Bitte erneut versuchen.');
       }
     })();
   };

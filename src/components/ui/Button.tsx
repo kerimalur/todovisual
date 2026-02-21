@@ -42,12 +42,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         shadow-sm hover:shadow-md
       `,
       secondary: `
-        bg-white text-gray-700 border border-gray-300
-        hover:bg-gray-50 hover:border-gray-400
+        bg-white text-gray-900 border border-gray-300
+        hover:bg-gray-50 hover:border-gray-500
         focus:ring-gray-500
       `,
       ghost: `
-        bg-transparent text-gray-600
+        bg-transparent text-gray-800
         hover:bg-gray-100 hover:text-gray-900
         focus:ring-gray-500
       `,

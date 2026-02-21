@@ -40,10 +40,10 @@ const colors = {
   goals: { bg: 'bg-emerald-100', icon: 'text-emerald-600' },
   calendar: { bg: 'bg-blue-100', icon: 'text-blue-600' },
   notes: { bg: 'bg-amber-100', icon: 'text-amber-600' },
-  search: { bg: 'bg-gray-100', icon: 'text-gray-600' },
+  search: { bg: 'bg-gray-100', icon: 'text-gray-700' },
   folder: { bg: 'bg-purple-100', icon: 'text-purple-600' },
   completed: { bg: 'bg-emerald-100', icon: 'text-emerald-600' },
-  default: { bg: 'bg-gray-100', icon: 'text-gray-600' },
+  default: { bg: 'bg-gray-100', icon: 'text-gray-700' },
 };
 
 export function EmptyState({
@@ -73,7 +73,7 @@ export function EmptyState({
       {/* Text */}
       <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
       {description && (
-        <p className="text-sm text-gray-500 max-w-sm mb-6">{description}</p>
+        <p className="text-sm text-gray-700 max-w-sm mb-6">{description}</p>
       )}
 
       {/* Action */}

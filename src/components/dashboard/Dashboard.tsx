@@ -291,7 +291,7 @@ export function Dashboard() {
       });
     } catch (error) {
       console.error('Failed to adopt event into task:', error);
-      alert('Termin konnte nicht als Aufgabe uebernommen werden.');
+      alert('Termin konnte nicht als Aufgabe übernommen werden.');
     } finally {
       setAdoptingEventId(null);
     }
@@ -303,7 +303,7 @@ export function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Cockpit</h1>
           <p className="text-gray-700 mt-1">
-            Ein gemeinsamer Arbeitsraum fuer Aufgaben und Termine.
+            Ein gemeinsamer Arbeitsraum für Aufgaben und Termine.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -328,7 +328,7 @@ export function Dashboard() {
           <Card className="border border-gray-200">
             <CardHeader
               title="Heute: Aufgaben + Termine"
-              subtitle="Gemischte Timeline fuer deinen Arbeitstag"
+              subtitle="Gemischte Timeline für deinen Arbeitstag"
               icon={<CalendarClock size={16} className="text-indigo-700" />}
             />
             <CardContent className="space-y-2">
@@ -349,13 +349,13 @@ export function Dashboard() {
                         {item.type === 'event' && item.linkedTask && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
                             <Link2 size={11} />
-                            Aufgabe verknuepft
+                            Aufgabe verknüpft
                           </span>
                         )}
                         {item.type === 'task' && item.overdue && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-medium text-red-700">
                             <AlertTriangle size={11} />
-                            Ueberfaellig
+                            Überfällig
                           </span>
                         )}
                       </div>
@@ -382,7 +382,7 @@ export function Dashboard() {
                         onClick={() => openEventModal(item.event)}
                         className="px-2.5 py-1.5 text-xs font-medium rounded-md border border-gray-200 hover:bg-gray-50 text-gray-800"
                       >
-                        Oeffnen
+                        Öffnen
                       </button>
                     )}
                   </div>
@@ -415,13 +415,13 @@ export function Dashboard() {
                       className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                     >
                       <Plus size={12} />
-                      {adoptingEventId === event.id ? 'Uebernehme...' : 'Als Aufgabe'}
+                      {adoptingEventId === event.id ? 'Übernehme...' : 'Als Aufgabe'}
                     </button>
                   </div>
                 ))
               ) : (
                 <div className="rounded-lg border border-dashed border-indigo-200 bg-white/80 p-5 text-center">
-                  <p className="text-sm text-gray-700">Alle anstehenden Termine sind bereits mit Aufgaben verknuepft.</p>
+                  <p className="text-sm text-gray-700">Alle anstehenden Termine sind bereits mit Aufgaben verknüpft.</p>
                 </div>
               )}
             </CardContent>
@@ -429,8 +429,8 @@ export function Dashboard() {
 
           <Card className="border border-amber-100 bg-gradient-to-br from-amber-50/70 via-white to-orange-50/60">
             <CardHeader
-              title="Prioritaeten"
-              subtitle="Deine naechsten umsetzbaren Aufgaben"
+              title="Prioritäten"
+              subtitle="Deine nächsten umsetzbaren Aufgaben"
               icon={<Flame size={16} className="text-amber-700" />}
               action={
                 <Link href="/tasks" className="text-sm font-medium text-amber-700 hover:text-amber-800 flex items-center gap-1">
@@ -451,7 +451,7 @@ export function Dashboard() {
                 ))
               ) : (
                 <div className="rounded-lg border border-dashed border-amber-200 bg-white p-5 text-center">
-                  <p className="text-sm text-gray-700">Keine offenen Prioritaeten. Sehr gut.</p>
+                  <p className="text-sm text-gray-700">Keine offenen Prioritäten. Sehr gut.</p>
                 </div>
               )}
             </CardContent>
@@ -462,7 +462,7 @@ export function Dashboard() {
           <Card className="border border-gray-200">
             <CardHeader
               title="Kalender kompakt"
-              subtitle="Schnellueberblick fuer die laufende Woche"
+              subtitle="Schnellüberblick für die laufende Woche"
               icon={<Calendar size={16} className="text-indigo-700" />}
               action={
                 <Link href="/calendar" className="text-sm font-medium text-indigo-700 hover:text-indigo-800 flex items-center gap-1">
@@ -539,7 +539,7 @@ export function Dashboard() {
               <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-700">Routine heute</p>
                 <p className="text-sm text-gray-900 mt-1">
-                  {dailyHabit ? dailyHabit.title : 'Lege eine taegliche Kerngewohnheit fest.'}
+                  {dailyHabit ? dailyHabit.title : 'Lege eine tägliche Kerngewohnheit fest.'}
                 </p>
               </div>
 

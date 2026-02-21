@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -91,11 +91,11 @@ function LoginForm() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Productive</h1>
-          <p className="text-gray-600">Melde dich an, um fortzufahren</p>
+          <p className="text-gray-700">Melde dich an, um fortzufahren</p>
         </div>
 
         {/* Sign In Card */}
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
           <h2 className="text-xl font-semibold text-gray-900 mb-6 text-center">
             Anmelden
           </h2>
@@ -118,7 +118,7 @@ function LoginForm() {
           {/* Email/Password Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 E-Mail Adresse
               </label>
               <input
@@ -126,11 +126,11 @@ function LoginForm() {
                 placeholder="beispiel@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-900 mb-2">
                 Passwort
               </label>
               <input
@@ -138,7 +138,7 @@ function LoginForm() {
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-3 text-gray-900 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
             <button
@@ -169,7 +169,7 @@ function LoginForm() {
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 text-sm text-gray-500">
+        <div className="text-center mt-6 text-sm text-gray-700">
           © 2017–2026
         </div>
       </div>

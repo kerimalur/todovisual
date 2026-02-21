@@ -34,14 +34,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       w-full transition-all duration-200
       focus:outline-none focus:ring-2 focus:ring-offset-0
       disabled:opacity-50 disabled:cursor-not-allowed
-      placeholder:text-gray-400
+      placeholder:text-gray-500
     `;
 
     const variants = {
       default: `
-        bg-white border border-gray-200 rounded-xl
+        bg-white border border-gray-300 rounded-xl
         focus:border-indigo-500 focus:ring-indigo-500/20
-        hover:border-gray-300
+        hover:border-gray-400
       `,
       filled: `
         bg-gray-100 border border-transparent rounded-xl
@@ -63,11 +63,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1.5">
         {label && (
-          <label className="block text-sm font-medium text-gray-700">{label}</label>
+          <label className="block text-sm font-medium text-gray-900">{label}</label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600">
               {leftIcon}
             </div>
           )}
@@ -88,19 +88,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 hover:text-gray-900 transition-colors"
             >
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           )}
           {rightIcon && !isPassword && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600">
               {rightIcon}
             </div>
           )}
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {hint && !error && <p className="text-sm text-gray-500">{hint}</p>}
+        {hint && !error && <p className="text-sm text-gray-700">{hint}</p>}
       </div>
     );
   }
