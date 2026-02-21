@@ -28,6 +28,8 @@ TWILIO_ACCOUNT_SID=
 TWILIO_AUTH_TOKEN=
 TWILIO_FROM_NUMBER=
 TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+SUPABASE_SERVICE_ROLE_KEY=
+CRON_SECRET=
 ```
 
 > In Vercel dieselben Variablen im Project Settings Bereich hinterlegen.
@@ -39,7 +41,7 @@ TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
   - `POST /api/reminders/whatsapp/test`
 - Automatisch:
   - Bei neuer Aufgabe optional sofortige WhatsApp-Nachricht
-  - 1 Stunde vor geplantem Aufgaben-Start optionale WhatsApp-Erinnerung
+  - 1 Stunde vor geplantem Aufgaben-Start (serverseitig via Vercel Cron, auch ohne offenen Browser)
   - Wochenrueckblick am Sonntag (konfigurierbare Uhrzeit, Standard `22:00`) via WhatsApp
 - Konfiguration in der App unter `Einstellungen -> Benachrichtigungen`.
 
@@ -50,9 +52,18 @@ Wenn du frisch von Firebase auf Supabase gewechselt bist, musst du zuerst das SQ
 1. In Supabase das Projekt öffnen.
 2. **SQL Editor** öffnen.
 3. Inhalt aus `supabase/migrations/20260220120000_init_productive_schema.sql` ausführen.
-4. Danach App neu starten (`npm run dev`).
+4. Danach zusätzlich `supabase/migrations/20260221200000_notification_settings_and_deliveries.sql` ausführen.
+5. Danach App neu starten (`npm run dev`).
 
 Dieses Schema legt alle benötigten Tabellen, Indizes und RLS-Policies für die App an (inkl. `tasks`, `goals`, `projects`, `calendar_events`, `habits`, `notes`, `time_entries`, usw.).
+
+## Serverseitige Reminder ohne offenen Browser
+
+1. In Vercel zusätzlich setzen:
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `CRON_SECRET`
+2. `vercel.json` enthält den Cron-Job für `GET /api/cron/reminders/task-start` alle 5 Minuten.
+3. Nach dem Setzen der Variablen redeployen.
 
 ## Lokale Entwicklung
 

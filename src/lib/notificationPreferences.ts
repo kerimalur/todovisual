@@ -5,6 +5,9 @@ export interface NotificationPreferences {
   whatsappWeeklyReviewEnabled: boolean;
   whatsappPhoneNumber: string;
   whatsappWeeklyReviewTime: string;
+  whatsappTaskCreatedTemplate: string;
+  whatsappTaskStartTemplate: string;
+  whatsappWeeklyReviewTemplate: string;
 }
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
@@ -14,6 +17,12 @@ const DEFAULT_PREFERENCES: NotificationPreferences = {
   whatsappWeeklyReviewEnabled: true,
   whatsappPhoneNumber: '',
   whatsappWeeklyReviewTime: '22:00',
+  whatsappTaskCreatedTemplate:
+    'Neue Aufgabe gespeichert: "{taskTitle}"\nStart: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
+  whatsappTaskStartTemplate:
+    'Start in 1 Stunde: "{taskTitle}"\nBeginn: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
+  whatsappWeeklyReviewTemplate:
+    'Wochenrueckblick ({weekRange})\n\n{review}',
 };
 
 interface PersistedSettingsShape {
@@ -66,6 +75,18 @@ export const getNotificationPreferences = (): NotificationPreferences => {
         typeof settings.whatsappWeeklyReviewTime === 'string'
           ? settings.whatsappWeeklyReviewTime
           : DEFAULT_PREFERENCES.whatsappWeeklyReviewTime,
+      whatsappTaskCreatedTemplate:
+        typeof settings.whatsappTaskCreatedTemplate === 'string'
+          ? settings.whatsappTaskCreatedTemplate
+          : DEFAULT_PREFERENCES.whatsappTaskCreatedTemplate,
+      whatsappTaskStartTemplate:
+        typeof settings.whatsappTaskStartTemplate === 'string'
+          ? settings.whatsappTaskStartTemplate
+          : DEFAULT_PREFERENCES.whatsappTaskStartTemplate,
+      whatsappWeeklyReviewTemplate:
+        typeof settings.whatsappWeeklyReviewTemplate === 'string'
+          ? settings.whatsappWeeklyReviewTemplate
+          : DEFAULT_PREFERENCES.whatsappWeeklyReviewTemplate,
     };
   } catch (error) {
     console.error('Unable to parse notification settings:', error);

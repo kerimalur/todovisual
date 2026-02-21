@@ -182,7 +182,45 @@ const normalizeProjectLinks = <T extends Partial<Project>>(input: T): T => {
   return normalized;
 };
 
-const sendTaskCreatedWhatsAppReminder = async (task: Task): Promise<void> => {
+const TASK_CREATED_DEDUPE_STORAGE_PREFIX = 'wa-task-created-sent:';
+
+const resolveTaskProjectTitle = (task: Task, projects: Project[]): string => {
+  const candidateIds = new Set<string>();
+  if (task.projectId) candidateIds.add(task.projectId);
+  if (Array.isArray(task.projectIds)) {
+    task.projectIds.forEach((projectId) => {
+      if (projectId) candidateIds.add(projectId);
+    });
+  }
+
+  for (const projectId of candidateIds) {
+    const project = projects.find((item) => item.id === projectId);
+    if (project?.title) return project.title;
+  }
+
+  return 'Kein Projekt';
+};
+
+const getTaskCreatedStorageKey = (task: Task): string =>
+  `${TASK_CREATED_DEDUPE_STORAGE_PREFIX}${task.userId}:${task.id}`;
+
+const hasTaskCreatedAlreadySent = (task: Task): boolean => {
+  try {
+    return !!window.localStorage.getItem(getTaskCreatedStorageKey(task));
+  } catch {
+    return false;
+  }
+};
+
+const markTaskCreatedAsSent = (task: Task): void => {
+  try {
+    window.localStorage.setItem(getTaskCreatedStorageKey(task), new Date().toISOString());
+  } catch {
+    // Ignore localStorage quota/privacy errors.
+  }
+};
+
+const sendTaskCreatedWhatsAppReminder = async (task: Task, projectTitle: string): Promise<void> => {
   if (typeof window === 'undefined') return;
 
   const preferences = getNotificationPreferences();
@@ -191,6 +229,10 @@ const sendTaskCreatedWhatsAppReminder = async (task: Task): Promise<void> => {
   const phoneNumber = preferences.whatsappPhoneNumber.trim();
   const taskTitle = task.title.trim();
   if (!phoneNumber || !taskTitle) return;
+  if (hasTaskCreatedAlreadySent(task)) return;
+  const taskStartDate = task.dueDate ? new Date(task.dueDate) : null;
+  const taskStartAt =
+    taskStartDate && !Number.isNaN(taskStartDate.getTime()) ? taskStartDate.toISOString() : null;
 
   try {
     const response = await fetch('/api/reminders/whatsapp/task-created', {
@@ -201,6 +243,13 @@ const sendTaskCreatedWhatsAppReminder = async (task: Task): Promise<void> => {
       body: JSON.stringify({
         phoneNumber,
         taskTitle,
+        userId: task.userId,
+        taskId: task.id,
+        taskStartAt,
+        priority: task.priority,
+        projectTitle,
+        messageTemplate: preferences.whatsappTaskCreatedTemplate,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
       }),
     });
 
@@ -208,6 +257,7 @@ const sendTaskCreatedWhatsAppReminder = async (task: Task): Promise<void> => {
       const result = (await response.json().catch(() => null)) as { error?: string } | null;
       throw new Error(result?.error || 'Task WhatsApp konnte nicht gesendet werden.');
     }
+    markTaskCreatedAsSent(task);
   } catch (error) {
     console.error('Failed to send task-created WhatsApp reminder:', error);
   }
@@ -383,7 +433,8 @@ export const useDataStore = create<DataStore>((set, get) => ({
             : task
         ),
       }));
-      void sendTaskCreatedWhatsAppReminder(createdTask);
+      const projectTitle = resolveTaskProjectTitle(createdTask, get().projects);
+      void sendTaskCreatedWhatsAppReminder(createdTask, projectTitle);
       return createdTask;
     } catch (error) {
       console.error('Failed to add task:', error);

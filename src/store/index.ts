@@ -210,6 +210,9 @@ interface UserSettings {
   whatsappTaskStartReminderEnabled: boolean;
   whatsappWeeklyReviewEnabled: boolean;
   whatsappWeeklyReviewTime: string;
+  whatsappTaskCreatedTemplate: string;
+  whatsappTaskStartTemplate: string;
+  whatsappWeeklyReviewTemplate: string;
 
   // Calendar
   weekStartsOnMonday: boolean;
@@ -269,6 +272,12 @@ const defaultSettings: UserSettings = {
   whatsappTaskStartReminderEnabled: true,
   whatsappWeeklyReviewEnabled: true,
   whatsappWeeklyReviewTime: '22:00',
+  whatsappTaskCreatedTemplate:
+    'Neue Aufgabe gespeichert: "{taskTitle}"\nStart: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
+  whatsappTaskStartTemplate:
+    'Start in 1 Stunde: "{taskTitle}"\nBeginn: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
+  whatsappWeeklyReviewTemplate:
+    'Wochenrueckblick ({weekRange})\n\n{review}',
   weekStartsOnMonday: true,
   zenShowClock: true,
   zenShowStats: true,

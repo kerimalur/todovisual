@@ -70,7 +70,7 @@ const priorityOptions = [
 ];
 
 export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
-  const { addTask, updateTask, deleteTask, addEvent, updateEvent, events, goals, projects, tags: allTags, addTag, startTimeTracking, stopTimeTracking, activeTimeEntry, getTotalTimeForTask } = useDataStore();
+  const { createTask, updateTask, deleteTask, addEvent, updateEvent, events, goals, projects, tags: allTags, addTag, startTimeTracking, stopTimeTracking, activeTimeEntry, getTotalTimeForTask } = useDataStore();
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -168,17 +168,20 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       // Load time from linked event if exists
       const linkedEvent = events.find(e => e.taskId === editTask.id);
       if (linkedEvent) {
+        setCreateAsEvent(true);
         const startDate = new Date(linkedEvent.startTime);
         const endDate = new Date(linkedEvent.endTime);
         setSkipAutoCalc(true); // Prevent auto-calculation from overwriting estimatedMinutes
         setStartTime(format(startDate, 'HH:mm'));
         setEndTime(format(endDate, 'HH:mm'));
       } else if (taskDueDate) {
+        setCreateAsEvent(false);
         const fallbackEnd = new Date(taskDueDate.getTime() + 60 * 60 * 1000);
         setSkipAutoCalc(true);
         setStartTime(format(taskDueDate, 'HH:mm'));
         setEndTime(format(fallbackEnd, 'HH:mm'));
       } else {
+        setCreateAsEvent(false);
         // Use default times if no linked event
         setStartTime('09:00');
         setEndTime('10:00');
@@ -254,9 +257,9 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       if (editTask) {
         await updateTask(editTask.id, taskData);
         
-        // Update linked event with new time/date if exists
+        // Update or create a linked event only if explicitly enabled.
         const linkedEvent = events.find(e => e.taskId === editTask.id);
-        if (linkedEvent && dueDate) {
+        if (createAsEvent && linkedEvent && dueDate) {
           const eventDate = dueDate;
           const startDateTime = new Date(`${eventDate}T${startTime}`);
           const endDateTime = new Date(`${eventDate}T${endTime}`);
@@ -267,7 +270,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             startTime: startDateTime,
             endTime: endDateTime,
           });
-        } else if (!linkedEvent && dueDate) {
+        } else if (createAsEvent && !linkedEvent && dueDate) {
           // Create new event if none exists
           const eventDate = dueDate;
           const startDateTime = new Date(`${eventDate}T${startTime}`);
@@ -283,11 +286,9 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
           });
         }
       } else {
-        await addTask(taskData);
+        const createdTask = await createTask(taskData);
 
-        // Bei neuen Tasks kann keine taskId verlinkt werden da async
-        // Das Event wird separat erstellt
-        if (dueDate) {
+        if (createAsEvent && dueDate) {
           const eventDate = dueDate;
           const startDateTime = new Date(`${eventDate}T${startTime}`);
           const endDateTime = new Date(`${eventDate}T${endTime}`);
@@ -298,6 +299,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             startTime: startDateTime,
             endTime: endDateTime,
             allDay: false,
+            taskId: createdTask.id,
           });
         }
       }

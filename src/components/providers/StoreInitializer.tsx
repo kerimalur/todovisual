@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDataStore } from '@/store';
-import { ReminderScheduler } from './ReminderScheduler';
+import { NotificationSettingsSync } from './NotificationSettingsSync';
 
 export function StoreInitializer({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -30,7 +30,7 @@ export function StoreInitializer({ children }: { children: React.ReactNode }) {
   return (
     <>
       {children}
-      <ReminderScheduler />
+      <NotificationSettingsSync />
     </>
   );
 }

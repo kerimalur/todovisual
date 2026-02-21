@@ -395,15 +395,37 @@ export default function SettingsPage() {
                           label="Neue Aufgabe"
                         />
                       </SettingRow>
+                      <SettingRow
+                        label="Text: Neue Aufgabe"
+                        description="Platzhalter: {taskTitle}, {startAt}, {project}, {priority}"
+                      >
+                        <textarea
+                          value={settings.whatsappTaskCreatedTemplate}
+                          onChange={(e) => handleChange('whatsappTaskCreatedTemplate', e.target.value)}
+                          rows={4}
+                          className="input w-80 resize-y"
+                        />
+                      </SettingRow>
 
                       <SettingRow
                         label="1h vor Start erinnern"
-                        description="Wenn eine Aufgabe geplant ist, kommt 1 Stunde vor Start eine WhatsApp"
+                        description="Wenn eine Aufgabe geplant ist, kommt 1 Stunde vor Start eine WhatsApp (serverseitig)"
                       >
                         <Toggle
                           enabled={settings.whatsappTaskStartReminderEnabled}
                           onChange={(v) => handleChange('whatsappTaskStartReminderEnabled', v)}
                           label="1h Start-Reminder"
+                        />
+                      </SettingRow>
+                      <SettingRow
+                        label="Text: 1h vor Start"
+                        description="Platzhalter: {taskTitle}, {startAt}, {project}, {priority}"
+                      >
+                        <textarea
+                          value={settings.whatsappTaskStartTemplate}
+                          onChange={(e) => handleChange('whatsappTaskStartTemplate', e.target.value)}
+                          rows={4}
+                          className="input w-80 resize-y"
                         />
                       </SettingRow>
 
@@ -428,6 +450,17 @@ export default function SettingsPage() {
                           />
                         </SettingRow>
                       )}
+                      <SettingRow
+                        label="Text: Wochenrueckblick"
+                        description="Platzhalter: {weekRange}, {review}"
+                      >
+                        <textarea
+                          value={settings.whatsappWeeklyReviewTemplate}
+                          onChange={(e) => handleChange('whatsappWeeklyReviewTemplate', e.target.value)}
+                          rows={5}
+                          className="input w-80 resize-y"
+                        />
+                      </SettingRow>
 
                       <div className="pt-3">
                         <button

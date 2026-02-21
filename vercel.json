@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reminders/task-start",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/reminders/weekly-review",
+      "schedule": "*/5 * * * *"
+    }
+  ]
+}
