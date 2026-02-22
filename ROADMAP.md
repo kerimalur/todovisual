@@ -1,4 +1,5 @@
-# Projekt Roadmap & Feature Ideen
+# Projekt Roadmap & Feature Idee
+
 
 Hier sind die geplanten hochmodernen Features zur Steigerung der Effizienz:
 
@@ -9,7 +10,7 @@ Hier sind die geplanten hochmodernen Features zur Steigerung der Effizienz:
 - **Nutzen:** Die App schlägt passende Aufgaben basierend auf der Tageszeit und dem typischen Energielevel des Nutzers vor (z.B. Fokus-Arbeit am Morgen, administrative Aufgaben im Nachmittagstief).
 
 ### 2. Interactive Goal Mapping (Idee #6)
-- **Konzept:** Eine visuelle Mind-Map-Integration, die tägliche Aufgaben mit langfristigen Zielen verknüpft.
+- **Konzept:** Eine visuellMind-Map-Integration, die tägliche Aufgaben mit langfristigen Zielen verknüpft.
 - **Nutzen:** Nutzer sehen grafisch, wie jede erledigte Aufgabe zum Erreichen eines größeren Ziels beiträgt, was die langfristige Motivation steigert.
 
 ### 3. Ambient Soundscapes im Zen-Mode (Idee #8)
