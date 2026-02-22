@@ -6,7 +6,7 @@
 alter table if exists public.goals
   add column if not exists smart_criteria jsonb not null default '{}'::jsonb,
   add column if not exists weekly_plan jsonb not null default '[]'::jsonb,
-  add column if not exists workflow_mode text not null default 'smart-hybri';
+  add column if not exists workflow_mode text not null default 'smart-hybrid';
 
 alter table if exists public.projects
   add column if not exists goal_ids uuid[] not null default '{}',
