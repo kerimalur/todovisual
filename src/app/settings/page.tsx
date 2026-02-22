@@ -3,10 +3,11 @@
 import { 
   User, Bell, Timer, Database, Download, Palette, Globe, Trash2, Check, 
   Clock, Volume2, ListTodo, Shield, Sparkles, Coffee,
-  Upload, Smartphone, Send
+  Upload, Smartphone, Send, PlusCircle
 } from 'lucide-react';
 import { useSettingsStore, useDataStore } from '@/store';
 import { useState } from 'react';
+import { WhatsAppCustomRule, WhatsAppCustomRuleTrigger } from '@/types';
 
 function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
@@ -48,6 +49,33 @@ function Section({ title, icon: Icon, children }: { title: string; icon: React.E
   );
 }
 
+const CUSTOM_RULE_TRIGGERS: Array<{ value: WhatsAppCustomRuleTrigger; label: string; description: string }> = [
+  {
+    value: 'task-created',
+    label: 'Neue Aufgabe',
+    description: 'Wird nach dem Erstellen einer Aufgabe ausgelöst.',
+  },
+  {
+    value: 'task-completed',
+    label: 'Aufgabe erledigt',
+    description: 'Wird ausgelöst, wenn du eine Aufgabe als erledigt markierst.',
+  },
+  {
+    value: 'event-attended',
+    label: 'Termin anwesend',
+    description: 'Wird ausgelöst, wenn ein Termin als anwesend markiert wird.',
+  },
+];
+
+const DEFAULT_CUSTOM_RULE_TEMPLATES: Record<WhatsAppCustomRuleTrigger, string> = {
+  'task-created':
+    'Custom Regel: Neue Aufgabe "{taskTitle}" geplant für {startAt}.',
+  'task-completed':
+    'Custom Regel: "{taskTitle}" wurde erledigt ({completedAt}).',
+  'event-attended':
+    'Custom Regel: Anwesenheit bei "{eventTitle}" bestätigt ({eventDate}, {eventStart}-{eventEnd}).',
+};
+
 export default function SettingsPage() {
   const { settings, updateSettings, resetSettings } = useSettingsStore();
   const { goals, projects, tasks, events, journalEntries, focusSessions } = useDataStore();
@@ -68,6 +96,41 @@ export default function SettingsPage() {
   const handleChange = <K extends keyof typeof settings>(key: K, value: typeof settings[K]) => {
     updateSettings({ [key]: value });
     showSavedFeedback();
+  };
+
+  const handleAddWhatsAppRule = () => {
+    const trigger: WhatsAppCustomRuleTrigger = 'task-created';
+    const newRule: WhatsAppCustomRule = {
+      id:
+        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+          ? crypto.randomUUID()
+          : `rule-${Date.now()}`,
+      name: `Neue Regel ${settings.whatsappCustomRules.length + 1}`,
+      enabled: true,
+      trigger,
+      template: DEFAULT_CUSTOM_RULE_TEMPLATES[trigger],
+    };
+    handleChange('whatsappCustomRules', [...settings.whatsappCustomRules, newRule]);
+  };
+
+  const handleUpdateWhatsAppRule = (
+    ruleId: string,
+    updates: Partial<Pick<WhatsAppCustomRule, 'name' | 'enabled' | 'trigger' | 'template'>>
+  ) => {
+    const nextRules = settings.whatsappCustomRules.map((rule) =>
+      rule.id === ruleId
+        ? {
+            ...rule,
+            ...updates,
+          }
+        : rule
+    );
+    handleChange('whatsappCustomRules', nextRules);
+  };
+
+  const handleDeleteWhatsAppRule = (ruleId: string) => {
+    const nextRules = settings.whatsappCustomRules.filter((rule) => rule.id !== ruleId);
+    handleChange('whatsappCustomRules', nextRules);
   };
 
   const handleExportData = () => {
@@ -381,13 +444,13 @@ export default function SettingsPage() {
                           value={settings.whatsappPhoneNumber}
                           onChange={(e) => handleChange('whatsappPhoneNumber', e.target.value)}
                           placeholder="+491234567890"
-                          className="input w-52"
+                          className="input w-full max-w-xs"
                         />
                       </SettingRow>
 
                       <SettingRow
                         label="Bei neuer Aufgabe erinnern"
-                        description="Bei jeder neu angelegten Aufgabe wird sofort eine kurze WhatsApp gesendet"
+                        description="Sofort nach dem Erstellen einer Aufgabe"
                       >
                         <Toggle
                           enabled={settings.whatsappTaskCreatedEnabled}
@@ -403,13 +466,35 @@ export default function SettingsPage() {
                           value={settings.whatsappTaskCreatedTemplate}
                           onChange={(e) => handleChange('whatsappTaskCreatedTemplate', e.target.value)}
                           rows={4}
-                          className="input w-80 resize-y"
+                          className="input w-full md:w-96 resize-y"
+                        />
+                      </SettingRow>
+
+                      <SettingRow
+                        label="Bei erledigter Aufgabe erinnern"
+                        description="Sofort wenn eine Aufgabe als erledigt markiert wird"
+                      >
+                        <Toggle
+                          enabled={settings.whatsappTaskCompletedEnabled}
+                          onChange={(v) => handleChange('whatsappTaskCompletedEnabled', v)}
+                          label="Aufgabe erledigt"
+                        />
+                      </SettingRow>
+                      <SettingRow
+                        label="Text: Aufgabe erledigt"
+                        description="Platzhalter: {taskTitle}, {completedAt}, {project}, {priority}"
+                      >
+                        <textarea
+                          value={settings.whatsappTaskCompletedTemplate}
+                          onChange={(e) => handleChange('whatsappTaskCompletedTemplate', e.target.value)}
+                          rows={4}
+                          className="input w-full md:w-96 resize-y"
                         />
                       </SettingRow>
 
                       <SettingRow
                         label="1h vor Start erinnern"
-                        description="Wenn eine Aufgabe geplant ist, kommt 1 Stunde vor Start eine WhatsApp (serverseitig)"
+                        description="Serverseitig 1 Stunde vor Startzeit"
                       >
                         <Toggle
                           enabled={settings.whatsappTaskStartReminderEnabled}
@@ -425,13 +510,13 @@ export default function SettingsPage() {
                           value={settings.whatsappTaskStartTemplate}
                           onChange={(e) => handleChange('whatsappTaskStartTemplate', e.target.value)}
                           rows={4}
-                          className="input w-80 resize-y"
+                          className="input w-full md:w-96 resize-y"
                         />
                       </SettingRow>
 
                       <SettingRow
                         label="Wochenrueckblick Sonntags"
-                        description="Sonntag um konfigurierter Zeit mit Rueckblick + Vorschau fuer Ziele"
+                        description="Rueckblick + Vorschau fuer Ziele"
                       >
                         <Toggle
                           enabled={settings.whatsappWeeklyReviewEnabled}
@@ -439,7 +524,6 @@ export default function SettingsPage() {
                           label="Wochenrueckblick"
                         />
                       </SettingRow>
-
                       {settings.whatsappWeeklyReviewEnabled && (
                         <SettingRow label="Zeit am Sonntag">
                           <input
@@ -458,11 +542,111 @@ export default function SettingsPage() {
                           value={settings.whatsappWeeklyReviewTemplate}
                           onChange={(e) => handleChange('whatsappWeeklyReviewTemplate', e.target.value)}
                           rows={5}
-                          className="input w-80 resize-y"
+                          className="input w-full md:w-96 resize-y"
                         />
                       </SettingRow>
 
-                      <div className="pt-3">
+                      <SettingRow
+                        label="Bei Termin-Anwesenheit erinnern"
+                        description="Wenn ein Termin als anwesend markiert wird"
+                      >
+                        <Toggle
+                          enabled={settings.whatsappEventAttendedEnabled}
+                          onChange={(v) => handleChange('whatsappEventAttendedEnabled', v)}
+                          label="Termin anwesend"
+                        />
+                      </SettingRow>
+                      <SettingRow
+                        label="Text: Termin anwesend"
+                        description="Platzhalter: {eventTitle}, {eventDate}, {eventStart}, {eventEnd}"
+                      >
+                        <textarea
+                          value={settings.whatsappEventAttendedTemplate}
+                          onChange={(e) => handleChange('whatsappEventAttendedTemplate', e.target.value)}
+                          rows={4}
+                          className="input w-full md:w-96 resize-y"
+                        />
+                      </SettingRow>
+
+                      <div className="mt-5 rounded-2xl border-2 border-emerald-200 bg-white p-4">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div>
+                            <p className="text-sm font-semibold text-emerald-800">Große Option: Eigene WhatsApp-Regeln</p>
+                            <p className="text-xs text-gray-600 mt-1">
+                              Erstelle beliebig viele eigene Nachrichten-Regeln direkt in der Software.
+                            </p>
+                          </div>
+                          <button
+                            onClick={handleAddWhatsAppRule}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
+                          >
+                            <PlusCircle size={14} />
+                            Regel hinzufügen
+                          </button>
+                        </div>
+
+                        {settings.whatsappCustomRules.length === 0 ? (
+                          <p className="text-xs text-gray-500 border border-dashed border-gray-200 rounded-lg p-3">
+                            Noch keine eigenen Regeln vorhanden.
+                          </p>
+                        ) : (
+                          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+                            {settings.whatsappCustomRules.map((rule) => (
+                              <div key={rule.id} className="rounded-xl border border-gray-200 p-3 bg-gray-50/50">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <input
+                                    value={rule.name}
+                                    onChange={(e) => handleUpdateWhatsAppRule(rule.id, { name: e.target.value })}
+                                    placeholder="Name der Regel"
+                                    className="input flex-1 min-w-[170px]"
+                                  />
+                                  <select
+                                    value={rule.trigger}
+                                    onChange={(e) => {
+                                      const trigger = e.target.value as WhatsAppCustomRuleTrigger;
+                                      handleUpdateWhatsAppRule(rule.id, {
+                                        trigger,
+                                        template: rule.template || DEFAULT_CUSTOM_RULE_TEMPLATES[trigger],
+                                      });
+                                    }}
+                                    className="select min-w-[165px]"
+                                    title="Trigger"
+                                  >
+                                    {CUSTOM_RULE_TRIGGERS.map((triggerOption) => (
+                                      <option key={triggerOption.value} value={triggerOption.value}>
+                                        {triggerOption.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  <Toggle
+                                    enabled={rule.enabled}
+                                    onChange={(enabled) => handleUpdateWhatsAppRule(rule.id, { enabled })}
+                                    label="Regel aktiv"
+                                  />
+                                  <button
+                                    onClick={() => handleDeleteWhatsAppRule(rule.id)}
+                                    className="px-2 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs hover:bg-red-50"
+                                  >
+                                    Entfernen
+                                  </button>
+                                </div>
+                                <p className="text-[11px] text-gray-500 mt-2">
+                                  {CUSTOM_RULE_TRIGGERS.find((option) => option.value === rule.trigger)?.description}
+                                </p>
+                                <textarea
+                                  value={rule.template}
+                                  onChange={(e) => handleUpdateWhatsAppRule(rule.id, { template: e.target.value })}
+                                  rows={4}
+                                  className="input w-full mt-2 resize-y"
+                                  placeholder="Eigene WhatsApp-Nachricht"
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-4">
                         <button
                           onClick={() => void handleSendTestWhatsApp()}
                           disabled={whatsappSending}

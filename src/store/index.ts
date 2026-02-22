@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { v4 as uuidv4 } from 'uuid';
-import { TimerState, ModalType } from '@/types';
+import { TimerState, ModalType, WhatsAppCustomRule } from '@/types';
 
 // ===== APP STATE STORE =====
 interface AppState {
@@ -207,12 +207,17 @@ interface UserSettings {
   whatsappRemindersEnabled: boolean;
   whatsappPhoneNumber: string;
   whatsappTaskCreatedEnabled: boolean;
+  whatsappTaskCompletedEnabled: boolean;
   whatsappTaskStartReminderEnabled: boolean;
   whatsappWeeklyReviewEnabled: boolean;
+  whatsappEventAttendedEnabled: boolean;
   whatsappWeeklyReviewTime: string;
   whatsappTaskCreatedTemplate: string;
+  whatsappTaskCompletedTemplate: string;
   whatsappTaskStartTemplate: string;
   whatsappWeeklyReviewTemplate: string;
+  whatsappEventAttendedTemplate: string;
+  whatsappCustomRules: WhatsAppCustomRule[];
 
   // Calendar
   weekStartsOnMonday: boolean;
@@ -269,15 +274,22 @@ const defaultSettings: UserSettings = {
   whatsappRemindersEnabled: false,
   whatsappPhoneNumber: '',
   whatsappTaskCreatedEnabled: true,
+  whatsappTaskCompletedEnabled: true,
   whatsappTaskStartReminderEnabled: true,
   whatsappWeeklyReviewEnabled: true,
+  whatsappEventAttendedEnabled: true,
   whatsappWeeklyReviewTime: '22:00',
   whatsappTaskCreatedTemplate:
     'Neue Aufgabe gespeichert: "{taskTitle}"\nStart: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
+  whatsappTaskCompletedTemplate:
+    'Aufgabe erledigt: "{taskTitle}"\nErledigt am: {completedAt}\nProjekt: {project}\nWichtigkeit: {priority}',
   whatsappTaskStartTemplate:
     'Start in 1 Stunde: "{taskTitle}"\nBeginn: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}',
   whatsappWeeklyReviewTemplate:
     'Wochenrueckblick ({weekRange})\n\n{review}',
+  whatsappEventAttendedTemplate:
+    'Anwesenheit bestaetigt: "{eventTitle}"\nZeit: {eventStart} - {eventEnd}\nDatum: {eventDate}',
+  whatsappCustomRules: [],
   weekStartsOnMonday: true,
   zenShowClock: true,
   zenShowStats: true,
@@ -305,7 +317,7 @@ export const useSettingsStore = create<SettingsStore>()(
     }),
     {
       name: 'settings-storage',
-      version: 3,
+      version: 4,
       merge: (persistedState, currentState) => {
         const typedPersistedState = persistedState as Partial<SettingsStore> | undefined;
         return {

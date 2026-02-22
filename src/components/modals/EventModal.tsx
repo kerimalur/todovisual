@@ -48,6 +48,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
   const [goalId, setGoalId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [attendanceSaving, setAttendanceSaving] = useState(false);
   
   // Time-Block specific
   const [linkedTaskId, setLinkedTaskId] = useState('');
@@ -65,7 +66,8 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       setStartTime(new Date(editEvent.startTime).toTimeString().slice(0, 5));
       setEndTime(new Date(editEvent.endTime).toTimeString().slice(0, 5));
       setAllDay(editEvent.allDay);
-      setLinkedTaskId(editEvent.linkedTaskId || '');
+      const legacyLinkedTaskId = editEvent.linkedTaskId || editEvent.taskId || '';
+      setLinkedTaskId(editEvent.isTimeBlock ? legacyLinkedTaskId : '');
       setBlockColor(editEvent.color || '#6366f1');
       setPriority('medium');
       setGoalId('');
@@ -88,6 +90,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       setLinkedTaskId('');
       setBlockColor('#6366f1');
     }
+    setAttendanceSaving(false);
   }, [editEvent, isOpen, preselectedDate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,32 +106,51 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
     const linkedTask = linkedTaskId ? tasks.find((t) => t.id === linkedTaskId) : null;
     const finalTitle = isTimeBlock && linkedTask ? `[Zeit] ${linkedTask.title}` : (isTimeBlock ? `[Zeit] ${title}` : title);
 
-    const eventData = {
-      title: finalTitle,
-      description: description || undefined,
-      startTime: startDateTime,
-      endTime: endDateTime,
-      allDay,
-      isTimeBlock,
-      linkedTaskId: linkedTaskId || undefined,
-      color: isTimeBlock ? blockColor : undefined,
-      eventType: isTimeBlock ? 'focus-time' as const : 'event' as const,
-    };
-
     try {
+      if (!isTimeBlock) {
+        const eventPayload = {
+          title: title.trim(),
+          description: description || undefined,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          allDay,
+          isTimeBlock: false,
+          taskId: undefined,
+          linkedTaskId: undefined,
+          color: undefined,
+          eventType: 'event' as const,
+          attendanceStatus: editEvent?.attendanceStatus || 'planned',
+          attendedAt: editEvent?.attendedAt,
+        };
+
+        if (editEvent) {
+          await updateEvent(editEvent.id, eventPayload);
+        } else {
+          await addEvent(eventPayload);
+        }
+        onClose();
+        return;
+      }
+
       if (editEvent) {
         const taskToUpdateId = linkedTaskId || editEvent.taskId || editEvent.linkedTaskId;
-
         await updateEvent(editEvent.id, {
-          ...eventData,
+          title: finalTitle,
+          description: description || undefined,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          allDay,
+          isTimeBlock: true,
           taskId: taskToUpdateId || undefined,
           linkedTaskId: taskToUpdateId || undefined,
+          color: blockColor,
+          eventType: 'focus-time',
         });
 
         if (taskToUpdateId) {
           await updateTask(taskToUpdateId, {
-            title: isTimeBlock ? title : `Termin: ${title}`,
-            description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
+            title,
+            description: description || `Fokuszeit: ${startTime} - ${endTime}`,
             dueDate: taskDueDate,
             priority,
             goalId: goalId || undefined,
@@ -138,25 +160,31 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       } else {
         let effectiveTaskId = linkedTaskId || undefined;
 
-        // For regular events and new time blocks, create and link a task.
-        if (!isTimeBlock || (isTimeBlock && !linkedTaskId && title.trim())) {
+        if (!linkedTaskId && title.trim()) {
           const createdTask = await createTask({
-            title: isTimeBlock ? title : `Termin: ${title}`,
-            description: description || (isTimeBlock ? `Fokuszeit: ${startTime} - ${endTime}` : `Termin: ${startTime} - ${endTime}`),
+            title,
+            description: description || `Fokuszeit: ${startTime} - ${endTime}`,
             dueDate: taskDueDate,
             priority,
             goalId: goalId || undefined,
             projectId: projectId || undefined,
             status: 'todo',
-            tags: isTimeBlock ? ['fokuszeit'] : ['termin'],
+            tags: ['fokuszeit'],
           });
           effectiveTaskId = createdTask.id;
         }
 
         await addEvent({
-          ...eventData,
+          title: finalTitle,
+          description: description || undefined,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          allDay,
+          isTimeBlock: true,
           taskId: effectiveTaskId,
           linkedTaskId: effectiveTaskId || linkedTaskId || undefined,
+          color: blockColor,
+          eventType: 'focus-time',
         });
       }
       onClose();
@@ -172,6 +200,35 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       onClose();
     }
   };
+
+  const canMarkAttendance =
+    !!editEvent &&
+    !editEvent.isTimeBlock &&
+    !editEvent.taskId &&
+    !editEvent.linkedTaskId;
+
+  const isAttended = editEvent?.attendanceStatus === 'attended';
+
+  const handleToggleAttendance = async () => {
+    if (!editEvent || !canMarkAttendance || attendanceSaving) return;
+
+    setAttendanceSaving(true);
+    try {
+      const nextAttended = !isAttended;
+      await updateEvent(editEvent.id, {
+        attendanceStatus: nextAttended ? 'attended' : 'planned',
+        attendedAt: nextAttended ? new Date() : null,
+      });
+      onClose();
+    } catch (error) {
+      console.error('Anwesenheitsstatus konnte nicht aktualisiert werden:', error);
+      alert('Anwesenheitsstatus konnte nicht gespeichert werden.');
+    } finally {
+      setAttendanceSaving(false);
+    }
+  };
+
+  const isSubmitDisabled = !date || (!(eventType === 'timeblock' && linkedTaskId) && !title.trim());
 
   return (
     <Modal 
@@ -321,6 +378,14 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
           </label>
         )}
 
+        {eventType === 'event' && (
+          <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2.5">
+            <p className="text-xs text-sky-700">
+              Termine bleiben eigenstaendige Kalender-Eintraege und werden nicht als Aufgabe angelegt.
+            </p>
+          </div>
+        )}
+
         {/* Time picker - always show for timeblocks, hide for allDay events */}
         {(eventType === 'timeblock' || !allDay) && (
           <div className="grid grid-cols-2 gap-4">
@@ -339,11 +404,11 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
           </div>
         )}
 
-        {/* Aufgaben-Eigenschaften - only for events or new timeblock tasks */}
-        {(eventType === 'event' || !linkedTaskId) && (
+        {/* Aufgaben-Eigenschaften - only for time blocks */}
+        {eventType === 'timeblock' && (
           <div className="pt-3 border-t border-gray-100">
             <p className="text-xs font-medium text-gray-600 mb-3">
-              {eventType === 'timeblock' ? '⏰ Fokuszeit-Eigenschaften' : '📋 Als Aufgabe verwalten'}
+              ⏰ Fokuszeit-Eigenschaften
             </p>
 
             {/* Priorität */}
@@ -423,17 +488,38 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
 
         {/* Actions */}
         <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          {/* Delete Button - only show when editing */}
-          {editEvent && !showDeleteConfirm && (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowDeleteConfirm(true)}
-              className="text-red-600 hover:bg-red-50"
-            >
-              <Trash2 size={16} />
-              Löschen
-            </Button>
+          {!showDeleteConfirm && (
+            <div className="flex items-center gap-2">
+              {canMarkAttendance && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => void handleToggleAttendance()}
+                  disabled={attendanceSaving}
+                  className={`${
+                    isAttended ? 'text-emerald-700 hover:bg-emerald-50' : 'text-sky-700 hover:bg-sky-50'
+                  }`}
+                >
+                  <CheckSquare size={16} />
+                  {attendanceSaving
+                    ? 'Speichere...'
+                    : isAttended
+                    ? 'Anwesenheit entfernen'
+                    : 'Als anwesend markieren'}
+                </Button>
+              )}
+              {editEvent && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 size={16} />
+                  Löschen
+                </Button>
+              )}
+            </div>
           )}
 
           {/* Delete Confirmation */}
@@ -465,8 +551,8 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
               <Button type="button" variant="ghost" onClick={onClose}>
                 Abbrechen
               </Button>
-              <Button type="submit" disabled={!title.trim() || !date}>
-                {editEvent ? 'Speichern' : 'Termin erstellen'}
+              <Button type="submit" disabled={isSubmitDisabled}>
+                {editEvent ? 'Speichern' : eventType === 'timeblock' ? 'Zeitblock erstellen' : 'Termin erstellen'}
               </Button>
             </div>
           )}

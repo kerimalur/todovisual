@@ -9,12 +9,17 @@ interface SyncNotificationSettingsBody {
   whatsappRemindersEnabled?: boolean;
   whatsappPhoneNumber?: string;
   whatsappTaskCreatedEnabled?: boolean;
+  whatsappTaskCompletedEnabled?: boolean;
   whatsappTaskStartReminderEnabled?: boolean;
   whatsappWeeklyReviewEnabled?: boolean;
+  whatsappEventAttendedEnabled?: boolean;
   whatsappWeeklyReviewTime?: string;
   whatsappTaskCreatedTemplate?: string;
+  whatsappTaskCompletedTemplate?: string;
   whatsappTaskStartTemplate?: string;
   whatsappWeeklyReviewTemplate?: string;
+  whatsappEventAttendedTemplate?: string;
+  whatsappCustomRules?: unknown;
   weekStartsOnMonday?: boolean;
   timezone?: string;
 }
@@ -45,11 +50,62 @@ const sanitizeTemplate = (value: unknown, fallback: string): string => {
   return normalized.slice(0, 1500);
 };
 
+const VALID_CUSTOM_RULE_TRIGGERS = ['task-created', 'task-completed', 'event-attended'] as const;
+type SanitizedCustomRule = {
+  id: string;
+  name: string;
+  enabled: boolean;
+  trigger: (typeof VALID_CUSTOM_RULE_TRIGGERS)[number];
+  template: string;
+};
+
+const sanitizeCustomRules = (value: unknown): SanitizedCustomRule[] => {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((rule, index) => {
+      if (!rule || typeof rule !== 'object') return null;
+      const candidate = rule as Record<string, unknown>;
+
+      const template =
+        typeof candidate.template === 'string' && candidate.template.trim()
+          ? candidate.template.trim().slice(0, 1500)
+          : '';
+      if (!template) return null;
+
+      const trigger =
+        typeof candidate.trigger === 'string' &&
+        VALID_CUSTOM_RULE_TRIGGERS.includes(candidate.trigger as (typeof VALID_CUSTOM_RULE_TRIGGERS)[number])
+          ? (candidate.trigger as (typeof VALID_CUSTOM_RULE_TRIGGERS)[number])
+          : null;
+      if (!trigger) return null;
+
+      return {
+        id:
+          typeof candidate.id === 'string' && candidate.id.trim()
+            ? candidate.id.trim().slice(0, 120)
+            : `rule-${index + 1}`,
+        name:
+          typeof candidate.name === 'string' && candidate.name.trim()
+            ? candidate.name.trim().slice(0, 80)
+            : `Regel ${index + 1}`,
+        enabled: typeof candidate.enabled === 'boolean' ? candidate.enabled : true,
+        trigger,
+        template,
+      };
+    })
+    .filter((rule): rule is SanitizedCustomRule => !!rule);
+};
+
 const DEFAULT_TASK_CREATED_TEMPLATE =
   'Neue Aufgabe gespeichert: "{taskTitle}"\nStart: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}';
+const DEFAULT_TASK_COMPLETED_TEMPLATE =
+  'Aufgabe erledigt: "{taskTitle}"\nErledigt am: {completedAt}\nProjekt: {project}\nWichtigkeit: {priority}';
 const DEFAULT_TASK_START_TEMPLATE =
   'Start in 1 Stunde: "{taskTitle}"\nBeginn: {startAt}\nProjekt: {project}\nWichtigkeit: {priority}';
 const DEFAULT_WEEKLY_TEMPLATE = 'Wochenrueckblick ({weekRange})\n\n{review}';
+const DEFAULT_EVENT_ATTENDED_TEMPLATE =
+  'Anwesenheit bestaetigt: "{eventTitle}"\nZeit: {eventStart} - {eventEnd}\nDatum: {eventDate}';
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,8 +140,10 @@ export async function POST(request: NextRequest) {
       whatsapp_reminders_enabled: coerceBoolean(body.whatsappRemindersEnabled, false),
       whatsapp_phone_number: normalizedPhoneNumber,
       whatsapp_task_created_enabled: coerceBoolean(body.whatsappTaskCreatedEnabled, true),
+      whatsapp_task_completed_enabled: coerceBoolean(body.whatsappTaskCompletedEnabled, true),
       whatsapp_task_start_reminder_enabled: coerceBoolean(body.whatsappTaskStartReminderEnabled, true),
       whatsapp_weekly_review_enabled: coerceBoolean(body.whatsappWeeklyReviewEnabled, true),
+      whatsapp_event_attended_enabled: coerceBoolean(body.whatsappEventAttendedEnabled, true),
       whatsapp_weekly_review_time: normalizeReminderTime(
         typeof body.whatsappWeeklyReviewTime === 'string' ? body.whatsappWeeklyReviewTime : '22:00',
         '22:00'
@@ -93,6 +151,10 @@ export async function POST(request: NextRequest) {
       whatsapp_task_created_template: sanitizeTemplate(
         body.whatsappTaskCreatedTemplate,
         DEFAULT_TASK_CREATED_TEMPLATE
+      ),
+      whatsapp_task_completed_template: sanitizeTemplate(
+        body.whatsappTaskCompletedTemplate,
+        DEFAULT_TASK_COMPLETED_TEMPLATE
       ),
       whatsapp_task_start_template: sanitizeTemplate(
         body.whatsappTaskStartTemplate,
@@ -102,6 +164,11 @@ export async function POST(request: NextRequest) {
         body.whatsappWeeklyReviewTemplate,
         DEFAULT_WEEKLY_TEMPLATE
       ),
+      whatsapp_event_attended_template: sanitizeTemplate(
+        body.whatsappEventAttendedTemplate,
+        DEFAULT_EVENT_ATTENDED_TEMPLATE
+      ),
+      whatsapp_custom_rules: sanitizeCustomRules(body.whatsappCustomRules),
       week_starts_on_monday: coerceBoolean(body.weekStartsOnMonday, true),
       timezone: sanitizeTimezone(body.timezone),
       updated_at: new Date().toISOString(),

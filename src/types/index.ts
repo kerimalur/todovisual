@@ -185,6 +185,18 @@ export interface CalendarEvent {
   googleEventId?: string; // ID vom Google Calendar Event
   isFromGoogleCalendar?: boolean;
   lastSyncedAt?: Date;
+  attendanceStatus?: 'planned' | 'attended';
+  attendedAt?: Date | null;
+}
+
+export type WhatsAppCustomRuleTrigger = 'task-created' | 'task-completed' | 'event-attended';
+
+export interface WhatsAppCustomRule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  trigger: WhatsAppCustomRuleTrigger;
+  template: string;
 }
 
 export interface DailyReflection {

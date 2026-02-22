@@ -168,6 +168,8 @@ CREATE TABLE IF NOT EXISTS public.calendar_events (
   google_event_id TEXT,
   is_from_google_calendar BOOLEAN DEFAULT FALSE,
   last_synced_at TIMESTAMP WITH TIME ZONE,
+  attendance_status VARCHAR(20) DEFAULT 'planned',
+  attended_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   INDEX idx_user_events (user_id),

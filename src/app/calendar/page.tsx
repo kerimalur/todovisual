@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Trash2, Calendar as CalendarIcon, Clock, CheckCircle2 } from 'lucide-react';
 import {
   addMinutes,
   addDays,
@@ -38,8 +38,9 @@ export default function CalendarPage() {
   const [quickTaskSaving, setQuickTaskSaving] = useState(false);
   const [replanBusy, setReplanBusy] = useState(false);
   const [replanMessage, setReplanMessage] = useState('');
+  const [attendanceBusyId, setAttendanceBusyId] = useState<string | null>(null);
 
-  const { tasks, events, deleteEvent, createTask, addEvent, rescheduleOverdueTasks } = useDataStore();
+  const { tasks, events, deleteEvent, createTask, addEvent, updateEvent, rescheduleOverdueTasks } = useDataStore();
   const { openTaskModal, openTaskDetailModal, openEventModal } = useModals();
 
   // Month view calculations
@@ -56,10 +57,50 @@ export default function CalendarPage() {
 
   // Day view - hours from 6:00 to 23:00
   const dayHours = Array.from({ length: 18 }, (_, i) => i + 6);
+  const activeTasks = useMemo(
+    () => tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived'),
+    [tasks]
+  );
+  const activeTaskMap = useMemo(() => {
+    const map = new Map<string, (typeof activeTasks)[number]>();
+    activeTasks.forEach((task) => map.set(task.id, task));
+    return map;
+  }, [activeTasks]);
+  const timedTaskEntries = useMemo(
+    () =>
+      events
+        .map((event) => {
+          const linkedTaskId = event.taskId || event.linkedTaskId;
+          if (!linkedTaskId) return null;
+          const task = activeTaskMap.get(linkedTaskId);
+          if (!task) return null;
+          return { event, task };
+        })
+        .filter(
+          (
+            entry
+          ): entry is { event: (typeof events)[number]; task: (typeof activeTasks)[number] } => !!entry
+        ),
+    [events, activeTaskMap]
+  );
+  const appointmentEvents = useMemo(
+    () => events.filter((event) => !event.taskId && !event.linkedTaskId && !event.isTimeBlock),
+    [events]
+  );
+  const visibleEvents = useMemo(
+    () => [...appointmentEvents, ...timedTaskEntries.map((entry) => entry.event)],
+    [appointmentEvents, timedTaskEntries]
+  );
+  const upcomingAppointments = useMemo(
+    () =>
+      appointmentEvents
+        .filter((event) => new Date(event.startTime) >= new Date())
+        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
+    [appointmentEvents]
+  );
   const todayStart = startOfDay(new Date());
-  const inboxCount = tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived' && !task.dueDate).length;
-  const overdueCount = tasks.filter((task) => {
-    if (task.status === 'completed' || task.status === 'archived') return false;
+  const inboxCount = activeTasks.filter((task) => !task.dueDate).length;
+  const overdueCount = activeTasks.filter((task) => {
     if (!task.dueDate) return false;
     return new Date(task.dueDate) < todayStart;
   }).length;
@@ -90,7 +131,7 @@ export default function CalendarPage() {
     if (overdueCount > 0) recommendations.push(`${overdueCount} überfällige Aufgaben heute automatisch neu planen.`);
     if (inboxCount > 0) recommendations.push(`${inboxCount} Inbox-Aufgaben in konkrete Zeitslots schieben.`);
     if (completionRate < 60 && plannedThisWeek.length >= 5) recommendations.push('Weniger parallel planen: maximal 3 Prioritäten pro Tag.');
-    if (events.filter((event) => new Date(event.startTime) >= now).length === 0) recommendations.push('Keine Zeitblöcke geplant: starte mit 2 Fokusblöcken für morgen.');
+    if (visibleEvents.filter((event) => new Date(event.startTime) >= now).length === 0) recommendations.push('Keine Zeitblöcke geplant: starte mit 2 Fokusblöcken für morgen.');
     if (recommendations.length === 0) recommendations.push('Wochenplan sieht stabil aus. Jetzt auf Konsistenz und Abschluss fokussieren.');
 
     return {
@@ -99,7 +140,7 @@ export default function CalendarPage() {
       completionRate,
       recommendations,
     };
-  }, [events, inboxCount, overdueCount, tasks]);
+  }, [inboxCount, overdueCount, tasks, visibleEvents]);
 
   // Navigation handlers
   const handlePrev = () => {
@@ -126,6 +167,21 @@ export default function CalendarPage() {
       setReplanMessage('Automatische Neuplanung fehlgeschlagen.');
     } finally {
       setReplanBusy(false);
+    }
+  };
+
+  const handleAttendanceToggle = async (eventId: string, nextAttended: boolean) => {
+    setAttendanceBusyId(eventId);
+    try {
+      await updateEvent(eventId, {
+        attendanceStatus: nextAttended ? 'attended' : 'planned',
+        attendedAt: nextAttended ? new Date() : null,
+      });
+    } catch (error) {
+      console.error('Anwesenheit konnte nicht gespeichert werden:', error);
+      alert('Anwesenheitsstatus konnte nicht gespeichert werden.');
+    } finally {
+      setAttendanceBusyId(null);
     }
   };
 
@@ -204,7 +260,7 @@ export default function CalendarPage() {
 
   // Get all events for a specific day (for positioning them with proper duration)
   const getEventsForDay = (date: Date) => {
-    return events.filter(e => {
+    return appointmentEvents.filter((e) => {
       const eventStart = new Date(e.startTime);
       return isSameDay(eventStart, date) && !e.allDay;
     });
@@ -212,13 +268,10 @@ export default function CalendarPage() {
 
   // Get tasks with time (those linked to events) for a specific day
   const getTimedTasksForDay = (date: Date) => {
-    return events.filter(e => {
-      const eventStart = new Date(e.startTime);
-      return isSameDay(eventStart, date) && !e.allDay && e.taskId;
-    }).map(event => {
-      const task = tasks.find(t => t.id === event.taskId);
-      return task ? { ...event, task } : null;
-    }).filter(Boolean);
+    return timedTaskEntries.filter(({ event }) => {
+      const eventStart = new Date(event.startTime);
+      return isSameDay(eventStart, date) && !event.allDay;
+    });
   };
 
   // Calculate event position and height based on start time and duration
@@ -246,12 +299,12 @@ export default function CalendarPage() {
   const getAllDayTasksForDate = (date: Date) => {
     // Get all event taskIds for this date
     const eventTaskIds = new Set(
-      events
-        .filter(e => e.taskId && isSameDay(new Date(e.startTime), date))
-        .map(e => e.taskId)
+      timedTaskEntries
+        .filter(({ event }) => isSameDay(new Date(event.startTime), date))
+        .map(({ task }) => task.id)
     );
 
-    return tasks.filter(t => {
+    return activeTasks.filter((t) => {
       if (!t.dueDate) return false;
       const taskDate = new Date(t.dueDate);
       // Exclude tasks that are already linked to an event on this day
@@ -286,7 +339,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto pb-24">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -394,16 +447,11 @@ export default function CalendarPage() {
               const isCurrentMonth = isSameMonth(date, currentDate);
               const isCurrentDay = isToday(date);
               
-              const dayEvents = events.filter(e => 
+              const dayEvents = appointmentEvents.filter((e) =>
                 isSameDay(new Date(e.startTime), date)
               );
-              
-              // Get taskIds that are linked to events on this day
-              const eventTaskIds = new Set(dayEvents.filter(e => e.taskId).map(e => e.taskId));
-              
-              // Only show tasks that are NOT linked to events (to avoid duplicates)
-              const dayTasks = tasks.filter(t => 
-                t.dueDate && isSameDay(new Date(t.dueDate), date) && !eventTaskIds.has(t.id)
+              const dayTasks = activeTasks.filter(
+                (t) => t.dueDate && isSameDay(new Date(t.dueDate), date)
               );
 
               return (
@@ -448,18 +496,13 @@ export default function CalendarPage() {
                       <CalendarItem
                         key={event.id}
                         className={`text-[10px] px-1.5 py-0.5 rounded truncate font-medium ${
-                          event.isTimeBlock
-                            ? 'border-l-2 bg-opacity-20'
-                            : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                          event.attendanceStatus === 'attended'
+                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                            : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
                         }`}
                         onClick={() => openEventModal(event)}
-                        style={event.isTimeBlock ? { 
-                          backgroundColor: `${event.color}20`,
-                          borderLeftColor: event.color,
-                          color: event.color 
-                        } : undefined}
                       >
-                        {event.isTimeBlock && <span className="mr-1">⏰</span>}
+                        {event.attendanceStatus === 'attended' && <span className="mr-1">✓</span>}
                         {!event.allDay && (
                           <span className="opacity-70 mr-1">
                             {format(new Date(event.startTime), 'HH:mm')}
@@ -474,9 +517,7 @@ export default function CalendarPage() {
                         key={task.id}
                         className={`
                           text-[10px] px-1.5 py-0.5 rounded truncate
-                          ${task.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-700 line-through opacity-60'
-                            : task.priority === 'urgent'
+                          ${task.priority === 'urgent'
                             ? 'bg-red-100 text-red-700'
                             : task.priority === 'high'
                             ? 'bg-amber-100 text-amber-700'
@@ -512,7 +553,7 @@ export default function CalendarPage() {
             </div>
             {weekDays.map((day) => {
               const allDayTasks = getAllDayTasksForDate(day);
-              const dayEvents = events.filter(e => isSameDay(new Date(e.startTime), day));
+              const dayEvents = appointmentEvents.filter((e) => isSameDay(new Date(e.startTime), day));
               return (
                 <div
                   key={day.toISOString()}
@@ -567,9 +608,7 @@ export default function CalendarPage() {
                       key={task.id}
                       className={`
                         text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate
-                        ${task.status === 'completed'
-                          ? 'bg-emerald-100 text-emerald-700 line-through'
-                          : task.priority === 'urgent'
+                        ${task.priority === 'urgent'
                           ? 'bg-red-100 text-red-700'
                           : task.priority === 'high'
                           ? 'bg-amber-100 text-amber-700'
@@ -624,18 +663,25 @@ export default function CalendarPage() {
                     {/* Render Events */}
                     {dayEvents.map((event) => {
                       const style = getEventStyle(event, dayHours[0]);
+                      const appointmentColorClass =
+                        event.attendanceStatus === 'attended'
+                          ? 'bg-emerald-100 text-emerald-700 border-l-emerald-500 hover:bg-emerald-200'
+                          : 'bg-violet-100 text-violet-700 border-l-violet-500 hover:bg-violet-200';
                       return (
                         <div
                           key={event.id}
                           className="absolute left-0 right-0 px-0.5 pointer-events-auto"
-                          style={style}
+                          style={{ ...style, touchAction: 'pan-y' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             openEventModal(event);
                           }}
                         >
-                          <div className="h-full px-1.5 py-1 rounded bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors cursor-pointer border-l-2 border-indigo-500 shadow-sm overflow-hidden">
-                            <div className="text-[10px] font-medium truncate">{event.title}</div>
+                          <div className={`h-full px-1.5 py-1 rounded transition-colors cursor-pointer border-l-2 shadow-sm overflow-hidden ${appointmentColorClass}`}>
+                            <div className="text-[10px] font-medium truncate">
+                              {event.attendanceStatus === 'attended' ? '✓ ' : ''}
+                              {event.title}
+                            </div>
                             {parseInt(style.height) > 30 && (
                               <div className="text-[9px] opacity-70 truncate">
                                 {format(new Date(event.startTime), 'HH:mm')}
@@ -647,10 +693,9 @@ export default function CalendarPage() {
                     })}
 
                     {/* Render Tasks with time */}
-                    {timedTasks.map((item: any) => {
-                      const style = getEventStyle(item, dayHours[0]);
+                    {timedTasks.map((item) => {
+                      const style = getEventStyle(item.event, dayHours[0]);
                       const task = item.task;
-                      const isCompleted = task.status === 'completed';
                       
                       const priorityColors: Record<string, string> = {
                         low: 'bg-gray-100 text-gray-700 border-l-gray-400',
@@ -658,26 +703,25 @@ export default function CalendarPage() {
                         high: 'bg-orange-100 text-orange-700 border-l-orange-500',
                         urgent: 'bg-red-100 text-red-700 border-l-red-500',
                       };
-                      const completedColor = 'bg-emerald-100 text-emerald-700 border-l-emerald-500';
-                      const colorClass = isCompleted ? completedColor : (priorityColors[task.priority] || priorityColors['medium']);
+                      const colorClass = priorityColors[task.priority] || priorityColors['medium'];
 
                       return (
                         <div
-                          key={task.id}
+                          key={`${task.id}-${item.event.id}`}
                           className="absolute left-0 right-0 px-0.5 pointer-events-auto"
-                          style={style}
+                          style={{ ...style, touchAction: 'pan-y' }}
                           onClick={(e) => {
                             e.stopPropagation();
                             openTaskDetailModal(task);
                           }}
                         >
-                          <div className={`h-full px-1.5 py-1 rounded ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-2 shadow-sm overflow-hidden ${isCompleted ? 'opacity-70' : ''}`}>
-                            <div className={`text-[10px] font-medium truncate ${isCompleted ? 'line-through' : ''}`}>
+                          <div className={`h-full px-1.5 py-1 rounded ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-2 shadow-sm overflow-hidden`}>
+                            <div className="text-[10px] font-medium truncate">
                               {task.title}
                             </div>
                             {parseInt(style.height) > 30 && (
                               <div className="text-[9px] opacity-70 truncate">
-                                {format(new Date(item.startTime), 'HH:mm')}
+                                {format(new Date(item.event.startTime), 'HH:mm')}
                               </div>
                             )}
                           </div>
@@ -748,9 +792,7 @@ export default function CalendarPage() {
                         key={task.id}
                         className={`
                           flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors
-                          ${task.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : task.priority === 'urgent'
+                          ${task.priority === 'urgent'
                             ? 'bg-red-100 text-red-700 hover:bg-red-200'
                             : task.priority === 'high'
                             ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -761,11 +803,10 @@ export default function CalendarPage() {
                       >
                         <div className={`
                           w-2 h-2 rounded-full
-                          ${task.status === 'completed' ? 'bg-emerald-500' :
-                            task.priority === 'urgent' ? 'bg-red-500' :
+                          ${task.priority === 'urgent' ? 'bg-red-500' :
                             task.priority === 'high' ? 'bg-amber-500' : 'bg-blue-500'}
                         `} />
-                        <span className={task.status === 'completed' ? 'line-through' : ''}>{task.title}</span>
+                        <span>{task.title}</span>
                       </CalendarItem>
                     ))}
                   </div>
@@ -800,18 +841,25 @@ export default function CalendarPage() {
               {/* Render Events */}
               {getEventsForDay(currentDate).map((event) => {
                 const style = getEventStyle(event, dayHours[0]);
+                const appointmentColorClass =
+                  event.attendanceStatus === 'attended'
+                    ? 'bg-emerald-100 text-emerald-700 border-l-emerald-500 hover:bg-emerald-200'
+                    : 'bg-violet-100 text-violet-700 border-l-violet-500 hover:bg-violet-200';
                 return (
                   <div
                     key={event.id}
                     className="absolute left-0 right-0 px-2 pointer-events-auto"
-                    style={style}
+                    style={{ ...style, touchAction: 'pan-y' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openEventModal(event);
                     }}
                   >
-                    <div className="h-full px-3 py-1.5 rounded-lg bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors cursor-pointer border-l-4 border-indigo-500 shadow-sm overflow-hidden">
-                      <div className="font-medium text-sm truncate">{event.title}</div>
+                    <div className={`h-full px-3 py-1.5 rounded-lg transition-colors cursor-pointer border-l-4 shadow-sm overflow-hidden ${appointmentColorClass}`}>
+                      <div className="font-medium text-sm truncate">
+                        {event.attendanceStatus === 'attended' ? '✓ ' : ''}
+                        {event.title}
+                      </div>
                       <div className="text-xs opacity-70 truncate">
                         {format(new Date(event.startTime), 'HH:mm')} - {format(new Date(event.endTime), 'HH:mm')}
                       </div>
@@ -821,37 +869,34 @@ export default function CalendarPage() {
               })}
 
               {/* Render Tasks with time */}
-              {getTimedTasksForDay(currentDate).map((item: any) => {
-                const style = getEventStyle(item, dayHours[0]);
+              {getTimedTasksForDay(currentDate).map((item) => {
+                const style = getEventStyle(item.event, dayHours[0]);
                 const task = item.task;
-                const isCompleted = task.status === 'completed';
                 
-                // Erledigte Aufgaben in grün, sonst nach Priorität
                 const priorityColors: Record<string, string> = {
                   low: 'bg-gray-100 text-gray-700 border-l-gray-400',
                   medium: 'bg-blue-100 text-blue-700 border-l-blue-500',
                   high: 'bg-orange-100 text-orange-700 border-l-orange-500',
                   urgent: 'bg-red-100 text-red-700 border-l-red-500',
                 };
-                const completedColor = 'bg-emerald-100 text-emerald-700 border-l-emerald-500';
-                const colorClass = isCompleted ? completedColor : (priorityColors[task.priority] || priorityColors['medium']);
+                const colorClass = priorityColors[task.priority] || priorityColors['medium'];
 
                 return (
                   <div
-                    key={task.id}
+                    key={`${task.id}-${item.event.id}`}
                     className="absolute left-0 right-0 px-2 pointer-events-auto"
-                    style={style}
+                    style={{ ...style, touchAction: 'pan-y' }}
                     onClick={(e) => {
                       e.stopPropagation();
                       openTaskDetailModal(task);
                     }}
                   >
-                    <div className={`h-full px-3 py-1.5 rounded-lg ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-4 shadow-sm overflow-hidden ${isCompleted ? 'opacity-70' : ''}`}>
-                      <div className={`font-medium text-sm truncate ${isCompleted ? 'line-through' : ''}`}>
+                    <div className={`h-full px-3 py-1.5 rounded-lg ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-4 shadow-sm overflow-hidden`}>
+                      <div className="font-medium text-sm truncate">
                         {task.title}
                       </div>
                       <div className="text-xs opacity-70 truncate">
-                        {format(new Date(item.startTime), 'HH:mm')} - {format(new Date(item.endTime), 'HH:mm')}
+                        {format(new Date(item.event.startTime), 'HH:mm')} - {format(new Date(item.event.endTime), 'HH:mm')}
                       </div>
                     </div>
                   </div>
@@ -892,25 +937,23 @@ export default function CalendarPage() {
           Kommende Termine
         </h2>
         
-        {events.length === 0 ? (
+        {upcomingAppointments.length === 0 ? (
           <div className="p-8 border border-dashed border-gray-200 rounded-xl text-center bg-white/50">
             <CalendarIcon size={32} className="mx-auto text-gray-300 mb-2" />
             <p className="text-sm text-gray-500">Keine Termine geplant</p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-xl bg-white divide-y divide-gray-100 shadow-sm">
-            {events
-              .filter(e => new Date(e.startTime) >= new Date())
-              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-              .slice(0, 5)
-              .map((event) => (
+          <div className="border border-gray-200 rounded-xl bg-white shadow-sm max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+            {upcomingAppointments.map((event) => (
                 <div 
                   key={event.id}
                   className="group flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer"
                   onClick={() => openEventModal(event)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <div className={`w-2 h-2 rounded-full ${
+                      event.attendanceStatus === 'attended' ? 'bg-emerald-500' : 'bg-violet-500'
+                    }`} />
                     <div>
                       <p className="text-sm font-medium text-gray-800">{event.title}</p>
                       <p className="text-xs text-gray-500">
@@ -920,16 +963,38 @@ export default function CalendarPage() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowDeleteConfirm(event.id);
-                    }}
-                    className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-lg transition-all"
-                    title="Löschen"
-                  >
-                    <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void handleAttendanceToggle(event.id, event.attendanceStatus !== 'attended');
+                      }}
+                      disabled={attendanceBusyId === event.id}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                        event.attendanceStatus === 'attended'
+                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                          : 'bg-sky-100 text-sky-700 hover:bg-sky-200'
+                      } disabled:opacity-60 disabled:cursor-not-allowed`}
+                      title="Anwesenheitsstatus setzen"
+                    >
+                      <CheckCircle2 size={12} />
+                      {attendanceBusyId === event.id
+                        ? 'Speichere...'
+                        : event.attendanceStatus === 'attended'
+                        ? 'Anwesend'
+                        : 'Anwesenheit'}
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDeleteConfirm(event.id);
+                      }}
+                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-lg transition-all"
+                      title="Löschen"
+                    >
+                      <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
+                    </button>
+                  </div>
                 </div>
               ))}
           </div>

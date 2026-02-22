@@ -13,7 +13,8 @@ import {
   Tag,
   Note,
   TimeEntry,
-  BrainstormSession
+  BrainstormSession,
+  WhatsAppCustomRuleTrigger,
 } from '@/types';
 import { supabaseService, TABLES } from '@/lib/supabaseService';
 import { addDays, format, isSameDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
@@ -220,46 +221,248 @@ const markTaskCreatedAsSent = (task: Task): void => {
   }
 };
 
+const TASK_PRIORITY_LABELS: Record<Task['priority'], string> = {
+  low: 'Niedrig',
+  medium: 'Mittel',
+  high: 'Hoch',
+  urgent: 'Dringend',
+};
+
+const DEFAULT_TASK_COMPLETED_TEMPLATE =
+  'Aufgabe erledigt: "{taskTitle}"\nErledigt am: {completedAt}\nProjekt: {project}\nWichtigkeit: {priority}';
+const DEFAULT_EVENT_ATTENDED_TEMPLATE =
+  'Anwesenheit bestaetigt: "{eventTitle}"\nZeit: {eventStart} - {eventEnd}\nDatum: {eventDate}';
+
+const formatDateTimeLabel = (value: Date | string | undefined | null): string => {
+  if (!value) return 'Nicht geplant';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Nicht geplant';
+  return `${parsed.toLocaleString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })} Uhr`;
+};
+
+const formatDateLabel = (value: Date | string | undefined | null): string => {
+  if (!value) return 'Unbekannt';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Unbekannt';
+  return parsed.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+};
+
+const applyTemplate = (template: string, values: Record<string, string>): string =>
+  template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_, key: string) => values[key] || '');
+
+const sendDirectWhatsAppMessage = async (phoneNumber: string, message: string): Promise<boolean> => {
+  const sanitizedMessage = message.trim();
+  if (!sanitizedMessage) return false;
+
+  const response = await fetch('/api/reminders/whatsapp/test', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      phoneNumber,
+      message: sanitizedMessage,
+    }),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(result?.error || 'WhatsApp Nachricht konnte nicht gesendet werden.');
+  }
+
+  return true;
+};
+
+const runCustomWhatsAppRules = async (
+  trigger: WhatsAppCustomRuleTrigger,
+  phoneNumber: string,
+  values: Record<string, string>
+): Promise<number> => {
+  const preferences = getNotificationPreferences();
+  if (!preferences.whatsappRemindersEnabled) return 0;
+
+  const rules = preferences.whatsappCustomRules.filter(
+    (rule) => rule.enabled && rule.trigger === trigger && rule.template.trim()
+  );
+  if (rules.length === 0) return 0;
+
+  const result = await Promise.allSettled(
+    rules.map((rule) => sendDirectWhatsAppMessage(phoneNumber, applyTemplate(rule.template, values)))
+  );
+
+  return result.reduce((count, entry) => {
+    if (entry.status === 'fulfilled' && entry.value) {
+      return count + 1;
+    }
+    if (entry.status === 'rejected') {
+      console.error('Custom WhatsApp rule failed:', entry.reason);
+    }
+    return count;
+  }, 0);
+};
+
 const sendTaskCreatedWhatsAppReminder = async (task: Task, projectTitle: string): Promise<void> => {
   if (typeof window === 'undefined') return;
 
   const preferences = getNotificationPreferences();
-  if (!preferences.whatsappRemindersEnabled || !preferences.whatsappTaskCreatedEnabled) return;
+  if (!preferences.whatsappRemindersEnabled) return;
 
   const phoneNumber = preferences.whatsappPhoneNumber.trim();
   const taskTitle = task.title.trim();
   if (!phoneNumber || !taskTitle) return;
   if (hasTaskCreatedAlreadySent(task)) return;
+
   const taskStartDate = task.dueDate ? new Date(task.dueDate) : null;
   const taskStartAt =
     taskStartDate && !Number.isNaN(taskStartDate.getTime()) ? taskStartDate.toISOString() : null;
+  const priorityLabel = TASK_PRIORITY_LABELS[task.priority] || 'Mittel';
+  const templateValues = {
+    taskTitle,
+    startAt: formatDateTimeLabel(taskStartDate),
+    completedAt: '',
+    project: projectTitle,
+    priority: priorityLabel,
+    eventTitle: '',
+    eventStart: '',
+    eventEnd: '',
+    eventDate: '',
+  };
+
+  let sentSomething = false;
+
+  if (preferences.whatsappTaskCreatedEnabled) {
+    try {
+      const response = await fetch('/api/reminders/whatsapp/task-created', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber,
+          taskTitle,
+          userId: task.userId,
+          taskId: task.id,
+          taskStartAt,
+          priority: task.priority,
+          projectTitle,
+          messageTemplate: preferences.whatsappTaskCreatedTemplate,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        }),
+      });
+
+      if (!response.ok) {
+        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(result?.error || 'Task WhatsApp konnte nicht gesendet werden.');
+      }
+      sentSomething = true;
+    } catch (error) {
+      console.error('Failed to send task-created WhatsApp reminder:', error);
+    }
+  }
 
   try {
-    const response = await fetch('/api/reminders/whatsapp/task-created', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        phoneNumber,
-        taskTitle,
-        userId: task.userId,
-        taskId: task.id,
-        taskStartAt,
-        priority: task.priority,
-        projectTitle,
-        messageTemplate: preferences.whatsappTaskCreatedTemplate,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-      }),
-    });
-
-    if (!response.ok) {
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
-      throw new Error(result?.error || 'Task WhatsApp konnte nicht gesendet werden.');
+    const customSent = await runCustomWhatsAppRules('task-created', phoneNumber, templateValues);
+    if (customSent > 0) {
+      sentSomething = true;
     }
-    markTaskCreatedAsSent(task);
   } catch (error) {
-    console.error('Failed to send task-created WhatsApp reminder:', error);
+    console.error('Failed to send custom task-created WhatsApp reminders:', error);
+  }
+
+  if (sentSomething) {
+    markTaskCreatedAsSent(task);
+  }
+};
+
+const sendTaskCompletedWhatsAppReminder = async (task: Task, projectTitle: string): Promise<void> => {
+  if (typeof window === 'undefined') return;
+
+  const preferences = getNotificationPreferences();
+  if (!preferences.whatsappRemindersEnabled) return;
+
+  const phoneNumber = preferences.whatsappPhoneNumber.trim();
+  if (!phoneNumber) return;
+
+  const taskTitle = task.title.trim();
+  const completedAt = task.completedAt ? new Date(task.completedAt) : new Date();
+  const priorityLabel = TASK_PRIORITY_LABELS[task.priority] || 'Mittel';
+  const templateValues = {
+    taskTitle,
+    startAt: formatDateTimeLabel(task.dueDate),
+    completedAt: formatDateTimeLabel(completedAt),
+    project: projectTitle,
+    priority: priorityLabel,
+    eventTitle: '',
+    eventStart: '',
+    eventEnd: '',
+    eventDate: '',
+  };
+
+  if (preferences.whatsappTaskCompletedEnabled) {
+    try {
+      const rendered = applyTemplate(preferences.whatsappTaskCompletedTemplate, templateValues).trim();
+      const fallback = applyTemplate(DEFAULT_TASK_COMPLETED_TEMPLATE, templateValues).trim();
+      await sendDirectWhatsAppMessage(phoneNumber, rendered || fallback);
+    } catch (error) {
+      console.error('Failed to send task-completed WhatsApp reminder:', error);
+    }
+  }
+
+  try {
+    await runCustomWhatsAppRules('task-completed', phoneNumber, templateValues);
+  } catch (error) {
+    console.error('Failed to send custom task-completed WhatsApp reminders:', error);
+  }
+};
+
+const sendEventAttendedWhatsAppReminder = async (event: CalendarEvent): Promise<void> => {
+  if (typeof window === 'undefined') return;
+
+  const preferences = getNotificationPreferences();
+  if (!preferences.whatsappRemindersEnabled) return;
+
+  const phoneNumber = preferences.whatsappPhoneNumber.trim();
+  if (!phoneNumber) return;
+
+  const start = new Date(event.startTime);
+  const end = new Date(event.endTime);
+  const templateValues = {
+    taskTitle: '',
+    startAt: '',
+    completedAt: '',
+    project: '',
+    priority: '',
+    eventTitle: event.title || 'Termin',
+    eventStart: format(start, 'HH:mm'),
+    eventEnd: format(end, 'HH:mm'),
+    eventDate: formatDateLabel(start),
+  };
+
+  if (preferences.whatsappEventAttendedEnabled) {
+    try {
+      const rendered = applyTemplate(preferences.whatsappEventAttendedTemplate, templateValues).trim();
+      const fallback = applyTemplate(DEFAULT_EVENT_ATTENDED_TEMPLATE, templateValues).trim();
+      await sendDirectWhatsAppMessage(phoneNumber, rendered || fallback);
+    } catch (error) {
+      console.error('Failed to send event-attended WhatsApp reminder:', error);
+    }
+  }
+
+  try {
+    await runCustomWhatsAppRules('event-attended', phoneNumber, templateValues);
+  } catch (error) {
+    console.error('Failed to send custom event-attended WhatsApp reminders:', error);
   }
 };
 
@@ -536,6 +739,15 @@ export const useDataStore = create<DataStore>((set, get) => ({
         completed_at: completedAt,
         updated_at: new Date(),
       });
+      if (previousTask) {
+        const completedTask: Task = {
+          ...previousTask,
+          status: 'completed',
+          completedAt,
+        };
+        const projectTitle = resolveTaskProjectTitle(completedTask, get().projects);
+        void sendTaskCompletedWhatsAppReminder(completedTask, projectTitle);
+      }
     } catch (error) {
       console.error('Failed to complete task:', error);
       if (previousTask) {
@@ -1053,6 +1265,20 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
     try {
       await supabaseService.update(TABLES.EVENTS, id, updateData);
+
+      if (previousEvent && updates.attendanceStatus === 'attended' && previousEvent.attendanceStatus !== 'attended') {
+        const updatedEvent: CalendarEvent = {
+          ...previousEvent,
+          ...updates,
+        };
+        const isExplicitAppointment =
+          !updatedEvent.isTimeBlock &&
+          !updatedEvent.taskId &&
+          !updatedEvent.linkedTaskId;
+        if (isExplicitAppointment) {
+          void sendEventAttendedWhatsAppReminder(updatedEvent);
+        }
+      }
     } catch (error) {
       console.error('Failed to update event:', error);
       if (previousEvent) {
