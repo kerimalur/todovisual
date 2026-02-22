@@ -18,7 +18,7 @@ import {
   Command
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAppStore, useDataStore } from '@/store';
+import { useAppStore, useDataStore, useSettingsStore } from '@/store';
 
 interface CommandItem {
   id: string;
@@ -43,6 +43,7 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
   const router = useRouter();
   const { toggleZenMode } = useAppStore();
   const { tasks, addTask } = useDataStore();
+  const settings = useSettingsStore((state) => state.settings);
 
   // Quick add detection - if query starts with "+" create task directly
   const isQuickAdd = query.startsWith('+');
@@ -205,11 +206,13 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
       e.preventDefault();
       if (isQuickAdd && quickAddTitle) {
         // Quick add task
+        const configuredTag = settings.quickCaptureDefaultTag.trim();
+        const tags = configuredTag ? [configuredTag] : [];
         addTask({
           title: quickAddTitle,
-          priority: 'medium',
+          priority: settings.quickCaptureDefaultPriority,
           status: 'todo',
-          tags: [],
+          tags,
         });
         setQuery('');
         setIsOpen(false);
@@ -217,7 +220,15 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
         items[selectedIndex].action();
       }
     }
-  }, [filteredCommands, selectedIndex, isQuickAdd, quickAddTitle, addTask]);
+  }, [
+    filteredCommands,
+    selectedIndex,
+    isQuickAdd,
+    quickAddTitle,
+    addTask,
+    settings.quickCaptureDefaultPriority,
+    settings.quickCaptureDefaultTag,
+  ]);
 
   // Reset selected index when query changes
   useEffect(() => {

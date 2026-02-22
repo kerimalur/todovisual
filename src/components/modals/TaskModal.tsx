@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { parse, format } from 'date-fns';
 import { Modal, Input, Textarea, Select, Button } from '../ui/Modal';
-import { useDataStore, useAppStore } from '@/store';
+import { useDataStore, useSettingsStore } from '@/store';
 import { Task, TaskImpact } from '@/types';
 import { Target, Zap, Clock, AlertTriangle, Coffee, Sparkles, Calendar, Tag, FolderKanban, Timer, ChevronDown, ChevronUp, CheckCircle2, Trash2, Plus, X, ListChecks, Repeat, Play, Square } from 'lucide-react';
 
@@ -71,11 +71,12 @@ const priorityOptions = [
 
 export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
   const { createTask, updateTask, deleteTask, addEvent, updateEvent, events, goals, projects, tags: allTags, addTag, startTimeTracking, stopTimeTracking, activeTimeEntry, getTotalTimeForTask } = useDataStore();
+  const settings = useSettingsStore((state) => state.settings);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
-  const [priority, setPriority] = useState<Task['priority']>('medium');
+  const [priority, setPriority] = useState<Task['priority']>(settings.defaultTaskPriority);
   const [goalIds, setGoalIds] = useState<string[]>([]);
   const [projectIds, setProjectIds] = useState<string[]>([]);
   const [estimatedMinutes, setEstimatedMinutes] = useState('');
@@ -191,7 +192,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       setTitle('');
       setDescription('');
       setDueDate(format(new Date(), 'yyyy-MM-dd'));
-      setPriority('medium');
+      setPriority(settings.defaultTaskPriority);
       setGoalIds([]);
       setProjectIds([]);
       setEstimatedMinutes('');
@@ -212,7 +213,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
       setShowNewTag(false);
       setNewTagName('');
     }
-  }, [editTask, isOpen, events]);
+  }, [editTask, isOpen, events, settings.defaultTaskPriority]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

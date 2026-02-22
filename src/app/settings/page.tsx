@@ -304,6 +304,60 @@ export default function SettingsPage() {
                   className="input w-full max-w-sm"
                 />
               </div>
+              <div className="py-3">
+                <label className="block text-xs font-medium text-[#9b9a97] mb-2">Persoenliches Motto</label>
+                <input
+                  type="text"
+                  value={settings.personalMotto}
+                  onChange={(e) => handleChange('personalMotto', e.target.value)}
+                  placeholder="Was soll dich taeglich erinnern?"
+                  className="input w-full max-w-xl"
+                />
+                <p className="text-xs text-[#9b9a97] mt-1">Wird auf dem Cockpit und im Zen Modus angezeigt</p>
+              </div>
+            </Section>
+
+            {/* Personalization */}
+            <Section title="Persoenliche Experience" icon={Sparkles}>
+              <SettingRow label="Begruessungsstil" description="Wie dich Dashboard und Zen Modus ansprechen">
+                <select
+                  value={settings.greetingStyle}
+                  onChange={(e) =>
+                    handleChange('greetingStyle', e.target.value as 'classic' | 'direct' | 'motivational')
+                  }
+                  className="select"
+                  title="Begruessungsstil"
+                >
+                  <option value="classic">Klassisch</option>
+                  <option value="direct">Direkt</option>
+                  <option value="motivational">Motivierend</option>
+                </select>
+              </SettingRow>
+              <SettingRow label="Tagesziel (Aufgaben)" description="Wird als Ziel-Fortschritt auf dem Cockpit gezeigt">
+                <input
+                  type="number"
+                  value={settings.dailyTaskGoal}
+                  onChange={(e) =>
+                    handleChange('dailyTaskGoal', Math.min(30, Math.max(1, parseInt(e.target.value, 10) || 1)))
+                  }
+                  min={1}
+                  max={30}
+                  className="input w-20"
+                />
+              </SettingRow>
+              <SettingRow label="Dashboard Dichte" description="Mehr Infos oder mehr Ruhe auf dem Cockpit">
+                <select
+                  value={settings.dashboardDensity}
+                  onChange={(e) =>
+                    handleChange('dashboardDensity', e.target.value as 'comfortable' | 'compact')
+                  }
+                  className="select"
+                  title="Dashboard Dichte"
+                >
+                  <option value="comfortable">Komfortabel</option>
+                  <option value="compact">Kompakt</option>
+                </select>
+              </SettingRow>
             </Section>
 
             {/* Language */}
@@ -858,6 +912,48 @@ export default function SettingsPage() {
                   enabled={settings.showTaskDescriptions}
                   onChange={(v) => handleChange('showTaskDescriptions', v)}
                   label="Beschreibungen"
+                />
+              </SettingRow>
+            </Section>
+            {/* Quick Capture */}
+            <Section title="Quick Capture" icon={PlusCircle}>
+              <SettingRow
+                label="Platzhalter im Schnellfeld"
+                description="Text im FAB-Schnellerfassen Feld"
+              >
+                <input
+                  type="text"
+                  value={settings.quickCapturePlaceholder}
+                  onChange={(e) => handleChange('quickCapturePlaceholder', e.target.value)}
+                  className="input w-full max-w-sm"
+                  placeholder="Aufgabe schnell notieren..."
+                />
+              </SettingRow>
+              <SettingRow label="Standard Prioritaet" description="Fuer neue Quick-Capture Aufgaben">
+                <select
+                  value={settings.quickCaptureDefaultPriority}
+                  onChange={(e) =>
+                    handleChange(
+                      'quickCaptureDefaultPriority',
+                      e.target.value as 'low' | 'medium' | 'high' | 'urgent'
+                    )
+                  }
+                  className="select"
+                  title="Quick-Capture Prioritaet"
+                >
+                  <option value="low">Niedrig</option>
+                  <option value="medium">Mittel</option>
+                  <option value="high">Hoch</option>
+                  <option value="urgent">Dringend</option>
+                </select>
+              </SettingRow>
+              <SettingRow label="Standard Tag" description="Wird bei Quick Capture automatisch angehaengt">
+                <input
+                  type="text"
+                  value={settings.quickCaptureDefaultTag}
+                  onChange={(e) => handleChange('quickCaptureDefaultTag', e.target.value)}
+                  className="input w-56"
+                  placeholder="quick-capture"
                 />
               </SettingRow>
             </Section>

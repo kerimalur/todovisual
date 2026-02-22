@@ -173,11 +173,14 @@ interface UserSettings {
   // Profile
   name: string;
   email: string;
+  greetingStyle: 'classic' | 'direct' | 'motivational';
+  personalMotto: string;
 
   // Appearance
   theme: 'light' | 'dark' | 'system';
   accentColor: string;
   compactMode: boolean;
+  dashboardDensity: 'comfortable' | 'compact';
 
   // Productivity / Timer
   pomodoroLength: number;
@@ -229,9 +232,13 @@ interface UserSettings {
   zenBackgroundStyle: 'solid' | 'gradient' | 'animated';
 
   // Tasks
+  dailyTaskGoal: number;
   defaultTaskPriority: 'low' | 'medium' | 'high';
   showCompletedTasks: boolean;
   showTaskDescriptions: boolean;
+  quickCapturePlaceholder: string;
+  quickCaptureDefaultPriority: 'low' | 'medium' | 'high' | 'urgent';
+  quickCaptureDefaultTag: string;
 
   // Privacy
   language: 'de' | 'en';
@@ -248,9 +255,12 @@ interface SettingsStore {
 const defaultSettings: UserSettings = {
   name: '',
   email: '',
+  greetingStyle: 'classic',
+  personalMotto: '',
   theme: 'system',
   accentColor: '#6366f1',
   compactMode: false,
+  dashboardDensity: 'comfortable',
   pomodoroLength: 25,
   shortBreakLength: 5,
   longBreakLength: 15,
@@ -295,9 +305,13 @@ const defaultSettings: UserSettings = {
   zenShowStats: true,
   zenShowQuotes: true,
   zenBackgroundStyle: 'gradient',
+  dailyTaskGoal: 5,
   defaultTaskPriority: 'medium',
   showCompletedTasks: true,
   showTaskDescriptions: true,
+  quickCapturePlaceholder: 'Aufgabe schnell notieren...',
+  quickCaptureDefaultPriority: 'medium',
+  quickCaptureDefaultTag: 'quick-capture',
   language: 'de',
   autoBackup: false,
   backupFrequency: 'weekly',

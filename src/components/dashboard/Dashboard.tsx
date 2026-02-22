@@ -14,7 +14,7 @@ import {
   Flame,
   Sparkles,
 } from 'lucide-react';
-import { useDataStore, useTimerStore, useAppStore } from '@/store';
+import { useDataStore, useTimerStore, useAppStore, useSettingsStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { CalendarEvent, Task } from '@/types';
 import {
@@ -128,6 +128,7 @@ export function Dashboard() {
   const { openTaskModal, openTaskDetailModal, openEventModal } = useModals();
   const { toggleZenMode } = useAppStore();
   const { startTimer, timer } = useTimerStore();
+  const settings = useSettingsStore((state) => state.settings);
 
   const [adoptingEventId, setAdoptingEventId] = useState<string | null>(null);
 
@@ -280,7 +281,7 @@ export function Dashboard() {
         title: `Termin: ${event.title}`,
         description: event.description || `Kalendereintrag ${format(new Date(event.startTime), 'd. MMM HH:mm', { locale: de })}`,
         dueDate: startOfDay(new Date(event.startTime)),
-        priority: 'medium',
+        priority: settings.defaultTaskPriority,
         status: 'todo',
         tags: ['kalender', 'termin'],
       });
@@ -297,14 +298,34 @@ export function Dashboard() {
     }
   };
 
+  const compactDashboard = settings.dashboardDensity === 'compact';
+  const dailyGoal = Math.max(1, settings.dailyTaskGoal);
+  const dailyGoalProgress = Math.min(100, Math.round((completedToday / dailyGoal) * 100));
+
+  const greetingText = (() => {
+    const hour = now.getHours();
+    const dayGreeting = hour < 12 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : 'Guten Abend';
+    const trimmedName = settings.name.trim();
+
+    if (settings.greetingStyle === 'direct') {
+      return trimmedName ? `${trimmedName}, Fokus auf das Naechste.` : 'Fokus auf das Naechste.';
+    }
+
+    if (settings.greetingStyle === 'motivational') {
+      return trimmedName ? `${dayGreeting}, ${trimmedName}. Heute zaehlt.` : `${dayGreeting}. Heute zaehlt.`;
+    }
+
+    return trimmedName ? `${dayGreeting}, ${trimmedName}` : dayGreeting;
+  })();
+
+  const subtitleText = settings.personalMotto.trim() || 'Ein gemeinsamer Arbeitsraum fuer Aufgaben und Termine.';
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className={`max-w-7xl mx-auto ${compactDashboard ? 'space-y-4' : 'space-y-6'}`}>
       <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Cockpit</h1>
-          <p className="text-gray-700 mt-1">
-            Ein gemeinsamer Arbeitsraum für Aufgaben und Termine.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">{greetingText}</h1>
+          <p className="text-gray-700 mt-1">{subtitleText}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button onClick={() => openTaskModal()} variant="primary" leftIcon={<Plus size={16} />}>
@@ -316,15 +337,32 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 ${compactDashboard ? 'gap-2' : 'gap-3'}`}>
         <StatCard label="Offene Aufgaben" value={activeTasks.length} tone="slate" />
-        <StatCard label="Heute erledigt" value={completedToday} tone="emerald" />
+        <StatCard
+          label={`Heute erledigt (Ziel ${dailyGoal})`}
+          value={`${completedToday}/${dailyGoal}`}
+          tone={completedToday >= dailyGoal ? 'emerald' : 'indigo'}
+        />
         <StatCard label="Termine diese Woche" value={thisWeekEvents} tone="indigo" />
         <StatCard label="Ziele auf Kurs" value={`${goalsOnTrack}/${goals.length}`} tone="amber" />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
+      <div className="rounded-xl border border-gray-200 bg-white p-3">
+        <div className="flex items-center justify-between text-xs text-gray-700 mb-1.5">
+          <span>Tagesziel Fortschritt</span>
+          <span>{dailyGoalProgress}%</span>
+        </div>
+        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+            style={{ width: `${dailyGoalProgress}%` }}
+          />
+        </div>
+      </div>
+
+      <div className={`grid grid-cols-1 xl:grid-cols-3 ${compactDashboard ? 'gap-4' : 'gap-6'}`}>
+        <div className={`xl:col-span-2 ${compactDashboard ? 'space-y-4' : 'space-y-6'}`}>
           <Card className="border border-gray-200">
             <CardHeader
               title="Heute: Aufgaben + Termine"

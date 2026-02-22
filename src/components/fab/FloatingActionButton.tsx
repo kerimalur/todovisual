@@ -11,7 +11,7 @@ import {
   Timer, 
   Sparkles 
 } from 'lucide-react';
-import { useAppStore, useTimerStore, useMotivationStore, useDataStore } from '@/store';
+import { useAppStore, useTimerStore, useMotivationStore, useDataStore, useSettingsStore } from '@/store';
 
 interface FloatingActionButtonProps {
   onOpenTaskModal: () => void;
@@ -32,6 +32,7 @@ export function FloatingActionButton({
   const { timer } = useTimerStore();
   const { triggerMotivation } = useMotivationStore();
   const { addTask } = useDataStore();
+  const settings = useSettingsStore((state) => state.settings);
   const menuRef = useRef<HTMLDivElement>(null);
   const quickInputRef = useRef<HTMLInputElement>(null);
   const [quickCaptureTitle, setQuickCaptureTitle] = useState('');
@@ -147,12 +148,14 @@ export function FloatingActionButton({
 
     try {
       setQuickCaptureLoading(true);
+      const configuredTag = settings.quickCaptureDefaultTag.trim();
+      const tags = Array.from(new Set(['quick-capture', ...(configuredTag ? [configuredTag] : [])]));
       await addTask({
         title,
         description: '',
         status: 'todo',
-        priority: 'medium',
-        tags: ['quick-capture'],
+        priority: settings.quickCaptureDefaultPriority,
+        tags,
       });
 
       setQuickCaptureTitle('');
@@ -200,7 +203,7 @@ export function FloatingActionButton({
                 type="text"
                 value={quickCaptureTitle}
                 onChange={(e) => setQuickCaptureTitle(e.target.value)}
-                placeholder="Aufgabe schnell notieren…"
+                placeholder={settings.quickCapturePlaceholder || 'Aufgabe schnell notieren...'}
                 className="flex-1 px-3 py-2.5 text-sm rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 bg-white"
               />
               <button

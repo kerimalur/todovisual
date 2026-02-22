@@ -66,10 +66,17 @@ export function ZenWorkspace() {
   const getGreeting = () => {
     const hour = currentTime.getHours();
     const name = settings.name ? `, ${settings.name}` : '';
-    if (hour < 12) return `Guten Morgen${name}`;
-    if (hour < 18) return `Guten Tag${name}`;
-    if (hour < 22) return `Guten Abend${name}`;
-    return `Gute Nacht${name}`;
+    const base = hour < 12 ? 'Guten Morgen' : hour < 18 ? 'Guten Tag' : hour < 22 ? 'Guten Abend' : 'Gute Nacht';
+
+    if (settings.greetingStyle === 'direct') {
+      return settings.name ? `${settings.name}, Fokus halten.` : 'Fokus halten.';
+    }
+
+    if (settings.greetingStyle === 'motivational') {
+      return `${base}${name}. Du machst Fortschritt.`;
+    }
+
+    return `${base}${name}`;
   };
 
   const handleCompleteTask = (taskId: string) => {
@@ -124,6 +131,9 @@ export function ZenWorkspace() {
         {settings.zenShowClock && (
           <div className="text-center mb-16">
             <p className="text-[#666] text-lg mb-4 tracking-wide">{getGreeting()}</p>
+            {settings.personalMotto.trim() && (
+              <p className="text-white/45 text-sm mb-4 tracking-wide">{settings.personalMotto.trim()}</p>
+            )}
             <div className="flex items-baseline justify-center gap-2">
               <span className="text-7xl md:text-8xl font-extralight text-white/90 tracking-tight">
                 {formatClock(currentTime)}
