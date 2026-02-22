@@ -150,21 +150,43 @@ const hasOwn = (obj: object, key: string): boolean =>
 const uniqueIds = (ids: Array<string | undefined | null>): string[] =>
   Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)));
 
+const normalizeLinkId = (value: string | undefined): string | undefined => {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : undefined;
+};
+
 const normalizeTaskLinks = <T extends Partial<Task>>(input: T): T => {
   const normalized: T = { ...input };
-  const touchesGoalLinks = hasOwn(input, 'goalId') || hasOwn(input, 'goalIds');
-  const touchesProjectLinks = hasOwn(input, 'projectId') || hasOwn(input, 'projectIds');
+  const hasGoalIds = hasOwn(input, 'goalIds');
+  const hasGoalId = hasOwn(input, 'goalId');
+  const hasProjectIds = hasOwn(input, 'projectIds');
+  const hasProjectId = hasOwn(input, 'projectId');
 
-  if (touchesGoalLinks) {
+  if (hasGoalIds) {
     const goalIds = uniqueIds([...(input.goalIds ?? []), input.goalId]);
-    (normalized as Partial<Task>).goalIds = goalIds;
-    (normalized as Partial<Task>).goalId = goalIds[0];
+    if (goalIds.length > 0) {
+      (normalized as Partial<Task>).goalIds = goalIds;
+      (normalized as Partial<Task>).goalId = goalIds[0];
+    } else {
+      delete (normalized as Partial<Task>).goalIds;
+      (normalized as Partial<Task>).goalId = undefined;
+    }
+  } else if (hasGoalId) {
+    (normalized as Partial<Task>).goalId = normalizeLinkId(input.goalId);
   }
 
-  if (touchesProjectLinks) {
+  if (hasProjectIds) {
     const projectIds = uniqueIds([...(input.projectIds ?? []), input.projectId]);
-    (normalized as Partial<Task>).projectIds = projectIds;
-    (normalized as Partial<Task>).projectId = projectIds[0];
+    if (projectIds.length > 0) {
+      (normalized as Partial<Task>).projectIds = projectIds;
+      (normalized as Partial<Task>).projectId = projectIds[0];
+    } else {
+      delete (normalized as Partial<Task>).projectIds;
+      (normalized as Partial<Task>).projectId = undefined;
+    }
+  } else if (hasProjectId) {
+    (normalized as Partial<Task>).projectId = normalizeLinkId(input.projectId);
   }
 
   return normalized;
@@ -172,15 +194,62 @@ const normalizeTaskLinks = <T extends Partial<Task>>(input: T): T => {
 
 const normalizeProjectLinks = <T extends Partial<Project>>(input: T): T => {
   const normalized: T = { ...input };
-  const touchesGoalLinks = hasOwn(input, 'goalId') || hasOwn(input, 'goalIds');
+  const hasGoalIds = hasOwn(input, 'goalIds');
+  const hasGoalId = hasOwn(input, 'goalId');
 
-  if (touchesGoalLinks) {
+  if (hasGoalIds) {
     const goalIds = uniqueIds([...(input.goalIds ?? []), input.goalId]);
-    (normalized as Partial<Project>).goalIds = goalIds;
-    (normalized as Partial<Project>).goalId = goalIds[0];
+    if (goalIds.length > 0) {
+      (normalized as Partial<Project>).goalIds = goalIds;
+      (normalized as Partial<Project>).goalId = goalIds[0];
+    } else {
+      delete (normalized as Partial<Project>).goalIds;
+      (normalized as Partial<Project>).goalId = undefined;
+    }
+  } else if (hasGoalId) {
+    (normalized as Partial<Project>).goalId = normalizeLinkId(input.goalId);
   }
 
   return normalized;
+};
+
+const serializeTaskForPersistence = (task: Partial<Task>): Record<string, unknown> => {
+  const serialized: Record<string, unknown> = { ...task };
+  const hasRecurring = hasOwn(task, 'recurring');
+  const recurring = task.recurring;
+
+  // Subtasks are stored in a dedicated table and must not be sent to public.tasks.
+  delete serialized.subtasks;
+  delete serialized.recurring;
+
+  if (Array.isArray(serialized.goalIds) && serialized.goalIds.length === 0) {
+    delete serialized.goalIds;
+  }
+  if (Array.isArray(serialized.projectIds) && serialized.projectIds.length === 0) {
+    delete serialized.projectIds;
+  }
+
+  if (hasRecurring) {
+    if (recurring && recurring.isActive) {
+      serialized.recurringFrequency = recurring.frequency;
+      serialized.recurringDaysOfWeek =
+        recurring.frequency === 'weekly' ? recurring.daysOfWeek ?? [] : null;
+      serialized.recurringInterval =
+        typeof recurring.interval === 'number' && recurring.interval > 0 ? recurring.interval : 1;
+      serialized.recurringEndDate = recurring.endDate ?? null;
+      serialized.recurringNextOccurrence = recurring.nextOccurrence ?? null;
+      serialized.recurringIsActive = recurring.isActive;
+    } else {
+      serialized.recurringFrequency = null;
+      serialized.recurringDaysOfWeek = null;
+      serialized.recurringInterval = null;
+      serialized.recurringEndDate = null;
+      serialized.recurringNextOccurrence = null;
+      serialized.recurringIsActive = null;
+    }
+  }
+
+  return serialized;
 };
 
 const TASK_CREATED_DEDUPE_STORAGE_PREFIX = 'wa-task-created-sent:';
@@ -597,6 +666,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     const userId = get().userId;
     if (!userId) throw new Error('User not authenticated');
     const normalizedTaskData = normalizeTaskLinks(taskData);
+    const persistableTaskData = serializeTaskForPersistence(normalizedTaskData);
 
     const temporaryId = `temp-${uuidv4()}`;
     const createdAt = new Date();
@@ -615,7 +685,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
     try {
       const createdId = await supabaseService.create(TABLES.TASKS, {
-        ...normalizedTaskData,
+        ...persistableTaskData,
         user_id: userId,
         created_at: createdAt,
         status: optimisticTask.status,
@@ -654,6 +724,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
 
   updateTask: async (id, updates) => {
     const normalizedUpdates = normalizeTaskLinks(updates);
+    const persistableUpdates = serializeTaskForPersistence(normalizedUpdates);
     const previousTask = get().tasks.find((task) => task.id === id);
     if (previousTask) {
       set((state) => ({
@@ -669,7 +740,7 @@ export const useDataStore = create<DataStore>((set, get) => ({
     }
 
     const updateData = {
-      ...normalizedUpdates,
+      ...persistableUpdates,
       updated_at: new Date(),
     };
 

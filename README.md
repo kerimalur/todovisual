@@ -29,6 +29,7 @@ TWILIO_AUTH_TOKEN=
 TWILIO_FROM_NUMBER=
 TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_URL=
 CRON_SECRET=
 ```
 
@@ -39,6 +40,7 @@ CRON_SECRET=
 - Test-Endpoints:
   - `POST /api/reminders/sms/test`
   - `POST /api/reminders/whatsapp/test`
+  - `POST /api/testwhatsapp` (Alias)
 - Automatisch:
   - Bei neuer Aufgabe optional sofortige WhatsApp-Nachricht
   - 1 Stunde vor geplantem Aufgaben-Start (serverseitig via Vercel Cron, auch ohne offenen Browser)
@@ -52,8 +54,11 @@ Wenn du frisch von Firebase auf Supabase gewechselt bist, musst du zuerst das SQ
 1. In Supabase das Projekt öffnen.
 2. **SQL Editor** öffnen.
 3. Inhalt aus `supabase/migrations/20260220120000_init_productive_schema.sql` ausführen.
-4. Danach zusätzlich `supabase/migrations/20260221200000_notification_settings_and_deliveries.sql` ausführen.
-5. Danach App neu starten (`npm run dev`).
+4. Danach `supabase/migrations/20260221103000_goal_project_workflows.sql` ausführen.
+5. Danach `supabase/migrations/20260221200000_notification_settings_and_deliveries.sql` ausführen.
+6. Danach `supabase/migrations/20260221213000_notification_templates.sql` ausführen.
+7. Danach `supabase/migrations/20260222010000_event_attendance_and_custom_whatsapp.sql` ausführen.
+8. Danach App neu starten (`npm run dev`).
 
 Dieses Schema legt alle benötigten Tabellen, Indizes und RLS-Policies für die App an (inkl. `tasks`, `goals`, `projects`, `calendar_events`, `habits`, `notes`, `time_entries`, usw.).
 
