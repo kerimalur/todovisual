@@ -1,4 +1,4 @@
-# Projekt Roadmap & Feature Idee
+# Projekt Roadmap & Feature Ideen
 
 
 Hier sind die geplanten hochmodernen Features zur Steigerung der Effizienz:
