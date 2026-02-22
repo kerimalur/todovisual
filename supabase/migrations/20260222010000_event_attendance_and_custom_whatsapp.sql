@@ -3,7 +3,7 @@ alter table if exists public.calendar_events
   add column if not exists attended_at timestamptz;
 
 do $$
-begin
+begi
   if not exists (
     select 1
     from pg_constraint
