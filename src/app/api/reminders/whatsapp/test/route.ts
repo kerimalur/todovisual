@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isValidE164PhoneNumber, sendTwilioMessage, TwilioError } from '@/lib/twilioMessaging';
+import { requireApiUserOrSecret } from '@/lib/apiRequestAuth';
 
 export const runtime = 'nodejs';
 
@@ -13,6 +14,9 @@ const buildDefaultMessage = () =>
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireApiUserOrSecret(request);
+    if (!auth.ok) return auth.response;
+
     const body = (await request.json()) as WhatsAppTestRequestBody;
     const phoneNumber = body.phoneNumber?.trim() || '';
     const message = body.message?.trim() || buildDefaultMessage();

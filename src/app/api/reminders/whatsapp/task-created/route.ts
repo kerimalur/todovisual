@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { format } from 'date-fns';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { isValidE164PhoneNumber, sendTwilioMessage, TwilioError } from '@/lib/twilioMessaging';
+import { requireApiUserOrSecret } from '@/lib/apiRequestAuth';
 
 export const runtime = 'nodejs';
 
@@ -124,11 +125,22 @@ const applyTemplate = (
 export async function POST(request: NextRequest) {
   let deliveryEventKey = '';
   try {
+    const auth = await requireApiUserOrSecret(request);
+    if (!auth.ok) return auth.response;
+
     const body = (await request.json()) as TaskCreatedWhatsAppBody;
     const phoneNumber = body.phoneNumber?.trim() || '';
     const taskTitle = body.taskTitle?.trim() || '';
     const taskId = body.taskId?.trim() || '';
-    const userId = body.userId?.trim() || '';
+    const bodyUserId = body.userId?.trim() || '';
+    const authenticatedUserId = auth.userId || '';
+    if (authenticatedUserId && bodyUserId && bodyUserId !== authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'userId passt nicht zum angemeldeten Benutzer.' },
+        { status: 403 }
+      );
+    }
+    const userId = bodyUserId || authenticatedUserId;
     const priorityLabel = PRIORITY_LABELS[body.priority || 'medium'] || 'Mittel';
     const projectTitle = body.projectTitle?.trim() || 'Kein Projekt';
     const template = sanitizeTemplate(body.messageTemplate);
