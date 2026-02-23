@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/reminders/task-start",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/reminders/weekly-review",
-      "schedule": "*/5 * * * *"
+      "schedule": "5 9 * * *"
     }
   ]
 }
