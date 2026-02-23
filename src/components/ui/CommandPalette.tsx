@@ -89,11 +89,11 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
     // Navigation
     { 
       id: 'nav-dashboard', 
-      title: 'Cockpit', 
+      title: '\u00DCbersicht', 
       subtitle: 'Zur Startseite',
       icon: LayoutDashboard, 
       action: () => { router.push('/'); setIsOpen(false); },
-      keywords: ['home', 'start', 'cockpit', 'dashboard'],
+      keywords: ['home', 'start', '\u00FCbersicht', 'dashboard'],
       category: 'navigation'
     },
     { 

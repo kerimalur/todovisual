@@ -349,7 +349,7 @@ export default function SettingsPage() {
                   placeholder="Was soll dich taeglich erinnern?"
                   className="input w-full max-w-xl"
                 />
-                <p className="text-xs text-[#9b9a97] mt-1">Wird auf dem Cockpit und im Zen Modus angezeigt</p>
+                <p className="text-xs text-[#9b9a97] mt-1">Wird in der \u00DCbersicht und im Zen Modus angezeigt</p>
               </div>
             </Section>
 
@@ -369,7 +369,7 @@ export default function SettingsPage() {
                   <option value="motivational">Motivierend</option>
                 </select>
               </SettingRow>
-              <SettingRow label="Tagesziel (Aufgaben)" description="Wird als Ziel-Fortschritt auf dem Cockpit gezeigt">
+              <SettingRow label="Tagesziel (Aufgaben)" description="Wird als Ziel-Fortschritt in der \u00DCbersicht gezeigt">
                 <input
                   type="number"
                   value={settings.dailyTaskGoal}
@@ -381,7 +381,7 @@ export default function SettingsPage() {
                   className="input w-20"
                 />
               </SettingRow>
-              <SettingRow label="Dashboard Dichte" description="Mehr Infos oder mehr Ruhe auf dem Cockpit">
+              <SettingRow label="Dashboard Dichte" description="Mehr Infos oder mehr Ruhe in der \u00DCbersicht">
                 <select
                   value={settings.dashboardDensity}
                   onChange={(e) =>

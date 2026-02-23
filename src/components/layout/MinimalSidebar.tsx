@@ -30,7 +30,7 @@ import { isToday } from 'date-fns';
 
 // Nur die wichtigsten 4 Navigationspunkte sichtbar
 const primaryNavItems = [
-  { href: '/', label: 'Cockpit', icon: LayoutDashboard },
+  { href: '/', label: '\u00DCbersicht', icon: LayoutDashboard },
   { href: '/tasks', label: 'Aufgaben', icon: ListTodo },
   { href: '/calendar', label: 'Kalender', icon: Calendar },
   { href: '/goals', label: 'Ziele', icon: Target },

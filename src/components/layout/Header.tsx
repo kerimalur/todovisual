@@ -22,7 +22,7 @@ import {
 import { useAppStore, useTimerStore } from '@/store';
 
 const navItems = [
-  { href: '/', label: 'Cockpit', icon: LayoutDashboard },
+  { href: '/', label: '\u00DCbersicht', icon: LayoutDashboard },
   { href: '/tasks', label: 'Aufgaben', icon: ListTodo },
   { href: '/matrix', label: 'Matrix', icon: Grid3X3 },
   { href: '/goals', label: 'Ziele', icon: Target },

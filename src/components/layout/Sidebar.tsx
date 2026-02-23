@@ -30,7 +30,7 @@ import { useMemo } from 'react';
 import { isToday } from 'date-fns';
 
 const navItems = [
-  { href: '/', label: 'Cockpit', icon: LayoutDashboard, description: 'Übersicht' },
+  { href: '/', label: '\u00DCbersicht', icon: LayoutDashboard, description: '\u00DCbersicht' },
   { href: '/tasks', label: 'Aufgaben', icon: ListTodo, description: 'Alle Tasks' },
   { href: '/habits', label: 'Gewohnheiten', icon: Repeat, description: 'Daily Habits' },
   { href: '/goals', label: 'Ziele', icon: Target, description: 'Zielverfolgung' },
