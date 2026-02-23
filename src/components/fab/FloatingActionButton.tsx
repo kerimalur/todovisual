@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState, useEffect, useRef } from 'react';
+import { FormEvent, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { 
   Plus, 
   X, 
@@ -12,6 +12,7 @@ import {
   Sparkles 
 } from 'lucide-react';
 import { useAppStore, useTimerStore, useMotivationStore, useDataStore, useSettingsStore } from '@/store';
+import { buildQuickCaptureTaskInput } from '@/lib/quickCapture';
 
 interface FloatingActionButtonProps {
   onOpenTaskModal: () => void;
@@ -20,6 +21,15 @@ interface FloatingActionButtonProps {
   onOpenEventModal: () => void;
   onOpenTimerModal: () => void;
 }
+
+type FabAction = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  action: () => void;
+  shortcut: string;
+  disabled?: boolean;
+};
 
 export function FloatingActionButton({
   onOpenTaskModal,
@@ -38,7 +48,7 @@ export function FloatingActionButton({
   const [quickCaptureTitle, setQuickCaptureTitle] = useState('');
   const [quickCaptureLoading, setQuickCaptureLoading] = useState(false);
 
-  const fabActions = [
+  const fabActions = useMemo<FabAction[]>(() => [
     { 
       id: 'task', 
       label: 'Neue Aufgabe', 
@@ -85,7 +95,16 @@ export function FloatingActionButton({
       },
       shortcut: 'Z'
     },
-  ];
+  ], [
+    onOpenTaskModal,
+    onOpenGoalModal,
+    onOpenProjectModal,
+    onOpenEventModal,
+    onOpenTimerModal,
+    timer.isRunning,
+    toggleZenMode,
+    triggerMotivation,
+  ]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -103,6 +122,11 @@ export function FloatingActionButton({
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [fabMenuOpen, setFabMenuOpen]);
+
+  const handleAction = useCallback((action: FabAction) => {
+    setFabMenuOpen(false);
+    action.action();
+  }, [setFabMenuOpen]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -133,12 +157,7 @@ export function FloatingActionButton({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [fabMenuOpen, setFabMenuOpen, timer.isRunning]);
-
-  const handleAction = (action: typeof fabActions[0]) => {
-    setFabMenuOpen(false);
-    action.action();
-  };
+  }, [fabActions, fabMenuOpen, handleAction, setFabMenuOpen]);
 
   const handleQuickCapture = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -148,15 +167,13 @@ export function FloatingActionButton({
 
     try {
       setQuickCaptureLoading(true);
-      const configuredTag = settings.quickCaptureDefaultTag.trim();
-      const tags = Array.from(new Set(['quick-capture', ...(configuredTag ? [configuredTag] : [])]));
-      await addTask({
-        title,
-        description: '',
-        status: 'todo',
-        priority: settings.quickCaptureDefaultPriority,
-        tags,
+      const quickTask = buildQuickCaptureTaskInput(title, {
+        quickCaptureDefaultPriority: settings.quickCaptureDefaultPriority,
+        quickCaptureDefaultTag: settings.quickCaptureDefaultTag,
       });
+      if (!quickTask) return;
+
+      await addTask(quickTask);
 
       setQuickCaptureTitle('');
       triggerMotivation('task-complete');

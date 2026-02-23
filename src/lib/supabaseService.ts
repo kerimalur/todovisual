@@ -131,7 +131,53 @@ export const supabaseService = {
   },
 
   // Real-time subscriptions
-  subscribe<T>(tableName: string, userId: string, callback: (data: T[]) => void, orderByField?: string): (() => void) {
+  subscribe<T>(
+    tableName: string,
+    userId: string,
+    callback: (data: T[]) => void,
+    _orderByField?: string
+  ): (() => void) {
+    const REFRESH_DEBOUNCE_MS = 120;
+    let refreshTimer: ReturnType<typeof setTimeout> | null = null;
+    let refreshInFlight = false;
+    let refreshQueued = false;
+    let unsubscribed = false;
+
+    const runRefresh = async () => {
+      if (unsubscribed) return;
+      if (refreshInFlight) {
+        refreshQueued = true;
+        return;
+      }
+
+      refreshInFlight = true;
+      try {
+        const rows = await supabaseService.readMany<T>(tableName, userId);
+        if (!unsubscribed) {
+          callback(rows);
+        }
+      } catch {
+        // Ignore transient subscription refresh failures.
+      } finally {
+        refreshInFlight = false;
+        if (refreshQueued && !unsubscribed) {
+          refreshQueued = false;
+          scheduleRefresh(REFRESH_DEBOUNCE_MS);
+        }
+      }
+    };
+
+    const scheduleRefresh = (delayMs = 0) => {
+      if (unsubscribed) return;
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      refreshTimer = setTimeout(() => {
+        refreshTimer = null;
+        void runRefresh();
+      }, delayMs);
+    };
+
     const channel = supabase
       .channel(`${tableName}-${userId}`)
       .on(
@@ -143,17 +189,18 @@ export const supabaseService = {
           filter: `user_id=eq.${userId}`,
         },
         () => {
-          // When any change occurs, refetch the data
-          supabaseService.readMany<T>(tableName, userId).then(callback);
+          scheduleRefresh(REFRESH_DEBOUNCE_MS);
         }
       )
       .subscribe();
 
-    // Initial fetch
-    supabaseService.readMany<T>(tableName, userId).then(callback);
+    scheduleRefresh(0);
 
-    // Return unsubscribe function
     return () => {
+      unsubscribed = true;
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
       supabase.removeChannel(channel);
     };
   },

@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useAppStore, useTimerStore } from '@/store';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store';
 import { MinimalSidebar } from './MinimalSidebar';
 import { MinimalFAB } from '../fab/MinimalFAB';
 import { MotivationToast } from '../ui/MotivationToast';
@@ -47,12 +46,6 @@ export function MinimalLayout({ children }: MinimalLayoutProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
   const { zenModeActive, zenWorkspaceActive } = useAppStore();
-  const { timer } = useTimerStore();
-
-  // If on login page, render children without auth protection
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
 
   // Modal states - simplified
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -71,6 +64,11 @@ export function MinimalLayout({ children }: MinimalLayoutProps) {
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [preselectedDate, setPreselectedDate] = useState<Date | undefined>();
   const [timerModalOpen, setTimerModalOpen] = useState(false);
+
+  // If on login page, render children without auth protection
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   // Modal handlers
   const openTaskModal = (task?: Task | null) => {

@@ -6,12 +6,9 @@ import {
   Plus, 
   Target, 
   Calendar, 
-  Timer, 
-  Moon,
   ListTodo,
   TrendingUp,
   BookOpen,
-  Archive,
   LayoutDashboard,
   CheckCircle2,
   Zap,
@@ -19,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAppStore, useDataStore, useSettingsStore } from '@/store';
+import { buildQuickCaptureTaskInput } from '@/lib/quickCapture';
 
 interface CommandItem {
   id: string;
@@ -40,6 +38,7 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [quickAddSubmitting, setQuickAddSubmitting] = useState(false);
   const router = useRouter();
   const { toggleZenMode } = useAppStore();
   const { tasks, addTask } = useDataStore();
@@ -192,48 +191,50 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen]);
 
-  // Handle navigation in list
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    const items = isQuickAdd ? [] : filteredCommands;
-    
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.min(prev + 1, items.length - 1));
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedIndex(prev => Math.max(prev - 1, 0));
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (isQuickAdd && quickAddTitle) {
-        // Quick add task
-        const configuredTag = settings.quickCaptureDefaultTag.trim();
-        const tags = configuredTag ? [configuredTag] : [];
-        addTask({
-          title: quickAddTitle,
-          priority: settings.quickCaptureDefaultPriority,
-          status: 'todo',
-          tags,
-        });
-        setQuery('');
-        setIsOpen(false);
-      } else if (items[selectedIndex]) {
-        items[selectedIndex].action();
-      }
+  const handleQuickAdd = useCallback(async () => {
+    if (!quickAddTitle || quickAddSubmitting) return;
+
+    const quickTask = buildQuickCaptureTaskInput(quickAddTitle, {
+      quickCaptureDefaultPriority: settings.quickCaptureDefaultPriority,
+      quickCaptureDefaultTag: settings.quickCaptureDefaultTag,
+    });
+    if (!quickTask) return;
+
+    try {
+      setQuickAddSubmitting(true);
+      await addTask(quickTask);
+      setQuery('');
+      setIsOpen(false);
+    } finally {
+      setQuickAddSubmitting(false);
     }
   }, [
-    filteredCommands,
-    selectedIndex,
-    isQuickAdd,
-    quickAddTitle,
     addTask,
+    quickAddSubmitting,
+    quickAddTitle,
     settings.quickCaptureDefaultPriority,
     settings.quickCaptureDefaultTag,
   ]);
 
-  // Reset selected index when query changes
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
+  // Handle navigation in list
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    const items = isQuickAdd ? [] : filteredCommands;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(prev + 1, Math.max(items.length - 1, 0)));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(prev - 1, 0));
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isQuickAdd) {
+        void handleQuickAdd();
+      } else if (items[selectedIndex]) {
+        items[selectedIndex].action();
+      }
+    }
+  }, [filteredCommands, handleQuickAdd, isQuickAdd, selectedIndex]);
 
   if (!isOpen) return null;
 
@@ -253,7 +254,10 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setSelectedIndex(0);
+            }}
             onKeyDown={handleKeyDown}
             placeholder="Suchen oder + für Quick-Add..."
             className="flex-1 text-sm bg-transparent outline-none placeholder:text-[#9b9a97]"
@@ -270,7 +274,7 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
             <div className="flex items-center gap-2">
               <Plus size={16} className="text-[#16a34a]" />
               <span className="text-sm text-[#16a34a] font-medium">
-                Quick-Add: "{quickAddTitle || '...'}"
+                Quick-Add: {quickAddTitle || '...'}
               </span>
             </div>
             <p className="text-xs text-[#22c55e] mt-1">Enter drücken um Aufgabe zu erstellen</p>
@@ -284,7 +288,7 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
             {filteredCommands.filter(c => c.category === 'action').length > 0 && (
               <div className="px-3 py-1">
                 <p className="text-[10px] font-medium text-[#9b9a97] uppercase tracking-wider mb-1">Aktionen</p>
-                {filteredCommands.filter(c => c.category === 'action').map((cmd, idx) => {
+                {filteredCommands.filter(c => c.category === 'action').map((cmd) => {
                   const globalIdx = filteredCommands.indexOf(cmd);
                   return (
                     <button
@@ -335,6 +339,27 @@ export function CommandPalette({ onOpenTaskModal, onOpenGoalModal, onOpenEventMo
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {query.length === 0 && recentTasks.length > 0 && (
+              <div className="px-3 py-1 mt-2">
+                <p className="text-[10px] font-medium text-[#9b9a97] uppercase tracking-wider mb-1">Zuletzt aktiv</p>
+                {recentTasks.map((task) => (
+                  <button
+                    key={task.id}
+                    onClick={task.action}
+                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors hover:bg-[#f7f6f3]"
+                  >
+                    <task.icon size={16} className="text-[#9b9a97]" />
+                    <div>
+                      <p className="text-sm font-medium text-[#37352f]">{task.title}</p>
+                      {task.subtitle && (
+                        <p className="text-xs text-[#9b9a97]">{task.subtitle}</p>
+                      )}
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
 

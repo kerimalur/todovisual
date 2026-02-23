@@ -5,6 +5,7 @@ import { format, startOfWeek } from 'date-fns';
 import { useDataStore, useSettingsStore } from '@/store';
 import { buildWeeklyReviewMessage } from '@/lib/weeklyReviewMessage';
 import { normalizeReminderTime } from '@/lib/notificationPreferences';
+import { buildAuthorizedHeaders } from '@/lib/clientRequestAuth';
 
 const CHECK_INTERVAL_MS = 60 * 1000;
 
@@ -63,11 +64,12 @@ export function ReminderScheduler() {
 
       sendingRef.current = true;
       try {
+        const headers = await buildAuthorizedHeaders({
+          'Content-Type': 'application/json',
+        });
         const response = await fetch('/api/reminders/whatsapp/weekly-review', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          headers,
           body: JSON.stringify({
             phoneNumber,
             message,

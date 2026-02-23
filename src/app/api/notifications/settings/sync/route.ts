@@ -24,6 +24,17 @@ interface SyncNotificationSettingsBody {
   timezone?: string;
 }
 
+type AuthenticatedUserResult =
+  | {
+      ok: true;
+      userId: string;
+      supabaseAdmin: ReturnType<typeof getSupabaseAdmin>;
+    }
+  | {
+      ok: false;
+      response: NextResponse;
+    };
+
 const parseBearerToken = (request: NextRequest): string | null => {
   const authorizationHeader = request.headers.get('authorization')?.trim() || '';
   if (!authorizationHeader.toLowerCase().startsWith('bearer ')) {
@@ -107,22 +118,58 @@ const DEFAULT_WEEKLY_TEMPLATE = 'Wochenrueckblick ({weekRange})\n\n{review}';
 const DEFAULT_EVENT_ATTENDED_TEMPLATE =
   'Anwesenheit bestaetigt: "{eventTitle}"\nZeit: {eventStart} - {eventEnd}\nDatum: {eventDate}';
 
+const USER_SCOPED_TABLES_FOR_DELETE = [
+  'notification_deliveries',
+  'time_entries',
+  'focus_sessions',
+  'calendar_events',
+  'tasks',
+  'habits',
+  'habit_categories',
+  'journal_entries',
+  'notes',
+  'tags',
+  'brainstorm_sessions',
+  'daily_stats',
+  'weekly_reflections',
+  'projects',
+  'goals',
+  'notification_settings',
+] as const;
+
+const authenticateUser = async (request: NextRequest): Promise<AuthenticatedUserResult> => {
+  const accessToken = parseBearerToken(request);
+  if (!accessToken) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'Nicht autorisiert (Bearer Token fehlt).' }, { status: 401 }),
+    };
+  }
+
+  const supabaseAdmin = getSupabaseAdmin();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabaseAdmin.auth.getUser(accessToken);
+
+  if (authError || !user) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: 'Token ist ungueltig oder abgelaufen.' }, { status: 401 }),
+    };
+  }
+
+  return {
+    ok: true,
+    userId: user.id,
+    supabaseAdmin,
+  };
+};
+
 export async function POST(request: NextRequest) {
   try {
-    const accessToken = parseBearerToken(request);
-    if (!accessToken) {
-      return NextResponse.json({ error: 'Nicht autorisiert (Bearer Token fehlt).' }, { status: 401 });
-    }
-
-    const supabaseAdmin = getSupabaseAdmin();
-    const {
-      data: { user },
-      error: authError,
-    } = await supabaseAdmin.auth.getUser(accessToken);
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Token ist ungueltig oder abgelaufen.' }, { status: 401 });
-    }
+    const auth = await authenticateUser(request);
+    if (!auth.ok) return auth.response;
 
     const body = (await request.json().catch(() => ({}))) as SyncNotificationSettingsBody;
     const phoneNumberRaw = typeof body.whatsappPhoneNumber === 'string' ? body.whatsappPhoneNumber.trim() : '';
@@ -136,7 +183,7 @@ export async function POST(request: NextRequest) {
     }
 
     const payload = {
-      user_id: user.id,
+      user_id: auth.userId,
       whatsapp_reminders_enabled: coerceBoolean(body.whatsappRemindersEnabled, false),
       whatsapp_phone_number: normalizedPhoneNumber,
       whatsapp_task_created_enabled: coerceBoolean(body.whatsappTaskCreatedEnabled, true),
@@ -174,7 +221,7 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
-    const { error: upsertError } = await supabaseAdmin.from('notification_settings').upsert(payload, {
+    const { error: upsertError } = await auth.supabaseAdmin.from('notification_settings').upsert(payload, {
       onConflict: 'user_id',
     });
 
@@ -190,5 +237,42 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Notification settings sync failed:', error);
     return NextResponse.json({ error: 'Interner Fehler beim Sync der Benachrichtigungseinstellungen.' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const auth = await authenticateUser(request);
+    if (!auth.ok) return auth.response;
+
+    const summary: Record<string, number> = {};
+
+    for (const tableName of USER_SCOPED_TABLES_FOR_DELETE) {
+      const { error, count } = await auth.supabaseAdmin
+        .from(tableName)
+        .delete({ count: 'exact' })
+        .eq('user_id', auth.userId);
+
+      if (error) {
+        return NextResponse.json(
+          {
+            error: `Daten in ${tableName} konnten nicht geloescht werden.`,
+            details: error.message,
+            partialSummary: summary,
+          },
+          { status: 500 }
+        );
+      }
+
+      summary[tableName] = count ?? 0;
+    }
+
+    return NextResponse.json({ ok: true, deletedByTable: summary });
+  } catch (error) {
+    console.error('Delete-all endpoint failed:', error);
+    return NextResponse.json(
+      { error: 'Interner Fehler beim Loeschen der Benutzerdaten.' },
+      { status: 500 }
+    );
   }
 }

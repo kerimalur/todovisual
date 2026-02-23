@@ -67,7 +67,7 @@ export function Sidebar() {
   };
 
   return (
-    <aside className={`fixed left-0 top-0 bottom-0 bg-white border-r border-gray-200 flex flex-col z-50 transition-all duration-300 ${sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'}`}>
+    <aside className={`hidden md:flex fixed left-0 top-0 bottom-0 bg-white border-r border-gray-200 flex-col z-50 transition-all duration-300 ${sidebarCollapsed ? 'w-[72px]' : 'w-[260px]'}`}>
       {/* Logo Section */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-gray-100">
         <Link href="/" className="flex items-center gap-3">

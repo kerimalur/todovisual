@@ -8,6 +8,7 @@ import {
 import { useSettingsStore, useDataStore } from '@/store';
 import { useState } from 'react';
 import { WhatsAppCustomRule, WhatsAppCustomRuleTrigger } from '@/types';
+import { buildAuthorizedHeaders } from '@/lib/clientRequestAuth';
 
 function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
@@ -86,6 +87,7 @@ export default function SettingsPage() {
   const [smsStatus, setSmsStatus] = useState('');
   const [whatsappSending, setWhatsappSending] = useState(false);
   const [whatsappStatus, setWhatsappStatus] = useState('');
+  const [deleteAllDataLoading, setDeleteAllDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'focus' | 'appearance' | 'data'>('general');
 
   const showSavedFeedback = () => {
@@ -154,9 +156,41 @@ export default function SettingsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const handleDeleteAllData = () => {
-    localStorage.clear();
-    window.location.reload();
+  const handleDeleteAllData = async () => {
+    if (deleteAllDataLoading) return;
+
+    setDeleteAllDataLoading(true);
+    try {
+      const headers = await buildAuthorizedHeaders();
+      const response = await fetch('/api/notifications/settings/sync', {
+        method: 'DELETE',
+        headers,
+      });
+
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      if (!response.ok) {
+        throw new Error(result?.error || 'Daten konnten nicht geloescht werden.');
+      }
+
+      const keysToDelete: string[] = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key) continue;
+        if (key === 'settings-storage' || key.startsWith('wa-task-created-sent:')) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((key) => localStorage.removeItem(key));
+
+      resetSettings();
+      setShowDeleteDataConfirm(false);
+      window.location.reload();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Daten konnten nicht geloescht werden.';
+      alert(message);
+    } finally {
+      setDeleteAllDataLoading(false);
+    }
   };
 
   const handleSendTestSms = async () => {
@@ -169,11 +203,12 @@ export default function SettingsPage() {
     setSmsSending(true);
     setSmsStatus('');
     try {
+      const headers = await buildAuthorizedHeaders({
+        'Content-Type': 'application/json',
+      });
       const response = await fetch('/api/reminders/sms/test', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           phoneNumber,
           reminderTime: settings.reminderTime,
@@ -204,11 +239,12 @@ export default function SettingsPage() {
     setWhatsappSending(true);
     setWhatsappStatus('');
     try {
+      const headers = await buildAuthorizedHeaders({
+        'Content-Type': 'application/json',
+      });
       const response = await fetch('/api/reminders/whatsapp/test', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           phoneNumber,
         }),
@@ -1076,6 +1112,7 @@ export default function SettingsPage() {
               <button onClick={() => setShowDeleteDataConfirm(false)} className="btn btn-ghost">Abbrechen</button>
               <button
                 onClick={handleDeleteAllData}
+                disabled={deleteAllDataLoading}
                 className="px-3 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
               >
                 Alle Daten löschen

@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { useAppStore, useTimerStore } from '@/store';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAppStore } from '@/store';
 import { Sidebar } from './Sidebar';
+import { MinimalSidebar } from './MinimalSidebar';
 import { FloatingActionButton } from '../fab/FloatingActionButton';
 import { MotivationToast } from '../ui/MotivationToast';
 import { CommandPalette } from '../ui/CommandPalette';
@@ -45,7 +45,6 @@ export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const isLoginPage = pathname === '/login';
   const { sidebarCollapsed, zenModeActive, zenWorkspaceActive } = useAppStore();
-  const { timer } = useTimerStore();
 
   // Modal states - MUST be before conditional returns
   const [taskModalOpen, setTaskModalOpen] = useState(false);
@@ -157,12 +156,13 @@ export function MainLayout({ children }: MainLayoutProps) {
     <ProtectedRoute>
       <ModalContext.Provider value={modalContext}>
         <div className="min-h-screen bg-[var(--background-secondary)]">
+          <MinimalSidebar />
           <Sidebar />
 
           <main
             className={`
-              min-h-screen transition-all duration-300 bg-gray-50
-              ${sidebarCollapsed ? 'ml-[72px]' : 'ml-[260px]'}
+              min-h-screen transition-all duration-300 bg-gray-50 pt-14 md:pt-0
+              ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'}
             `}
           >
             <div className="p-6 md:p-8">

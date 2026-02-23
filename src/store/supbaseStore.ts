@@ -19,6 +19,7 @@ import {
 import { supabaseService, TABLES } from '@/lib/supabaseService';
 import { addDays, format, isSameDay, startOfDay, startOfWeek, endOfWeek } from 'date-fns';
 import { getNotificationPreferences } from '@/lib/notificationPreferences';
+import { buildAuthorizedHeaders } from '@/lib/clientRequestAuth';
 
 interface DataStore {
   // User
@@ -334,11 +335,12 @@ const sendDirectWhatsAppMessage = async (phoneNumber: string, message: string): 
   const sanitizedMessage = message.trim();
   if (!sanitizedMessage) return false;
 
+  const headers = await buildAuthorizedHeaders({
+    'Content-Type': 'application/json',
+  });
   const response = await fetch('/api/reminders/whatsapp/test', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify({
       phoneNumber,
       message: sanitizedMessage,
@@ -412,11 +414,12 @@ const sendTaskCreatedWhatsAppReminder = async (task: Task, projectTitle: string)
 
   if (preferences.whatsappTaskCreatedEnabled) {
     try {
+      const headers = await buildAuthorizedHeaders({
+        'Content-Type': 'application/json',
+      });
       const response = await fetch('/api/reminders/whatsapp/task-created', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify({
           phoneNumber,
           taskTitle,
