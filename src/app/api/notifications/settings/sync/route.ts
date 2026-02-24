@@ -282,7 +282,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const row = data as NotificationSettingsRow;
+    const row = data as unknown as NotificationSettingsRow;
 
     return NextResponse.json({
       ok: true,

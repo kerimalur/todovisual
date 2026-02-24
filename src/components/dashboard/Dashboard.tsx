@@ -1,11 +1,10 @@
 ﻿'use client';
 
-import { useMemo } from 'react';
 import { ArrowRight, Calendar, CalendarClock, CheckCircle2, Plus, Target } from 'lucide-react';
 import { useDataStore, useSettingsStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { Task } from '@/types';
-import { addDays, format, isBefore, isSameDay, isToday, startOfDay, startOfWeek } from 'date-fns';
+import { addDays, format, isSameDay, isToday, startOfDay, startOfWeek } from 'date-fns';
 import { de } from 'date-fns/locale';
 import Link from 'next/link';
 import { Button, Card, CardContent, CardHeader, PriorityBadge } from '@/components/ui';
@@ -37,66 +36,52 @@ export function Dashboard() {
   const settings = useSettingsStore((state) => state.settings);
 
   const now = new Date();
-  const todayStart = startOfDay(now);
+  const todayStartMs = startOfDay(now).getTime();
   const weekStart = startOfWeek(now, { weekStartsOn: 1 });
   const weekDays = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
 
-  const activeTasks = useMemo(
-    () => tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived'),
-    [tasks]
-  );
+  const activeTasks = tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived');
 
-  const importantTasks = useMemo(() => {
-    const dueTodayOrOverdue = activeTasks
-      .filter((task) => {
-        if (!task.dueDate) return false;
-        const due = new Date(task.dueDate);
-        return isToday(due) || isBefore(due, todayStart);
-      })
-      .sort((a, b) => {
-        const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-        const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
-        if (dateA !== dateB) return dateA - dateB;
-        return priorityOrder[a.priority] - priorityOrder[b.priority];
-      });
+  const dueTodayOrOverdue = activeTasks
+    .filter((task) => {
+      if (!task.dueDate) return false;
+      const due = new Date(task.dueDate);
+      return isToday(due) || due.getTime() < todayStartMs;
+    })
+    .sort((a, b) => {
+      const dateA = a.dueDate ? new Date(a.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      const dateB = b.dueDate ? new Date(b.dueDate).getTime() : Number.MAX_SAFE_INTEGER;
+      if (dateA !== dateB) return dateA - dateB;
+      return priorityOrder[a.priority] - priorityOrder[b.priority];
+    });
 
-    if (dueTodayOrOverdue.length >= 6) {
-      return dueTodayOrOverdue.slice(0, 6);
-    }
+  const noDateTasks = activeTasks
+    .filter((task) => !task.dueDate)
+    .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
 
-    const noDateTasks = activeTasks
-      .filter((task) => !task.dueDate)
-      .sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+  const importantTasks =
+    dueTodayOrOverdue.length >= 6
+      ? dueTodayOrOverdue.slice(0, 6)
+      : [...dueTodayOrOverdue, ...noDateTasks].slice(0, 6);
 
-    return [...dueTodayOrOverdue, ...noDateTasks].slice(0, 6);
-  }, [activeTasks, todayStart]);
+  const upcomingEvents = events
+    .filter((event) => new Date(event.startTime).getTime() >= todayStartMs)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    .slice(0, 6);
 
-  const upcomingEvents = useMemo(
-    () =>
-      events
-        .filter((event) => new Date(event.startTime) >= todayStart)
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-        .slice(0, 6),
-    [events, todayStart]
-  );
+  const calendarStrip = weekDays.map((day) => {
+    const taskCount = activeTasks.filter(
+      (task) => task.dueDate && isSameDay(new Date(task.dueDate), day)
+    ).length;
+    const eventCount = events.filter((event) => isSameDay(new Date(event.startTime), day)).length;
 
-  const calendarStrip = useMemo(
-    () =>
-      weekDays.map((day) => {
-        const taskCount = activeTasks.filter(
-          (task) => task.dueDate && isSameDay(new Date(task.dueDate), day)
-        ).length;
-        const eventCount = events.filter((event) => isSameDay(new Date(event.startTime), day)).length;
-
-        return {
-          day,
-          taskCount,
-          eventCount,
-          total: taskCount + eventCount,
-        };
-      }),
-    [activeTasks, events, weekDays]
-  );
+    return {
+      day,
+      taskCount,
+      eventCount,
+      total: taskCount + eventCount,
+    };
+  });
 
   const greetingText = (() => {
     const hour = now.getHours();
@@ -160,7 +145,8 @@ export function Dashboard() {
               ) : (
                 importantTasks.map((task) => {
                   const dueDate = task.dueDate ? new Date(task.dueDate) : null;
-                  const isOverdue = !!dueDate && isBefore(dueDate, todayStart) && !isToday(dueDate);
+                  const isOverdue =
+                    !!dueDate && dueDate.getTime() < todayStartMs && !isToday(dueDate);
 
                   return (
                     <div
