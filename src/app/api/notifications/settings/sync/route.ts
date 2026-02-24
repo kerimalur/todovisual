@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+﻿import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/supabaseAdmin';
 import { normalizeReminderTime } from '@/lib/notificationPreferences';
 import { isValidE164PhoneNumber } from '@/lib/twilioMessaging';
@@ -6,6 +6,11 @@ import { isValidE164PhoneNumber } from '@/lib/twilioMessaging';
 export const runtime = 'nodejs';
 
 interface SyncNotificationSettingsBody {
+  name?: string;
+  email?: string;
+  smsRemindersEnabled?: boolean;
+  smsPhoneNumber?: string;
+  smsLeadMinutes?: number;
   whatsappRemindersEnabled?: boolean;
   whatsappPhoneNumber?: string;
   whatsappTaskCreatedEnabled?: boolean;
@@ -22,6 +27,32 @@ interface SyncNotificationSettingsBody {
   whatsappCustomRules?: unknown;
   weekStartsOnMonday?: boolean;
   timezone?: string;
+  settingsSnapshot?: unknown;
+}
+
+interface NotificationSettingsRow {
+  profile_name: string | null;
+  profile_email: string | null;
+  sms_reminders_enabled: boolean | null;
+  sms_phone_number: string | null;
+  sms_lead_minutes: number | null;
+  whatsapp_reminders_enabled: boolean | null;
+  whatsapp_phone_number: string | null;
+  whatsapp_task_created_enabled: boolean | null;
+  whatsapp_task_completed_enabled: boolean | null;
+  whatsapp_task_start_reminder_enabled: boolean | null;
+  whatsapp_weekly_review_enabled: boolean | null;
+  whatsapp_event_attended_enabled: boolean | null;
+  whatsapp_weekly_review_time: string | null;
+  whatsapp_task_created_template: string | null;
+  whatsapp_task_completed_template: string | null;
+  whatsapp_task_start_template: string | null;
+  whatsapp_weekly_review_template: string | null;
+  whatsapp_event_attended_template: string | null;
+  whatsapp_custom_rules: unknown;
+  week_starts_on_monday: boolean | null;
+  timezone: string | null;
+  settings_snapshot: unknown;
 }
 
 type AuthenticatedUserResult =
@@ -40,6 +71,7 @@ const parseBearerToken = (request: NextRequest): string | null => {
   if (!authorizationHeader.toLowerCase().startsWith('bearer ')) {
     return null;
   }
+
   const token = authorizationHeader.slice(7).trim();
   return token.length > 0 ? token : null;
 };
@@ -61,7 +93,39 @@ const sanitizeTemplate = (value: unknown, fallback: string): string => {
   return normalized.slice(0, 1500);
 };
 
+const sanitizeName = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, 120);
+};
+
+const sanitizeEmail = (value: unknown): string => {
+  if (typeof value !== 'string') return '';
+  return value.trim().slice(0, 320);
+};
+
+const sanitizeLeadMinutes = (value: unknown): number => {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  if (!Number.isFinite(numeric)) return 30;
+  return Math.min(720, Math.max(0, Math.round(numeric)));
+};
+
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const sanitizeSettingsSnapshot = (value: unknown): Record<string, unknown> | null => {
+  if (!isPlainObject(value)) return null;
+
+  try {
+    const serialized = JSON.stringify(value);
+    if (!serialized || serialized.length > 50000) return null;
+    return JSON.parse(serialized) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
 const VALID_CUSTOM_RULE_TRIGGERS = ['task-created', 'task-completed', 'event-attended'] as const;
+
 type SanitizedCustomRule = {
   id: string;
   name: string;
@@ -166,12 +230,103 @@ const authenticateUser = async (request: NextRequest): Promise<AuthenticatedUser
   };
 };
 
+export async function GET(request: NextRequest) {
+  try {
+    const auth = await authenticateUser(request);
+    if (!auth.ok) return auth.response;
+
+    const { data, error } = await auth.supabaseAdmin
+      .from('notification_settings')
+      .select(
+        [
+          'profile_name',
+          'profile_email',
+          'sms_reminders_enabled',
+          'sms_phone_number',
+          'sms_lead_minutes',
+          'whatsapp_reminders_enabled',
+          'whatsapp_phone_number',
+          'whatsapp_task_created_enabled',
+          'whatsapp_task_completed_enabled',
+          'whatsapp_task_start_reminder_enabled',
+          'whatsapp_weekly_review_enabled',
+          'whatsapp_event_attended_enabled',
+          'whatsapp_weekly_review_time',
+          'whatsapp_task_created_template',
+          'whatsapp_task_completed_template',
+          'whatsapp_task_start_template',
+          'whatsapp_weekly_review_template',
+          'whatsapp_event_attended_template',
+          'whatsapp_custom_rules',
+          'week_starts_on_monday',
+          'timezone',
+          'settings_snapshot',
+        ].join(', ')
+      )
+      .eq('user_id', auth.userId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Failed to load notification settings:', error);
+      return NextResponse.json(
+        { error: 'Benachrichtigungseinstellungen konnten nicht geladen werden.' },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json({
+        ok: true,
+        settings: null,
+        settingsSnapshot: null,
+      });
+    }
+
+    const row = data as NotificationSettingsRow;
+
+    return NextResponse.json({
+      ok: true,
+      settingsSnapshot: isPlainObject(row.settings_snapshot) ? row.settings_snapshot : null,
+      settings: {
+        name: row.profile_name || '',
+        email: row.profile_email || '',
+        smsRemindersEnabled: row.sms_reminders_enabled === true,
+        smsPhoneNumber: row.sms_phone_number || '',
+        smsLeadMinutes: typeof row.sms_lead_minutes === 'number' ? row.sms_lead_minutes : 30,
+        whatsappRemindersEnabled: row.whatsapp_reminders_enabled === true,
+        whatsappPhoneNumber: row.whatsapp_phone_number || '',
+        whatsappTaskCreatedEnabled: row.whatsapp_task_created_enabled !== false,
+        whatsappTaskCompletedEnabled: row.whatsapp_task_completed_enabled !== false,
+        whatsappTaskStartReminderEnabled: row.whatsapp_task_start_reminder_enabled !== false,
+        whatsappWeeklyReviewEnabled: row.whatsapp_weekly_review_enabled !== false,
+        whatsappEventAttendedEnabled: row.whatsapp_event_attended_enabled !== false,
+        whatsappWeeklyReviewTime: row.whatsapp_weekly_review_time || '22:00',
+        whatsappTaskCreatedTemplate: row.whatsapp_task_created_template || DEFAULT_TASK_CREATED_TEMPLATE,
+        whatsappTaskCompletedTemplate: row.whatsapp_task_completed_template || DEFAULT_TASK_COMPLETED_TEMPLATE,
+        whatsappTaskStartTemplate: row.whatsapp_task_start_template || DEFAULT_TASK_START_TEMPLATE,
+        whatsappWeeklyReviewTemplate: row.whatsapp_weekly_review_template || DEFAULT_WEEKLY_TEMPLATE,
+        whatsappEventAttendedTemplate:
+          row.whatsapp_event_attended_template || DEFAULT_EVENT_ATTENDED_TEMPLATE,
+        whatsappCustomRules: Array.isArray(row.whatsapp_custom_rules) ? row.whatsapp_custom_rules : [],
+        weekStartsOnMonday: row.week_starts_on_monday !== false,
+      },
+    });
+  } catch (error) {
+    console.error('Notification settings preload failed:', error);
+    return NextResponse.json(
+      { error: 'Interner Fehler beim Laden der Benachrichtigungseinstellungen.' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await authenticateUser(request);
     if (!auth.ok) return auth.response;
 
     const body = (await request.json().catch(() => ({}))) as SyncNotificationSettingsBody;
+
     const phoneNumberRaw = typeof body.whatsappPhoneNumber === 'string' ? body.whatsappPhoneNumber.trim() : '';
     const normalizedPhoneNumber = phoneNumberRaw.length > 0 ? phoneNumberRaw : null;
 
@@ -182,8 +337,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const payload = {
+    const smsPhoneNumberRaw = typeof body.smsPhoneNumber === 'string' ? body.smsPhoneNumber.trim() : '';
+    const normalizedSmsPhoneNumber = smsPhoneNumberRaw.length > 0 ? smsPhoneNumberRaw : null;
+
+    if (normalizedSmsPhoneNumber && !isValidE164PhoneNumber(normalizedSmsPhoneNumber)) {
+      return NextResponse.json(
+        { error: 'Ungueltige SMS-Nummer. Bitte E.164 Format nutzen (z.B. +491234567890).' },
+        { status: 400 }
+      );
+    }
+
+    const settingsSnapshot = sanitizeSettingsSnapshot(body.settingsSnapshot);
+
+    const payload: Record<string, unknown> = {
       user_id: auth.userId,
+      profile_name: sanitizeName(body.name),
+      profile_email: sanitizeEmail(body.email),
+      sms_reminders_enabled: coerceBoolean(body.smsRemindersEnabled, false),
+      sms_phone_number: normalizedSmsPhoneNumber,
+      sms_lead_minutes: sanitizeLeadMinutes(body.smsLeadMinutes),
       whatsapp_reminders_enabled: coerceBoolean(body.whatsappRemindersEnabled, false),
       whatsapp_phone_number: normalizedPhoneNumber,
       whatsapp_task_created_enabled: coerceBoolean(body.whatsappTaskCreatedEnabled, true),
@@ -221,6 +393,10 @@ export async function POST(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
+    if (settingsSnapshot) {
+      payload.settings_snapshot = settingsSnapshot;
+    }
+
     const { error: upsertError } = await auth.supabaseAdmin.from('notification_settings').upsert(payload, {
       onConflict: 'user_id',
     });
@@ -236,7 +412,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('Notification settings sync failed:', error);
-    return NextResponse.json({ error: 'Interner Fehler beim Sync der Benachrichtigungseinstellungen.' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Interner Fehler beim Sync der Benachrichtigungseinstellungen.' },
+      { status: 500 }
+    );
   }
 }
 
