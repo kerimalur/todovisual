@@ -348,3 +348,162 @@ textarea:focus-visible {
   background: #c7d2fe;
   color: #312e81;
 }
+
+/* ===== EXTENDED ANIMATIONS ===== */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-12px); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  33% { transform: translateY(-8px) rotate(1deg); }
+  66% { transform: translateY(-4px) rotate(-1deg); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes orb {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  33% { transform: translate(20px, -15px) scale(1.08); opacity: 0.6; }
+  66% { transform: translate(-15px, 8px) scale(0.94); opacity: 0.3; }
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+  50% { box-shadow: 0 0 24px 6px rgba(99, 102, 241, 0.2); }
+}
+
+@keyframes timerPing {
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(1); opacity: 0.8; }
+}
+
+@keyframes borderGlow {
+  0%, 100% { border-color: rgba(99, 102, 241, 0.3); }
+  50% { border-color: rgba(99, 102, 241, 0.7); }
+}
+
+@keyframes subtleBounce {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-4px); }
+  60% { transform: translateY(-2px); }
+}
+
+/* Fill-mode fixes for entrance animations */
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out both;
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.35s ease-out both;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.2s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out both;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s ease-out both;
+}
+
+.animate-slide-in-up {
+  animation: slideInUp 0.4s ease-out both;
+}
+
+.animate-float {
+  animation: float 5s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: floatSlow 7s ease-in-out infinite;
+}
+
+.animate-orb {
+  animation: orb 9s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.animate-gradient-flow {
+  background-size: 200% 200%;
+  animation: gradientFlow 5s ease infinite;
+}
+
+.animate-timer-ping {
+  animation: timerPing 2s ease-in-out infinite;
+}
+
+.animate-subtle-bounce {
+  animation: subtleBounce 1.8s ease-in-out infinite;
+}
+
+/* ===== STAGGER DELAY UTILITIES ===== */
+.stagger-1 { animation-delay: 60ms; animation-fill-mode: both; }
+.stagger-2 { animation-delay: 120ms; animation-fill-mode: both; }
+.stagger-3 { animation-delay: 180ms; animation-fill-mode: both; }
+.stagger-4 { animation-delay: 240ms; animation-fill-mode: both; }
+.stagger-5 { animation-delay: 300ms; animation-fill-mode: both; }
+.stagger-6 { animation-delay: 360ms; animation-fill-mode: both; }
+.stagger-7 { animation-delay: 420ms; animation-fill-mode: both; }
+.stagger-8 { animation-delay: 480ms; animation-fill-mode: both; }
+
+/* ===== GLASS MORPHISM ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+/* ===== ENHANCED CARD HOVER ===== */
+.card-hover {
+  transition: all 0.2s ease-out;
+}
+
+.card-hover:hover {
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+  border-color: #c7d2fe;
+}
+
+/* ===== SIDEBAR NAV ACTIVE ===== */
+.nav-active-glow {
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.3);
+}
+
+/* ===== TOPBAR SHADOW ===== */
+.topbar-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
