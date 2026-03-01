@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { 
-  BookOpen, Smile, Meh, Frown, Trash2, Edit2, 
-  Star, Plus, X, ChevronDown, ChevronRight, Lightbulb,
+  BookOpen, Smile, Meh, Frown, Trash2, Edit2,
+  Star, Plus, X, ChevronDown, Lightbulb,
   Target, Zap, Brain, Coffee, Sparkles, Calendar, CheckCircle2,
   Clock, TrendingUp, Award, AlertCircle, ArrowRight
 } from 'lucide-react';
@@ -28,19 +28,19 @@ const journalPrompts = [
 // Star Rating Component
 function StarRating({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
   return (
-    <div className="space-y-1">
-      <span className="text-xs text-[#9b9a97]">{label}</span>
-      <div className="flex gap-0.5">
+    <div className="space-y-1.5">
+      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{label}</span>
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             type="button"
             onClick={() => onChange(star)}
-            className="p-0.5"
+            className="p-0.5 hover:scale-110 transition-transform"
           >
-            <Star 
-              size={16} 
-              className={star <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'} 
+            <Star
+              size={16}
+              className={star <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'}
             />
           </button>
         ))}
@@ -78,74 +78,86 @@ function JournalSummaryCard({ entry, onEdit, onDelete }: {
     ? entry.content.substring(0, 100) + '...' 
     : entry.content;
 
+  const moodBorderColors: Record<string, string> = {
+    great: 'border-l-emerald-400',
+    good: 'border-l-green-300',
+    neutral: 'border-l-yellow-300',
+    bad: 'border-l-orange-400',
+    terrible: 'border-l-red-400',
+  };
+  const borderColor = entry.mood ? moodBorderColors[entry.mood] : 'border-l-gray-200';
+
   return (
-    <div className="group border border-[#e9e9e7] rounded-lg bg-white hover:shadow-md transition-all">
+    <div className={`group border border-gray-100 border-l-4 ${borderColor} rounded-2xl bg-white shadow-sm hover:shadow-md transition-all duration-200 animate-fade-in`}>
       {/* Header - immer sichtbar */}
-      <div 
+      <div
         className="p-4 cursor-pointer flex items-start justify-between"
         onClick={() => setExpanded(!expanded)}
       >
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-[#37352f]">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <span className="text-sm font-semibold text-gray-800">
               {format(new Date(entry.date), 'EEEE, dd. MMMM yyyy', { locale: de })}
             </span>
             {entry.mood && (
-              <div className="flex items-center gap-1 px-2 py-0.5 bg-gray-50 rounded-full">
+              <div className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-50 border border-gray-100 rounded-full">
                 {moodIcons[entry.mood]}
-                <span className="text-xs text-gray-500">{moodLabels[entry.mood]}</span>
+                <span className="text-xs font-medium text-gray-600">{moodLabels[entry.mood]}</span>
               </div>
             )}
+            {entry.isWeeklyReflection && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-purple-50 border border-purple-100 rounded-full text-xs font-medium text-purple-700">
+                📅 Wochenreflexion
+              </span>
+            )}
           </div>
-          <p className="text-sm text-[#6b6b6b] line-clamp-2">{summary}</p>
-          
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">{summary}</p>
+
           {/* Quick Stats */}
           {entry.reflection && (
             <div className="flex items-center gap-3 mt-2">
-              <span className="text-xs text-[#9b9a97] flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-yellow-50 px-2 py-0.5 rounded-lg">
                 <Star size={10} className="text-yellow-400 fill-yellow-400" />
                 Produktivität: {entry.reflection.productivity}/5
               </span>
-              <span className="text-xs text-[#9b9a97] flex items-center gap-1">
+              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 bg-blue-50 px-2 py-0.5 rounded-lg">
                 <Zap size={10} className="text-blue-400" />
                 Energie: {entry.reflection.energy}/5
               </span>
             </div>
           )}
         </div>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-1.5 flex-shrink-0 ml-3">
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
-              className="p-1.5 hover:bg-[rgba(55,53,47,0.08)] rounded"
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <Edit2 size={14} className="text-[#9b9a97]" />
+              <Edit2 size={14} className="text-gray-400 hover:text-gray-600" />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
-              className="p-1.5 hover:bg-red-50 rounded"
+              className="p-1.5 hover:bg-red-50 rounded-lg transition-colors"
             >
-              <Trash2 size={14} className="text-[#9b9a97] hover:text-red-500" />
+              <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
             </button>
           </div>
-          {expanded ? (
+          <div className={`p-1 rounded-lg transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}>
             <ChevronDown size={16} className="text-gray-400" />
-          ) : (
-            <ChevronRight size={16} className="text-gray-400" />
-          )}
+          </div>
         </div>
       </div>
 
       {/* Expanded Content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-[#f0f0ef] pt-3 animate-fadeIn">
+        <div className="px-4 pb-4 border-t border-gray-50 pt-3 animate-fade-in">
           {/* Full Content */}
           <div className="mb-4">
-            <h4 className="text-xs font-medium text-[#9b9a97] uppercase tracking-wider mb-2">
+            <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
               Vollständiger Eintrag
             </h4>
-            <p className="text-sm text-[#37352f] whitespace-pre-wrap bg-gray-50 p-3 rounded-lg">
+            <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 border border-gray-100 p-4 rounded-xl leading-relaxed">
               {entry.content}
             </p>
           </div>
@@ -153,7 +165,7 @@ function JournalSummaryCard({ entry, onEdit, onDelete }: {
           {/* Reflection Details */}
           {entry.reflection && (
             <div className="space-y-3">
-              <h4 className="text-xs font-medium text-[#9b9a97] uppercase tracking-wider">
+              <h4 className="text-[10px] font-bold uppercase tracking-widest text-gray-400">
                 Tägliche Reflexion
               </h4>
               
@@ -435,26 +447,23 @@ export default function JournalPage() {
     })();
   };
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto animate-fade-in">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Journal</h1>
-            <p className="text-gray-500 mt-1">{format(today, 'EEEE, d. MMMM yyyy', { locale: de })}</p>
-          </div>
-          
-          <div className="flex items-center gap-2">
-            {!showForm && !showWeeklyReflection && (
-              <button
-                onClick={() => setShowForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-xl shadow-sm hover:shadow-md transition-all"
-              >
-                <Plus size={16} />
-                Neuer Eintrag
-              </button>
-            )}
-          </div>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Journal</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{format(today, 'EEEE, d. MMMM yyyy', { locale: de })} · {journalEntries.length} Einträge</p>
+        </div>
+        <div className="flex items-center gap-2">
+          {!showForm && !showWeeklyReflection && (
+            <button
+              onClick={() => setShowForm(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200/50 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+            >
+              <Plus size={16} />
+              Neuer Eintrag
+            </button>
+          )}
         </div>
       </div>
 
@@ -728,16 +737,17 @@ export default function JournalPage() {
 
       {/* New Entry Form */}
       {showForm && (
-        <div className="mb-6 border border-[#e9e9e7] rounded-md bg-white p-4">
+        <div className="mb-6 border border-gray-100 rounded-2xl bg-white shadow-sm p-5 animate-fade-in-up">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-[#37352f]">
+            <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+              <BookOpen size={15} className="text-indigo-500" />
               {editingEntry ? 'Eintrag bearbeiten' : 'Neuer Eintrag'}
             </h3>
             <button
               onClick={resetForm}
-              className="p-1 hover:bg-[rgba(55,53,47,0.08)] rounded"
+              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <X size={16} className="text-[#9b9a97]" />
+              <X size={15} className="text-gray-400" />
             </button>
           </div>
           
@@ -818,14 +828,14 @@ export default function JournalPage() {
           {/* Reflection Toggle */}
           <button
             onClick={() => setShowReflection(!showReflection)}
-            className="text-sm text-[#2383e2] hover:underline mb-4"
+            className="text-sm font-medium text-indigo-600 hover:text-indigo-700 mb-4 transition-colors"
           >
             {showReflection ? 'Reflexion ausblenden' : '+ Tägliche Reflexion hinzufügen'}
           </button>
 
           {/* Reflection Section */}
           {showReflection && (
-            <div className="border-t border-[#e9e9e7] pt-4 space-y-4">
+            <div className="border-t border-gray-100 pt-4 space-y-4 animate-fade-in">
               <div className="grid grid-cols-3 gap-4">
                 <StarRating
                   value={reflection.productivity}
@@ -914,45 +924,51 @@ export default function JournalPage() {
         </div>
       )}
 
-      {/* Entries List - Vergangene Einträge */}
+      {/* Entries List */}
       {journalEntries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-xl bg-white">
-          <div className="w-14 h-14 rounded-full bg-indigo-50 flex items-center justify-center mb-4">
-            <BookOpen size={28} className="text-indigo-500" />
+        <div className="flex flex-col items-center justify-center py-16 text-center border border-dashed border-gray-200 rounded-2xl bg-white animate-fade-in">
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mb-4">
+            <BookOpen size={28} className="text-indigo-400" />
           </div>
-          <p className="font-medium text-gray-700 mb-1">Noch keine Einträge</p>
+          <p className="font-semibold text-gray-700 mb-1">Noch keine Einträge</p>
           <p className="text-sm text-gray-500">Starte mit deinem ersten Journal-Eintrag.</p>
+          <button
+            onClick={() => setShowForm(true)}
+            className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+          >
+            <Plus size={14} />
+            Ersten Eintrag erstellen
+          </button>
         </div>
       ) : (
-        <>
-          <h2 className="text-sm font-semibold text-[#37352f] mb-4 flex items-center gap-2">
-            <BookOpen size={16} className="text-indigo-500" />
-            Vergangene Einträge
-            <span className="text-xs text-[#9b9a97] font-normal">({journalEntries.length} insgesamt)</span>
-          </h2>
-          
+        <div className="space-y-6">
           {Object.entries(groupedEntries).map(([month, entries]) => (
-            <div key={month} className="mb-6">
-              <h3 className="text-xs font-medium text-[#9b9a97] uppercase tracking-wider mb-3 sticky top-0 bg-[var(--background)] py-1">
-                {month}
-                <span className="ml-2 text-[#c3c3c1]">({entries.length} Einträge)</span>
-              </h3>
-              
+            <div key={month}>
+              <div className="flex items-center gap-3 mb-3 sticky top-16 z-10 py-2">
+                <div className="h-px flex-1 bg-gray-100" />
+                <span className="text-[10px] font-bold uppercase tracking-widest text-gray-400 px-3 py-1 bg-white border border-gray-100 rounded-full">
+                  {month}
+                  <span className="ml-1.5 text-gray-300">· {entries.length}</span>
+                </span>
+                <div className="h-px flex-1 bg-gray-100" />
+              </div>
+
               <div className="space-y-3">
                 {entries
                   .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                  .map((entry) => (
-                    <JournalSummaryCard
-                      key={entry.id}
-                      entry={entry}
-                      onEdit={() => handleEditEntry(entry)}
-                      onDelete={() => setShowDeleteConfirm(entry.id)}
-                    />
+                  .map((entry, idx) => (
+                    <div key={entry.id} style={{ animationDelay: `${idx * 50}ms` }}>
+                      <JournalSummaryCard
+                        entry={entry}
+                        onEdit={() => handleEditEntry(entry)}
+                        onDelete={() => setShowDeleteConfirm(entry.id)}
+                      />
+                    </div>
                   ))}
               </div>
             </div>
           ))}
-        </>
+        </div>
       )}
 
       {/* Delete Confirm Modal */}

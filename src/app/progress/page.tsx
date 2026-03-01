@@ -398,48 +398,39 @@ export default function ProgressPage() {
   const PRIORITY_COLORS = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e', none: '#9ca3af' };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto animate-fade-in">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Fortschritt</h1>
-        <p className="text-gray-500 mt-1">Deine Statistiken, Fokuszeit und Trends</p>
+      <div className="mb-6 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Fortschritt</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Deine Statistiken, Fokuszeit und wöchentliche Trends</p>
+        </div>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-100">
+          <Rocket size={13} className="text-emerald-600" />
+          <span className="text-xs font-semibold text-emerald-700">{stats.completionPercentage}% erledigt</span>
+        </div>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6">
-        <button
-          onClick={() => setActiveTab('overview')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'overview'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          <BarChart3 size={16} />
-          Übersicht
-        </button>
-        <button
-          onClick={() => setActiveTab('focus')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'focus'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          <Timer size={16} />
-          Fokus-Statistik
-        </button>
-        <button
-          onClick={() => setActiveTab('weekly')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
-            activeTab === 'weekly'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-          }`}
-        >
-          <FileText size={16} />
-          Wochenreport
-        </button>
+      <div className="flex gap-1.5 mb-6">
+        {[
+          { key: 'overview' as const, icon: BarChart3, label: 'Übersicht' },
+          { key: 'focus' as const, icon: Timer, label: 'Fokus-Statistik' },
+          { key: 'weekly' as const, icon: FileText, label: 'Wochenreport' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              activeTab === tab.key
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            <tab.icon size={15} />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* ===== OVERVIEW TAB ===== */}
@@ -447,31 +438,31 @@ export default function ProgressPage() {
         <>
           {/* Stats Grid */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-          <div className="flex items-center gap-2 text-gray-500 mb-2">
-            <CheckCircle2 size={16} />
-            <span className="text-sm font-medium">Erledigt</span>
+        <div className="flex items-center gap-3 p-5 bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-100 rounded-2xl hover:shadow-md transition-all animate-fade-in-up stagger-1">
+          <div className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 size={18} className="text-emerald-600" />
           </div>
-          <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
-          <p className="text-xs text-gray-400 mt-1">von {stats.totalTasks}</p>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
+            <p className="text-xs font-medium text-emerald-600 mt-0.5">von {stats.totalTasks} erledigt</p>
+          </div>
         </div>
 
         {/* Tagesziel mit Erklärung */}
-        <div 
-          className="relative p-5 bg-white border border-gray-200 rounded-xl cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group"
+        <div
+          className="relative flex items-center gap-3 p-5 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl cursor-pointer hover:shadow-md transition-all group animate-fade-in-up stagger-2"
           onClick={() => setShowGoalExplanation(!showGoalExplanation)}
         >
-          <div className="flex items-center justify-between text-gray-500 mb-2">
-            <div className="flex items-center gap-2">
-              <Target size={16} />
-              <span className="text-sm font-medium">Tagesziel</span>
-            </div>
-            <HelpCircle size={12} className="opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
+          <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+            <Target size={18} className="text-indigo-600" />
           </div>
-          <p className="text-2xl font-semibold text-[#37352f]">{dailyGoalBreakdown.total}</p>
-          <p className="text-xs text-[#9b9a97]">
-            {dailyGoalBreakdown.todayCompleted} erledigt
-          </p>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{dailyGoalBreakdown.total}</p>
+            <p className="text-xs font-medium text-indigo-600 mt-0.5">
+              {dailyGoalBreakdown.todayCompleted} heute erledigt
+            </p>
+          </div>
+          <HelpCircle size={12} className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
           
           {/* Hover Tooltip */}
           {showGoalExplanation && (
@@ -528,30 +519,32 @@ export default function ProgressPage() {
           )}
         </div>
 
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <div className="flex items-center gap-2 text-[#9b9a97] mb-2">
-            <TrendingUp size={14} />
-            <span className="text-xs font-medium">Ø pro Tag</span>
+        <div className="flex items-center gap-3 p-5 bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-100 rounded-2xl hover:shadow-md transition-all animate-fade-in-up stagger-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0">
+            <TrendingUp size={18} className="text-blue-600" />
           </div>
-          <p className="text-2xl font-semibold text-[#37352f]">{stats.avgCompletionRate}</p>
-          <p className="text-xs text-[#9b9a97]">letzte 7 Tage</p>
+          <div>
+            <p className="text-2xl font-bold text-gray-900">{stats.avgCompletionRate}</p>
+            <p className="text-xs font-medium text-blue-600 mt-0.5">Ø pro Tag (7 Tage)</p>
+          </div>
         </div>
 
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <div className="flex items-center gap-2 text-[#9b9a97] mb-2">
-            <AlertCircle size={14} />
-            <span className="text-xs font-medium">Überfällig</span>
+        <div className="flex items-center gap-3 p-5 bg-gradient-to-br from-red-50 to-orange-50 border border-red-100 rounded-2xl hover:shadow-md transition-all animate-fade-in-up stagger-4">
+          <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+            <AlertCircle size={18} className="text-red-500" />
           </div>
-          <p className="text-2xl font-semibold text-red-600">{stats.overdueTasks}</p>
-          <p className="text-xs text-[#9b9a97]">offen</p>
+          <div>
+            <p className="text-2xl font-bold text-red-600">{stats.overdueTasks}</p>
+            <p className="text-xs font-medium text-red-500 mt-0.5">überfällig</p>
+          </div>
         </div>
       </div>
 
       {/* Charts */}
       <div className="grid grid-cols-2 gap-4 mb-6">
         {/* Daily Completed Tasks */}
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <h3 className="text-sm font-medium text-[#37352f] mb-4">
+        <div className="p-5 border border-gray-100 rounded-2xl bg-white shadow-sm">
+          <h3 className="text-sm font-semibold text-gray-800 mb-4">
             Erledigte Aufgaben pro Tag
           </h3>
           <div className="h-[200px]">
@@ -561,17 +554,17 @@ export default function ProgressPage() {
                   dataKey="day" 
                   axisLine={false} 
                   tickLine={false}
-                  tick={{ fill: '#9b9a97', fontSize: 11 }}
+                  tick={{ fill: '#9ca3af', fontSize: 11 }}
                 />
                 <YAxis 
                   axisLine={false} 
                   tickLine={false}
-                  tick={{ fill: '#9b9a97', fontSize: 11 }}
+                  tick={{ fill: '#9ca3af', fontSize: 11 }}
                 />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: '#fff', 
-                    border: '1px solid #e9e9e7',
+                    border: '1px solid #e5e7eb',
                     borderRadius: '4px',
                     fontSize: '12px',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
@@ -581,7 +574,7 @@ export default function ProgressPage() {
                 />
                 <Bar 
                   dataKey="completed" 
-                  fill="#2383e2" 
+                  fill="#6366f1"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>
@@ -619,17 +612,17 @@ export default function ProgressPage() {
                     dataKey="week" 
                     axisLine={false} 
                     tickLine={false}
-                    tick={{ fill: '#9b9a97', fontSize: 11 }}
+                    tick={{ fill: '#9ca3af', fontSize: 11 }}
                   />
                   <YAxis 
                     axisLine={false} 
                     tickLine={false}
-                    tick={{ fill: '#9b9a97', fontSize: 11 }}
+                    tick={{ fill: '#9ca3af', fontSize: 11 }}
                   />
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: '#fff', 
-                      border: '1px solid #e9e9e7',
+                      border: '1px solid #e5e7eb',
                       borderRadius: '8px',
                       fontSize: '12px',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
@@ -875,12 +868,12 @@ export default function ProgressPage() {
                       dataKey="day" 
                       axisLine={false} 
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
                     />
                     <YAxis 
                       axisLine={false} 
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
                       tickFormatter={(value) => `${value}m`}
                     />
                     <Tooltip 
@@ -1085,12 +1078,12 @@ export default function ProgressPage() {
                       dataKey="day" 
                       axisLine={false} 
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
                     />
                     <YAxis 
                       axisLine={false} 
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: '#9ca3af', fontSize: 11 }}
                     />
                     <Tooltip 
                       contentStyle={{ 

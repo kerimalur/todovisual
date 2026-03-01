@@ -13,12 +13,46 @@ import {
   FolderKanban,
   X,
   Link2,
+  Clock,
+  Zap,
+  InboxIcon,
+  TrendingUp,
+  Filter,
+  ArrowUpDown,
+  Search,
 } from 'lucide-react';
 import { useModals } from '@/components/layout/MainLayout';
-import { Button, Card, PriorityBadge, SearchInput, TasksEmptyState, SearchEmptyState } from '@/components/ui';
+import { PriorityBadge, TasksEmptyState, SearchEmptyState } from '@/components/ui';
 
 type FilterType = 'all' | 'inbox' | 'today' | 'upcoming' | 'overdue';
 type SortType = 'dueDate' | 'priority' | 'created' | 'title';
+
+const priorityConfig = {
+  urgent: {
+    border: 'border-l-red-500',
+    dot: 'bg-red-500',
+    bg: 'hover:bg-red-50/30',
+    label: 'Dringend',
+  },
+  high: {
+    border: 'border-l-orange-400',
+    dot: 'bg-orange-400',
+    bg: 'hover:bg-orange-50/30',
+    label: 'Hoch',
+  },
+  medium: {
+    border: 'border-l-blue-400',
+    dot: 'bg-blue-400',
+    bg: 'hover:bg-blue-50/20',
+    label: 'Mittel',
+  },
+  low: {
+    border: 'border-l-gray-300',
+    dot: 'bg-gray-300',
+    bg: 'hover:bg-gray-50',
+    label: 'Niedrig',
+  },
+};
 
 export default function TasksPage() {
   const {
@@ -42,17 +76,21 @@ export default function TasksPage() {
   const [planningBusy, setPlanningBusy] = useState(false);
   const [planningMessage, setPlanningMessage] = useState('');
   const [eventAdoptBusyId, setEventAdoptBusyId] = useState<string | null>(null);
+  const [showOrphanEvents, setShowOrphanEvents] = useState(false);
 
   const activeTasks = tasks.filter((task) => task.status !== 'completed');
+  const completedToday = tasks.filter(
+    (t) => t.status === 'completed' && t.completedAt && isToday(new Date(t.completedAt))
+  );
   const inboxTasks = activeTasks.filter((task) => !task.dueDate);
   const overdueTasks = activeTasks.filter(
     (task) => task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate))
   );
+  const todayTasks = activeTasks.filter((task) => task.dueDate && isToday(new Date(task.dueDate)));
 
   const orphanUpcomingEvents = useMemo(() => {
     const rangeStart = startOfDay(new Date());
     const rangeEnd = addDays(rangeStart, 14);
-
     return events
       .filter((event) => {
         if (event.taskId || event.linkedTaskId) return false;
@@ -125,7 +163,7 @@ export default function TasksPage() {
           return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
         case 'priority': {
           const order = { urgent: 0, high: 1, medium: 2, low: 3 };
-          return (order[a.priority] ?? 3) - (order[b.priority] ?? 3);
+          return (order[a.priority as keyof typeof order] ?? 3) - (order[b.priority as keyof typeof order] ?? 3);
         }
         case 'created':
           return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -141,7 +179,7 @@ export default function TasksPage() {
     () => ({
       all: activeTasks.length,
       inbox: inboxTasks.length,
-      today: activeTasks.filter((task) => task.dueDate && isToday(new Date(task.dueDate))).length,
+      today: todayTasks.length,
       upcoming: activeTasks.filter(
         (task) =>
           task.dueDate &&
@@ -150,7 +188,7 @@ export default function TasksPage() {
       ).length,
       overdue: overdueTasks.length,
     }),
-    [activeTasks, inboxTasks.length, overdueTasks.length]
+    [activeTasks, inboxTasks.length, overdueTasks.length, todayTasks.length]
   );
 
   const handlePlanInbox = async () => {
@@ -186,7 +224,6 @@ export default function TasksPage() {
   const handleAdoptEventAsTask = async (eventId: string) => {
     const event = events.find((entry) => entry.id === eventId);
     if (!event) return;
-
     setEventAdoptBusyId(eventId);
     try {
       const createdTask = await createTask({
@@ -199,14 +236,12 @@ export default function TasksPage() {
         status: 'todo',
         tags: ['kalender', 'termin'],
       });
-
       await updateEvent(event.id, {
         taskId: createdTask.id,
         linkedTaskId: createdTask.id,
       });
     } catch (error) {
       console.error('Event konnte nicht als Aufgabe übernommen werden:', error);
-      alert('Termin konnte nicht als Aufgabe übernommen werden.');
     } finally {
       setEventAdoptBusyId(null);
     }
@@ -214,58 +249,124 @@ export default function TasksPage() {
 
   const formatDueDate = (dueDate: Date) => {
     const date = new Date(dueDate);
-    const dayLabel = isToday(date)
-      ? 'Heute'
-      : isTomorrow(date)
-        ? 'Morgen'
-        : format(date, 'd. MMM', { locale: de });
-
+    const dayLabel = isToday(date) ? 'Heute' : isTomorrow(date) ? 'Morgen' : format(date, 'd. MMM', { locale: de });
     return `${dayLabel}, ${format(date, 'HH:mm')} Uhr`;
   };
 
-  const priorityLabel: Record<string, string> = {
-    urgent: 'Dringend',
-    high: 'Hoch',
-    medium: 'Mittel',
-    low: 'Niedrig',
-  };
+  const filterTabs = [
+    { key: 'all', label: 'Alle', count: taskCounts.all, color: 'indigo' },
+    { key: 'inbox', label: 'Inbox', count: taskCounts.inbox, color: 'gray' },
+    { key: 'today', label: 'Heute', count: taskCounts.today, color: 'blue' },
+    { key: 'upcoming', label: 'Diese Woche', count: taskCounts.upcoming, color: 'purple' },
+    { key: 'overdue', label: 'Überfällig', count: taskCounts.overdue, color: 'red' },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Aufgaben</h1>
-        <p className="text-gray-700 mt-1">{activeTasks.length} aktive Aufgaben</p>
+    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in">
+
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Aufgaben</h1>
+          <p className="text-sm text-gray-500 mt-0.5">{activeTasks.length} aktive Aufgaben · {completedToday.length} heute erledigt</p>
+        </div>
+        <button
+          onClick={() => openTaskModal()}
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-sm font-semibold rounded-xl shadow-md shadow-indigo-200/50 hover:shadow-indigo-300/60 hover:scale-[1.01] active:scale-[0.99] transition-all duration-200"
+        >
+          <Plus size={16} />
+          Neue Aufgabe
+        </button>
       </div>
 
-      <div className="mb-6 p-4 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-blue-50">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <p className="text-xs font-semibold text-indigo-800 uppercase tracking-wide">Daily Planning Ritual</p>
-            <p className="text-sm text-gray-900 mt-1">
-              Inbox: <span className="font-semibold">{inboxTasks.length}</span> · Überfällig:{' '}
-              <span className="font-semibold">{overdueTasks.length}</span>
-            </p>
-            {planningMessage && <p className="text-xs text-indigo-900 mt-2">{planningMessage}</p>}
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          {
+            label: 'Aktiv gesamt',
+            value: activeTasks.length,
+            icon: Zap,
+            bg: 'bg-indigo-50',
+            iconColor: 'text-indigo-600',
+            border: 'border-indigo-100',
+          },
+          {
+            label: 'Heute fällig',
+            value: taskCounts.today,
+            icon: Calendar,
+            bg: 'bg-blue-50',
+            iconColor: 'text-blue-600',
+            border: 'border-blue-100',
+          },
+          {
+            label: 'Inbox',
+            value: taskCounts.inbox,
+            icon: InboxIcon,
+            bg: 'bg-gray-50',
+            iconColor: 'text-gray-500',
+            border: 'border-gray-200',
+          },
+          {
+            label: 'Überfällig',
+            value: taskCounts.overdue,
+            icon: AlertTriangle,
+            bg: overdueTasks.length > 0 ? 'bg-red-50' : 'bg-gray-50',
+            iconColor: overdueTasks.length > 0 ? 'text-red-500' : 'text-gray-400',
+            border: overdueTasks.length > 0 ? 'border-red-100' : 'border-gray-200',
+          },
+        ].map((stat, i) => (
+          <div
+            key={stat.label}
+            className={`flex items-center gap-3 px-4 py-3 ${stat.bg} border ${stat.border} rounded-xl animate-fade-in-up stagger-${i + 1}`}
+          >
+            <div className={`w-8 h-8 rounded-lg ${stat.bg} border ${stat.border} flex items-center justify-center flex-shrink-0`}>
+              <stat.icon size={15} className={stat.iconColor} />
+            </div>
+            <div>
+              <p className="text-xl font-bold text-gray-900 leading-none">{stat.value}</p>
+              <p className="text-xs text-gray-500 mt-0.5">{stat.label}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Planning Ritual */}
+      <div className="p-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50/80 to-purple-50/60 animate-fade-in-up stagger-2">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
+              <TrendingUp size={16} className="text-indigo-600" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-indigo-700 uppercase tracking-wide">Daily Planning</p>
+              <p className="text-sm text-gray-700 mt-0.5">
+                <span className="font-semibold">{inboxTasks.length}</span> in Inbox ·{' '}
+                <span className="font-semibold text-red-600">{overdueTasks.length}</span> überfällig
+              </p>
+              {planningMessage && (
+                <p className="text-xs text-indigo-700 mt-1 font-medium">{planningMessage}</p>
+              )}
+            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => void handlePlanInbox()}
               disabled={planningBusy}
-              className="px-3 py-2 text-xs font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-xs font-semibold rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
             >
-              Inbox nach Heute
+              Inbox → Heute
             </button>
             <button
               onClick={() => void handleReschedule()}
               disabled={planningBusy}
-              className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-indigo-200 text-indigo-800 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 transition-colors"
             >
-              Überfällige smart planen
+              Überfällige planen
             </button>
             {mitCandidate && (
               <button
                 onClick={() => openTaskDetailModal(mitCandidate)}
-                className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-gray-200 text-gray-800 hover:bg-gray-50"
+                className="px-3 py-2 text-xs font-semibold rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
               >
                 MIT öffnen
               </button>
@@ -274,110 +375,141 @@ export default function TasksPage() {
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border border-sky-100 bg-sky-50/60 p-4">
-        <p className="text-xs font-semibold text-sky-800 uppercase tracking-wide">Termine ohne Aufgabe</p>
-        <p className="text-sm text-gray-900 mt-1 mb-3">
-          {orphanUpcomingEvents.length > 0
-            ? `${orphanUpcomingEvents.length} kommende Termine sind noch nicht als Aufgabe übernommen.`
-            : 'Alle kommenden Termine sind bereits mit Aufgaben verknüpft.'}
-        </p>
-
-        {orphanUpcomingEvents.length > 0 && (
-          <div className="space-y-2">
-            {orphanUpcomingEvents.map((event) => (
-              <div
-                key={event.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-sky-100 bg-white px-3 py-2.5"
-              >
-                <button onClick={() => openEventModal(event)} className="min-w-0 text-left">
-                  <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
-                  <p className="text-xs text-gray-700 mt-0.5">
-                    {format(new Date(event.startTime), 'EEE, d. MMM HH:mm', { locale: de })}
-                  </p>
-                </button>
-                <button
-                  onClick={() => void handleAdoptEventAsTask(event.id)}
-                  disabled={eventAdoptBusyId === event.id}
-                  className="inline-flex items-center gap-1 rounded-md bg-sky-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-sky-700 disabled:opacity-50"
-                >
-                  <Link2 size={12} />
-                  {eventAdoptBusyId === event.id ? 'Übernehme...' : 'Als Aufgabe'}
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      <div className="flex items-center gap-1 mb-5 border-b border-gray-200">
-        {[
-          { key: 'all', label: 'Alle', count: taskCounts.all },
-          { key: 'inbox', label: 'Inbox', count: taskCounts.inbox },
-          { key: 'today', label: 'Heute', count: taskCounts.today },
-          { key: 'upcoming', label: 'Diese Woche', count: taskCounts.upcoming },
-          { key: 'overdue', label: 'Überfällig', count: taskCounts.overdue },
-        ].map((entry) => (
+      {/* Orphan Events (collapsible) */}
+      {orphanUpcomingEvents.length > 0 && (
+        <div className="rounded-2xl border border-sky-100 bg-sky-50/40 overflow-hidden animate-fade-in-up stagger-3">
           <button
-            key={entry.key}
-            onClick={() => setFilter(entry.key as FilterType)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 -mb-px transition-colors ${
-              filter === entry.key
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-gray-700 hover:text-gray-900'
-            }`}
+            onClick={() => setShowOrphanEvents(!showOrphanEvents)}
+            className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-sky-50/80 transition-colors"
           >
-            {entry.label}
-            {entry.count > 0 && (
-              <span
-                className={`ml-2 px-2 py-0.5 rounded-full text-xs font-semibold ${
-                  filter === entry.key ? 'bg-indigo-100 text-indigo-800' : 'bg-gray-100 text-gray-700'
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center">
+                <Link2 size={13} className="text-sky-600" />
+              </div>
+              <div className="text-left">
+                <p className="text-xs font-bold text-sky-700 uppercase tracking-wide">Termine ohne Aufgabe</p>
+                <p className="text-sm text-gray-700">{orphanUpcomingEvents.length} Termine in den nächsten 14 Tagen</p>
+              </div>
+            </div>
+            <span className="text-xs text-sky-500 font-medium">{showOrphanEvents ? 'Einklappen' : 'Anzeigen'}</span>
+          </button>
+          {showOrphanEvents && (
+            <div className="px-4 pb-4 space-y-2 animate-fade-in">
+              {orphanUpcomingEvents.map((event) => (
+                <div
+                  key={event.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-sky-100 bg-white px-3 py-2.5"
+                >
+                  <button onClick={() => openEventModal(event)} className="min-w-0 text-left">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{event.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {format(new Date(event.startTime), 'EEE, d. MMM HH:mm', { locale: de })}
+                    </p>
+                  </button>
+                  <button
+                    onClick={() => void handleAdoptEventAsTask(event.id)}
+                    disabled={eventAdoptBusyId === event.id}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-700 disabled:opacity-50 transition-colors"
+                  >
+                    <Link2 size={11} />
+                    {eventAdoptBusyId === event.id ? 'Übernehme...' : 'Als Aufgabe'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Filter Tabs + Controls */}
+      <div className="flex flex-col gap-3">
+        {/* Pill tabs */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {filterTabs.map((tab) => {
+            const isActive = filter === tab.key;
+            const isOverdue = tab.key === 'overdue' && tab.count > 0;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key as FilterType)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                  isActive
+                    ? isOverdue
+                      ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                      : 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                    : isOverdue
+                      ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-100'
+                      : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
                 }`}
               >
-                {entry.count}
-              </span>
+                {tab.label}
+                {tab.count > 0 && (
+                  <span
+                    className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                      isActive ? 'bg-white/25 text-white' : isOverdue ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {tab.count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Search + Sort row */}
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Search */}
+          <div className="flex items-center gap-2 flex-1 min-w-[200px] px-3.5 py-2.5 bg-white border border-gray-200 rounded-xl focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+            <Search size={14} className="text-gray-400 flex-shrink-0" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Aufgaben suchen..."
+              className="flex-1 text-sm bg-transparent outline-none text-gray-800 placeholder:text-gray-400"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="text-gray-400 hover:text-gray-600">
+                <X size={13} />
+              </button>
             )}
-          </button>
-        ))}
+          </div>
+
+          {/* Priority filter */}
+          <div className="relative">
+            <Filter size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="pl-8 pr-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer appearance-none"
+            >
+              <option value="all">Alle Prioritäten</option>
+              <option value="urgent">Dringend</option>
+              <option value="high">Hoch</option>
+              <option value="medium">Mittel</option>
+              <option value="low">Niedrig</option>
+            </select>
+          </div>
+
+          {/* Sort */}
+          <div className="relative">
+            <ArrowUpDown size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortType)}
+              className="pl-8 pr-3 py-2.5 text-sm text-gray-700 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-300 cursor-pointer appearance-none"
+            >
+              <option value="priority">Nach Priorität</option>
+              <option value="dueDate">Nach Datum</option>
+              <option value="created">Neueste zuerst</option>
+              <option value="title">Alphabetisch</option>
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <SearchInput
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Aufgaben durchsuchen..."
-          className="flex-1"
-        />
-
-        <select
-          value={priorityFilter}
-          onChange={(event) => setPriorityFilter(event.target.value)}
-          className="px-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-          title="Priorität filtern"
-        >
-          <option value="all">Alle Prioritäten</option>
-          <option value="urgent">Dringend</option>
-          <option value="high">Hoch</option>
-          <option value="medium">Mittel</option>
-          <option value="low">Niedrig</option>
-        </select>
-
-        <select
-          value={sortBy}
-          onChange={(event) => setSortBy(event.target.value as SortType)}
-          className="px-4 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
-          title="Sortieren nach"
-        >
-          <option value="priority">Nach Priorität</option>
-          <option value="dueDate">Nach Datum</option>
-          <option value="created">Neueste zuerst</option>
-          <option value="title">Alphabetisch</option>
-        </select>
-
-        <Button onClick={() => openTaskModal()} variant="primary" leftIcon={<Plus size={16} />}>
-          Neue Aufgabe
-        </Button>
-      </div>
-
+      {/* Task list */}
       {filteredTasks.length === 0 ? (
         searchQuery ? (
           <SearchEmptyState query={searchQuery} />
@@ -385,94 +517,122 @@ export default function TasksPage() {
           <TasksEmptyState onAdd={() => openTaskModal()} />
         )
       ) : (
-        <Card className="overflow-hidden divide-y divide-gray-100">
-          {filteredTasks.map((task) => {
-            const isOverdue =
-              task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
-            const linkedGoalIds = task.goalIds?.length ? task.goalIds : (task.goalId ? [task.goalId] : []);
-            const linkedProjectIds = task.projectIds?.length ? task.projectIds : (task.projectId ? [task.projectId] : []);
-            const linkedGoalTitles = goals.filter((goal) => linkedGoalIds.includes(goal.id)).map((goal) => goal.title);
-            const linkedProjectTitles = projects.filter((project) => linkedProjectIds.includes(project.id)).map((project) => project.title);
-            const primaryProjectTitle = linkedProjectTitles[0] || 'Kein Projekt';
-            const importance = priorityLabel[task.priority] || task.priority;
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden animate-fade-in">
+          <div className="divide-y divide-gray-50">
+            {filteredTasks.map((task, idx) => {
+              const isOverdue =
+                task.dueDate && isPast(new Date(task.dueDate)) && !isToday(new Date(task.dueDate));
+              const priority = (task.priority as keyof typeof priorityConfig) in priorityConfig
+                ? (task.priority as keyof typeof priorityConfig)
+                : 'low';
+              const pc = priorityConfig[priority];
+              const linkedGoalIds = task.goalIds?.length ? task.goalIds : task.goalId ? [task.goalId] : [];
+              const linkedProjectIds = task.projectIds?.length ? task.projectIds : task.projectId ? [task.projectId] : [];
+              const linkedGoalTitles = goals.filter((g) => linkedGoalIds.includes(g.id)).map((g) => g.title);
+              const linkedProjectTitles = projects.filter((p) => linkedProjectIds.includes(p.id)).map((p) => p.title);
 
-            return (
-              <div
-                key={task.id}
-                className="group flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                onClick={() => openTaskDetailModal(task)}
-              >
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    completeTask(task.id);
-                  }}
-                  className="mt-0.5 w-5 h-5 rounded-full border-2 border-gray-300 hover:border-indigo-600 hover:bg-indigo-50 flex items-center justify-center transition-all flex-shrink-0"
-                  title="Als erledigt markieren"
+              return (
+                <div
+                  key={task.id}
+                  className={`group relative flex items-start gap-0 border-l-4 ${pc.border} ${pc.bg} transition-all duration-150 cursor-pointer animate-fade-in`}
+                  style={{ animationDelay: `${idx * 30}ms` }}
+                  onClick={() => openTaskDetailModal(task)}
                 >
-                  <CheckCircle2 size={12} className="text-indigo-700 opacity-0 group-hover:opacity-100" />
-                </button>
+                  {/* Check button */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); completeTask(task.id); }}
+                    className="self-stretch flex items-start pt-4 pl-4 pr-3 flex-shrink-0"
+                    title="Als erledigt markieren"
+                  >
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300 group-hover:border-indigo-500 hover:bg-indigo-50 flex items-center justify-center transition-all">
+                      <CheckCircle2 size={12} className="text-indigo-600 opacity-0 group-hover:opacity-60 transition-opacity" />
+                    </div>
+                  </button>
 
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-gray-900">{task.title}</span>
-                    <PriorityBadge priority={task.priority} />
+                  {/* Content */}
+                  <div className="flex-1 min-w-0 py-3.5 pr-4">
+                    <div className="flex items-start gap-2 mb-1">
+                      <p className="text-sm font-semibold text-gray-900 leading-snug flex-1">{task.title}</p>
+                      <PriorityBadge priority={task.priority} />
+                    </div>
+
+                    {task.description && (
+                      <p className="text-xs text-gray-500 mb-2 line-clamp-1 leading-relaxed">{task.description}</p>
+                    )}
+
+                    {/* Meta chips */}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {task.dueDate && (
+                        <span
+                          className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg ${
+                            isOverdue
+                              ? 'bg-red-100 text-red-700'
+                              : isToday(new Date(task.dueDate))
+                                ? 'bg-blue-100 text-blue-700'
+                                : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {isOverdue ? <AlertTriangle size={10} /> : <Calendar size={10} />}
+                          {formatDueDate(task.dueDate)}
+                        </span>
+                      )}
+                      {task.estimatedMinutes && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600">
+                          <Clock size={10} />
+                          {task.estimatedMinutes}m
+                        </span>
+                      )}
+                      {linkedGoalTitles.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-purple-50 text-purple-700">
+                          <Target size={10} />
+                          {linkedGoalTitles[0]}
+                          {linkedGoalTitles.length > 1 && ` +${linkedGoalTitles.length - 1}`}
+                        </span>
+                      )}
+                      {linkedProjectTitles.length > 0 && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-700">
+                          <FolderKanban size={10} />
+                          {linkedProjectTitles[0]}
+                          {linkedProjectTitles.length > 1 && ` +${linkedProjectTitles.length - 1}`}
+                        </span>
+                      )}
+                      {task.tags?.map((tag) => (
+                        <span key={tag} className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-lg bg-gray-50 text-gray-500 border border-gray-200">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
 
-                  {task.description && (
-                    <p className="text-xs text-gray-700 mb-2 line-clamp-1">{task.description}</p>
-                  )}
-
-                  {task.dueDate && (
-                    <p className="text-[11px] text-gray-700 mb-2">
-                      Start: <span className="font-medium">{formatDueDate(task.dueDate)}</span> · Projekt:{' '}
-                      <span className="font-medium">{primaryProjectTitle}</span> · Wichtigkeit:{' '}
-                      <span className="font-medium">{importance}</span>
-                    </p>
-                  )}
-
-                  <div className="flex flex-wrap items-center gap-3">
-                    {task.dueDate && (
-                      <span
-                        className={`text-xs flex items-center gap-1.5 px-2 py-0.5 rounded ${
-                          isOverdue ? 'text-red-700 bg-red-100' : 'text-gray-800 bg-gray-100'
-                        }`}
-                      >
-                        {isOverdue ? <AlertTriangle size={11} /> : <Calendar size={11} />}
-                        {formatDueDate(task.dueDate)}
-                      </span>
-                    )}
-                    {linkedGoalTitles.length > 0 && (
-                      <span className="text-xs text-gray-800 flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100">
-                        <Target size={11} />
-                        {linkedGoalTitles[0]}
-                        {linkedGoalTitles.length > 1 && ` +${linkedGoalTitles.length - 1}`}
-                      </span>
-                    )}
-                    {linkedProjectTitles.length > 0 && (
-                      <span className="text-xs text-gray-800 flex items-center gap-1.5 px-2 py-0.5 rounded bg-gray-100">
-                        <FolderKanban size={11} />
-                        {linkedProjectTitles[0]}
-                        {linkedProjectTitles.length > 1 && ` +${linkedProjectTitles.length - 1}`}
-                      </span>
-                    )}
-                  </div>
+                  {/* Delete */}
+                  <button
+                    onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                    className="self-stretch flex items-start pt-4 pr-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    title="Löschen"
+                  >
+                    <div className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                      <X size={13} />
+                    </div>
+                  </button>
                 </div>
+              );
+            })}
+          </div>
 
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    deleteTask(task.id);
-                  }}
-                  className="p-1.5 text-gray-500 hover:text-red-700 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                  title="Löschen"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            );
-          })}
-        </Card>
+          {/* Footer summary */}
+          <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
+            <p className="text-xs text-gray-400 font-medium">
+              {filteredTasks.length} Aufgabe{filteredTasks.length !== 1 ? 'n' : ''} angezeigt
+            </p>
+            <button
+              onClick={() => openTaskModal()}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors"
+            >
+              <Plus size={12} />
+              Neue Aufgabe
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -312,6 +312,21 @@ export default function CalendarPage() {
     });
   };
 
+  // Today's agenda data
+  const todayAgendaEvents = useMemo(() => {
+    const now = new Date();
+    return visibleEvents
+      .filter((e) => isSameDay(new Date(e.startTime), now))
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  }, [visibleEvents]);
+
+  const todayDueTasks = useMemo(() => {
+    const now = new Date();
+    return activeTasks
+      .filter((t) => t.dueDate && isSameDay(new Date(t.dueDate), now))
+      .slice(0, 5);
+  }, [activeTasks]);
+
   // Calendar item component
   const CalendarItem = ({
     className,
@@ -402,6 +417,48 @@ export default function CalendarPage() {
           </div>
         </div>
       </div>
+
+      {/* Today's Agenda Banner */}
+      {(todayAgendaEvents.length > 0 || todayDueTasks.length > 0) && (
+        <div className="mb-6 bg-white border border-indigo-100 rounded-2xl shadow-sm overflow-hidden animate-fade-in">
+          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-indigo-50/80 to-purple-50/50 border-b border-indigo-100">
+            <div className="w-7 h-7 rounded-lg bg-indigo-100 flex items-center justify-center flex-shrink-0">
+              <CalendarIcon size={14} className="text-indigo-600" />
+            </div>
+            <p className="text-sm font-bold text-indigo-800">
+              Heute · {format(new Date(), 'EEEE, d. MMMM', { locale: de })}
+            </p>
+            <span className="ml-auto text-xs text-indigo-500 font-medium">
+              {todayAgendaEvents.length + todayDueTasks.length} Einträge
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2 px-5 py-3">
+            {todayAgendaEvents.map((event) => (
+              <button
+                key={event.id}
+                onClick={() => openEventModal(event)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors group"
+              >
+                <Clock size={12} className="text-indigo-500 flex-shrink-0" />
+                <span className="text-xs font-semibold text-indigo-800">
+                  {format(new Date(event.startTime), 'HH:mm')}
+                </span>
+                <span className="text-xs text-indigo-700 max-w-[160px] truncate">{event.title}</span>
+              </button>
+            ))}
+            {todayDueTasks.map((task) => (
+              <button
+                key={task.id}
+                onClick={() => openTaskDetailModal(task)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 transition-colors"
+              >
+                <CheckCircle2 size={12} className="text-gray-400 flex-shrink-0" />
+                <span className="text-xs text-gray-700 max-w-[160px] truncate">{task.title}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {(overdueCount > 0 || replanMessage) && (
         <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
