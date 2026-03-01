@@ -584,11 +584,11 @@ export default function ProgressPage() {
 
         {/* Goal Velocity - Clickable */}
         <div 
-          className="p-4 border border-[#e9e9e7] rounded-md bg-white cursor-pointer hover:shadow-lg hover:border-indigo-200 transition-all duration-300 group"
+          className="p-4 border border-gray-100 rounded-2xl shadow-sm bg-white cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all duration-300 group"
           onClick={() => setShowVelocityModal(true)}
         >
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-[#37352f]">
+            <h3 className="text-sm font-medium text-gray-800">
               Ziel-Velocity (Aufgaben/Woche)
             </h3>
             <div className="flex items-center gap-1 text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -752,47 +752,49 @@ export default function ProgressPage() {
       )}
 
       {/* Goal Progress */}
-      <div className="border border-[#e9e9e7] rounded-md bg-white">
-        <div className="p-4 border-b border-[#e9e9e7]">
-          <h3 className="text-sm font-medium text-[#37352f]">Ziel-Fortschritt</h3>
+      <div className="border border-gray-100 rounded-2xl shadow-sm bg-white overflow-hidden">
+        <div className="p-4 border-b border-gray-100">
+          <h3 className="text-sm font-semibold text-gray-800">Ziel-Fortschritt</h3>
         </div>
-        
+
         {activeGoals.length === 0 ? (
           <div className="p-8 text-center">
-            <Target size={32} className="mx-auto text-[#c3c3c1] mb-2" />
-            <p className="text-sm text-[#9b9a97]">Keine aktiven Ziele</p>
+            <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+              <Target size={20} className="text-gray-400" />
+            </div>
+            <p className="text-sm text-gray-400">Keine aktiven Ziele</p>
           </div>
         ) : (
-          <div className="divide-y divide-[#f0f0ef]">
+          <div className="divide-y divide-gray-50">
             {activeGoals.map((goal) => {
               const goalTasks = tasks.filter(t => t.goalId === goal.id);
               const completedGoalTasks = goalTasks.filter(t => t.status === 'completed').length;
-              const progress = goalTasks.length > 0 
-                ? Math.round((completedGoalTasks / goalTasks.length) * 100) 
+              const progress = goalTasks.length > 0
+                ? Math.round((completedGoalTasks / goalTasks.length) * 100)
                 : 0;
 
               return (
-                <div key={goal.id} className="p-4">
+                <div key={goal.id} className="p-4 hover:bg-gray-50/50 transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full"
+                      <div
+                        className="w-2.5 h-2.5 rounded-full"
                         style={{ backgroundColor: goal.color }}
                       />
-                      <span className="text-sm font-medium text-[#37352f]">{goal.title}</span>
+                      <span className="text-sm font-medium text-gray-800">{goal.title}</span>
                     </div>
-                    <span className="text-sm text-[#6b6b6b]">{progress}%</span>
+                    <span className="text-sm font-semibold text-gray-600">{progress}%</span>
                   </div>
-                  <div className="h-1.5 bg-[#f0f0ef] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all"
-                      style={{ 
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{
                         width: `${progress}%`,
                         backgroundColor: goal.color
                       }}
                     />
                   </div>
-                  <p className="text-xs text-[#9b9a97] mt-1">
+                  <p className="text-xs text-gray-400 mt-1">
                     {completedGoalTasks} von {goalTasks.length} Aufgaben erledigt
                   </p>
                 </div>
