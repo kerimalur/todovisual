@@ -13,6 +13,7 @@ import {
   ChevronRight,
   CalendarDays,
   Sparkles,
+  Repeat,
 } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isToday, subWeeks, addWeeks, endOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -22,18 +23,11 @@ const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
 const getSpecificDaysLabel = (days?: number[]) => {
   if (!days || days.length === 0) return 'Flexibel';
-  return days.map((day) => dayLabels[day] || '').filter(Boolean).join(', ');
+  return days.map((d) => dayLabels[d] || '').filter(Boolean).join(', ');
 };
 
 export default function HabitsPage() {
-  const {
-    habits,
-    habitCategories,
-    goals,
-    completeHabit,
-    uncompleteHabit,
-    calculateStreak,
-  } = useDataStore();
+  const { habits, habitCategories, goals, completeHabit, uncompleteHabit, calculateStreak } = useDataStore();
   const { openHabitModal } = useModals();
 
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -47,138 +41,122 @@ export default function HabitsPage() {
 
   const getCategoryInfo = (categoryId?: string) => {
     if (!categoryId) return null;
-    return habitCategories.find((category) => category.id === categoryId) || null;
+    return habitCategories.find((c) => c.id === categoryId) || null;
   };
 
   const isHabitDueOnDay = (habit: Habit, date: Date) => {
     if (habit.frequency === 'daily') return true;
-
     if (habit.frequency === 'specific-days') {
-      const dayOfWeek = date.getDay();
-      const normalizedDay = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-      return (habit.specificDays || []).includes(normalizedDay);
+      const dow = date.getDay();
+      const norm = dow === 0 ? 6 : dow - 1;
+      return (habit.specificDays || []).includes(norm);
     }
-
     return true;
   };
 
-  const wasCompletedOnDay = (habit: Habit, date: Date) => {
-    return (habit.completions || []).some((completion) => {
-      const completionDate = new Date(completion.date);
-      return isSameDay(completionDate, date);
-    });
-  };
+  const wasCompletedOnDay = (habit: Habit, date: Date) =>
+    (habit.completions || []).some((c) => isSameDay(new Date(c.date), date));
 
-  const getCompletionsThisWeek = (habit: Habit) => {
-    return (habit.completions || []).filter((completion) => {
-      const completionDate = new Date(completion.date);
-      return completionDate >= weekStart && completionDate <= weekEnd;
+  const getCompletionsThisWeek = (habit: Habit) =>
+    (habit.completions || []).filter((c) => {
+      const d = new Date(c.date);
+      return d >= weekStart && d <= weekEnd;
     }).length;
-  };
 
   const filteredHabits = useMemo(() => {
-    const activeHabits = habits.filter((habit) => habit.isActive && !habit.isPaused);
-    if (categoryFilter === 'all') return activeHabits;
-    return activeHabits.filter((habit) => habit.category === categoryFilter);
+    const active = habits.filter((h) => h.isActive && !h.isPaused);
+    if (categoryFilter === 'all') return active;
+    return active.filter((h) => h.category === categoryFilter);
   }, [habits, categoryFilter]);
 
-  const todayHabits = filteredHabits.filter((habit) => isHabitDueOnDay(habit, today));
-
-  const completedToday = todayHabits.filter((habit) => wasCompletedOnDay(habit, today)).length;
+  const todayHabits = filteredHabits.filter((h) => isHabitDueOnDay(h, today));
+  const completedToday = todayHabits.filter((h) => wasCompletedOnDay(h, today)).length;
   const completionRate = todayHabits.length > 0 ? Math.round((completedToday / todayHabits.length) * 100) : 0;
-  const activeHabitsCount = filteredHabits.length;
   const averageStreak = filteredHabits.length > 0
-    ? Math.round(filteredHabits.reduce((sum, habit) => sum + calculateStreak(habit), 0) / filteredHabits.length)
+    ? Math.round(filteredHabits.reduce((s, h) => s + calculateStreak(h), 0) / filteredHabits.length)
     : 0;
 
   const toggleHabitCompletion = async (habit: Habit, date: Date = new Date()) => {
     const isCompleted = wasCompletedOnDay(habit, date);
     try {
-      if (isCompleted) {
-        await uncompleteHabit(habit.id, date);
-      } else {
-        await completeHabit(habit.id, date);
-      }
-    } catch (error) {
-      console.error('Failed to toggle habit completion:', error);
-    }
+      if (isCompleted) await uncompleteHabit(habit.id, date);
+      else await completeHabit(habit.id, date);
+    } catch (e) { console.error(e); }
   };
 
+  const statCards = [
+    { label: 'Heute erledigt', value: `${completedToday}/${todayHabits.length}`, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-300' },
+    { label: 'Erfüllungsquote', value: `${completionRate}%`, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
+    { label: 'Aktive Routinen', value: filteredHabits.length, color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+    { label: 'Ø Streak', value: averageStreak, color: 'from-orange-500/20 to-orange-600/10', border: 'border-orange-500/20', text: 'text-orange-400', icon: <Flame size={18} className="inline mr-1" /> },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in-up">
+
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Gewohnheiten</h1>
-          <p className="text-gray-500 mt-1">Heute abhaken, diese Woche stabil halten, Streaks sichern.</p>
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-900/30">
+            <Repeat size={22} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Gewohnheiten</h1>
+            <p className="text-white/40 text-sm mt-0.5">Tägliche Routinen · Streaks · Wochenansicht</p>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <select
             value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-            className="px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            title="Kategorie Filter"
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-3 py-2.5 text-sm text-white/60 rounded-xl border border-white/08 focus:outline-none focus:border-violet-500/50 transition-all cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.04)' }}
+            title="Kategorie"
           >
             <option value="all">Alle Kategorien</option>
-            {habitCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
+            {habitCategories.map((c) => (
+              <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>
           <button
             onClick={() => openHabitModal()}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-pink-900/20"
+            style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}
           >
-            <Plus size={16} />
-            Neue Gewohnheit
+            <Plus size={16} /> Neue Routine
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Heute erledigt</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {completedToday}/{todayHabits.length}
-          </p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Erfüllungsquote</p>
-          <p className="text-2xl font-bold text-emerald-600 mt-1">{completionRate}%</p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Aktive Gewohnheiten</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {activeHabitsCount}
-          </p>
-        </div>
-        <div className="bg-white border border-gray-200 rounded-xl p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ø Streak</p>
-          <p className="text-2xl font-bold text-orange-600 mt-1 flex items-center gap-1">
-            <Flame size={20} />
-            {averageStreak}
-          </p>
-        </div>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {statCards.map((card) => (
+          <div key={card.label} className={`rounded-2xl border ${card.border} p-4 bg-gradient-to-br ${card.color} card-hover`}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{card.label}</p>
+            <p className={`text-3xl font-bold mt-1 ${card.text}`}>
+              {card.icon}{card.value}
+            </p>
+          </div>
+        ))}
       </div>
 
-      <section className="bg-white border border-gray-200 rounded-2xl p-5">
+      {/* Today Focus */}
+      <div className="rounded-2xl border border-white/08 p-5" style={{ background: 'rgba(255,255,255,0.02)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <Sparkles size={18} className="text-indigo-600" />
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+            <Sparkles size={16} className="text-pink-400" />
             Heute im Fokus
           </h2>
-          <span className="text-xs text-gray-500">{format(today, 'EEEE, d. MMMM', { locale: de })}</span>
+          <span className="text-xs text-white/30">{format(today, 'EEEE, d. MMMM', { locale: de })}</span>
         </div>
 
         {todayHabits.length === 0 ? (
-          <div className="border border-dashed border-gray-200 rounded-xl p-8 text-center">
-            <p className="text-sm text-gray-600">Keine aktiven Gewohnheiten für heute.</p>
-            <button
-              onClick={() => openHabitModal()}
-              className="mt-3 inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
-            >
-              <Plus size={14} />
-              Gewohnheit erstellen
+          <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
+            <p className="text-sm text-white/30">Keine aktiven Routinen für heute.</p>
+            <button onClick={() => openHabitModal()}
+              className="mt-3 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-white transition-all hover:opacity-90 mx-auto"
+              style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+              <Plus size={14} /> Routine erstellen
             </button>
           </div>
         ) : (
@@ -187,143 +165,114 @@ export default function HabitsPage() {
               const category = getCategoryInfo(habit.category);
               const completed = wasCompletedOnDay(habit, today);
               const streak = calculateStreak(habit);
-              const linkedGoal = habit.goalId ? goals.find((goal) => goal.id === habit.goalId) : null;
-              const frequencyLabel =
-                habit.frequency === 'daily'
-                  ? 'Täglich'
-                  : habit.frequency === 'weekly'
-                  ? `${habit.targetPerWeek || 1}x pro Woche`
-                  : getSpecificDaysLabel(habit.specificDays);
+              const linkedGoal = habit.goalId ? goals.find((g) => g.id === habit.goalId) : null;
+              const freqLabel = habit.frequency === 'daily' ? 'Täglich' : habit.frequency === 'weekly' ? `${habit.targetPerWeek || 1}x pro Woche` : getSpecificDaysLabel(habit.specificDays);
 
               return (
                 <div
                   key={habit.id}
-                  className={`rounded-xl border p-4 transition-colors ${
-                    completed ? 'border-emerald-200 bg-emerald-50/60' : 'border-gray-200 bg-white'
+                  className={`rounded-xl border p-4 transition-all duration-300 ${
+                    completed ? 'border-emerald-500/25 bg-emerald-500/08' : 'border-white/08 bg-white/02'
                   }`}
                 >
-                  <div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => void toggleHabitCompletion(habit)}
-                          className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
-                            completed
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                          }`}
-                          title={completed ? 'Als offen markieren' : 'Als erledigt markieren'}
-                        >
-                          {completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
-                        </button>
-                        <button
-                          onClick={() => openHabitModal(habit)}
-                          className="text-left"
-                        >
-                          <p className="font-semibold text-gray-900">{habit.title}</p>
-                          <p className="text-xs text-gray-500 mt-0.5">{frequencyLabel}</p>
-                        </button>
-                      </div>
-                      <div className="flex items-center gap-2 mt-2 flex-wrap">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-orange-100 text-orange-700 text-xs font-medium rounded-full">
-                          <Flame size={12} />
-                          {streak} Tage
-                        </span>
-                        {category && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border border-gray-200 bg-gray-50 text-gray-700">
-                            {category.emoji} {category.name}
-                          </span>
-                        )}
-                        {linkedGoal && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border border-indigo-100 bg-indigo-50 text-indigo-700">
-                            <Target size={11} />
-                            {linkedGoal.title}
-                          </span>
-                        )}
-                      </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => void toggleHabitCompletion(habit)}
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
+                        completed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/30' : 'bg-white/08 text-white/30 hover:bg-white/12'
+                      }`}
+                      title={completed ? 'Offen markieren' : 'Erledigt markieren'}
+                    >
+                      {completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
+                    </button>
+                    <button onClick={() => openHabitModal(habit)} className="text-left flex-1 min-w-0">
+                      <p className={`font-semibold ${completed ? 'text-emerald-300' : 'text-white'}`}>{habit.title}</p>
+                      <p className="text-xs text-white/35 mt-0.5">{freqLabel}</p>
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <span className="flex items-center gap-1 px-2.5 py-1 bg-orange-500/15 text-orange-400 text-xs font-medium rounded-lg border border-orange-500/20">
+                      <Flame size={11} /> {streak} Tage
+                    </span>
+                    {category && (
+                      <span className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-white/08 text-white/40 bg-white/05">
+                        {category.emoji} {category.name}
+                      </span>
+                    )}
+                    {linkedGoal && (
+                      <span className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-400">
+                        <Target size={11} /> {linkedGoal.title}
+                      </span>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
         )}
-      </section>
+      </div>
 
-      <section className="bg-white border border-gray-200 rounded-2xl p-5 overflow-hidden">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-            <CalendarDays size={18} className="text-indigo-600" />
+      {/* Week View */}
+      <div className="rounded-2xl border border-white/08 p-5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
+          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+            <CalendarDays size={16} className="text-blue-400" />
             Wochenansicht
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50"
-              title="Vorherige Woche"
-            >
+            <button onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
+              className="p-2 rounded-xl border border-white/08 text-white/40 hover:text-white/70 hover:bg-white/05 transition-all" title="Vorherige Woche">
               <ChevronLeft size={16} />
             </button>
-            <p className="text-sm font-medium text-gray-700 min-w-[210px] text-center">
-              {format(weekStart, 'd. MMM', { locale: de })} - {format(weekEnd, 'd. MMM yyyy', { locale: de })}
+            <p className="text-sm text-white/60 min-w-[200px] text-center">
+              {format(weekStart, 'd. MMM', { locale: de })} – {format(weekEnd, 'd. MMM yyyy', { locale: de })}
             </p>
-            <button
-              onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
-              className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50"
-              title="Nächste Woche"
-            >
+            <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
+              className="p-2 rounded-xl border border-white/08 text-white/40 hover:text-white/70 hover:bg-white/05 transition-all" title="Nächste Woche">
               <ChevronRight size={16} />
             </button>
-            <button
-              onClick={() => setCurrentWeek(new Date())}
-              className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50"
-            >
+            <button onClick={() => setCurrentWeek(new Date())}
+              className="px-3 py-2 text-sm font-medium rounded-xl border border-white/08 text-white/50 hover:bg-white/05 hover:text-white/80 transition-all">
               Diese Woche
             </button>
           </div>
         </div>
 
         {filteredHabits.length === 0 ? (
-          <div className="border border-dashed border-gray-200 rounded-xl p-8 text-center text-gray-600">
-            Keine Gewohnheiten für den aktuellen Filter.
+          <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-white/30 text-sm">
+            Keine Routinen für diesen Filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="min-w-[900px]">
-              <div className="grid grid-cols-[280px_repeat(7,minmax(68px,1fr))_120px] border-b border-gray-100">
-                <div className="p-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Gewohnheit</div>
+            <div className="min-w-[800px]">
+              {/* Header Row */}
+              <div className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] pb-2 mb-2 border-b border-white/06">
+                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-white/30">Routine</div>
                 {weekDays.map((day) => (
-                  <div key={day.toISOString()} className={`p-3 text-center ${isToday(day) ? 'bg-indigo-50' : ''}`}>
-                    <p className="text-[11px] text-gray-500 uppercase">{format(day, 'EEE', { locale: de })}</p>
-                    <p className={`text-sm font-semibold mt-0.5 ${isToday(day) ? 'text-indigo-700' : 'text-gray-900'}`}>
+                  <div key={day.toISOString()} className={`text-center px-2 py-1 rounded-lg ${isToday(day) ? 'bg-violet-500/15' : ''}`}>
+                    <p className="text-[11px] uppercase text-white/30">{format(day, 'EEE', { locale: de })}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${isToday(day) ? 'text-violet-400' : 'text-white/60'}`}>
                       {format(day, 'd')}
                     </p>
                   </div>
                 ))}
-                <div className="p-3 text-xs font-semibold uppercase tracking-wide text-gray-500 text-center">Status</div>
+                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-white/30 text-center">Status</div>
               </div>
 
+              {/* Habit Rows */}
               {filteredHabits.map((habit) => {
                 const streak = calculateStreak(habit);
                 const completionsThisWeek = getCompletionsThisWeek(habit);
                 const weeklyTarget = habit.targetPerWeek || 1;
-                const weeklyLabel =
-                  habit.frequency === 'weekly'
-                    ? `${completionsThisWeek}/${weeklyTarget}`
-                    : `${streak} Tage`;
+                const weeklyLabel = habit.frequency === 'weekly' ? `${completionsThisWeek}/${weeklyTarget}` : `${streak} d`;
 
                 return (
-                  <div key={habit.id} className="grid grid-cols-[280px_repeat(7,minmax(68px,1fr))_120px] border-b border-gray-50 last:border-b-0">
-                    <div className="p-3">
-                      <button
-                        onClick={() => openHabitModal(habit)}
-                        className="text-left"
-                      >
-                        <p className="font-medium text-gray-900">{habit.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
-                          {habit.frequency === 'daily'
-                            ? 'Täglich'
-                            : habit.frequency === 'weekly'
-                            ? `${weeklyTarget}x pro Woche`
-                            : getSpecificDaysLabel(habit.specificDays)}
+                  <div key={habit.id} className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] py-2 border-b border-white/04 last:border-b-0 hover:bg-white/01 transition-colors">
+                    <div className="px-3 flex items-center">
+                      <button onClick={() => openHabitModal(habit)} className="text-left">
+                        <p className="font-medium text-white/80 text-sm">{habit.title}</p>
+                        <p className="text-xs text-white/30 mt-0.5">
+                          {habit.frequency === 'daily' ? 'Täglich' : habit.frequency === 'weekly' ? `${weeklyTarget}x/Woche` : getSpecificDaysLabel(habit.specificDays)}
                         </p>
                       </button>
                     </div>
@@ -334,29 +283,27 @@ export default function HabitsPage() {
                       const inFuture = day > todayEnd;
 
                       return (
-                        <div key={`${habit.id}-${day.toISOString()}`} className={`flex items-center justify-center ${isToday(day) ? 'bg-indigo-50/40' : ''}`}>
+                        <div key={`${habit.id}-${day.toISOString()}`} className={`flex items-center justify-center ${isToday(day) ? 'bg-violet-500/06' : ''}`}>
                           {due ? (
                             <button
                               onClick={() => !inFuture && void toggleHabitCompletion(habit, day)}
                               disabled={inFuture}
-                              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-                                completed
-                                  ? 'bg-emerald-600 text-white'
-                                  : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                              } ${inFuture ? 'opacity-40 cursor-not-allowed' : ''}`}
-                              title={completed ? 'Als offen markieren' : 'Als erledigt markieren'}
+                              className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
+                                completed ? 'bg-emerald-500 text-white' : 'bg-white/06 text-white/20 hover:bg-white/10'
+                              } ${inFuture ? 'opacity-30 cursor-not-allowed' : ''}`}
+                              title={completed ? 'Offen markieren' : 'Erledigt markieren'}
                             >
-                              {completed ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                              {completed ? <CheckCircle2 size={15} /> : <Circle size={15} />}
                             </button>
                           ) : (
-                            <span className="text-gray-300 text-sm">-</span>
+                            <span className="text-white/15 text-sm">–</span>
                           )}
                         </div>
                       );
                     })}
 
-                    <div className="p-3 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-gray-700">{weeklyLabel}</span>
+                    <div className="px-3 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-white/50">{weeklyLabel}</span>
                     </div>
                   </div>
                 );
@@ -364,7 +311,7 @@ export default function HabitsPage() {
             </div>
           </div>
         )}
-      </section>
+      </div>
     </div>
   );
 }

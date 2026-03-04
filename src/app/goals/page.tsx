@@ -10,6 +10,8 @@ import {
   Target,
   Trash2,
   Wand2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { addDays, differenceInCalendarDays, format, isBefore, startOfDay } from 'date-fns';
 import { de } from 'date-fns/locale';
@@ -17,7 +19,6 @@ import { useDataStore } from '@/store';
 import { useModals } from '@/components/layout/MainLayout';
 import { ConfirmModal } from '@/components/modals';
 import { Goal, Task } from '@/types';
-import { Button, Card, CardContent, CardHeader, GoalsEmptyState, ProgressBar } from '@/components/ui';
 
 type GoalHealth = 'on-track' | 'at-risk' | 'overdue' | 'done';
 type GoalFilter = 'all' | 'on-track' | 'at-risk' | 'overdue' | 'done';
@@ -28,39 +29,44 @@ const getTaskGoalIds = (task: Task): string[] =>
 const getGoalHealth = (goal: Goal): GoalHealth => {
   if (goal.progress >= 100) return 'done';
   if (!goal.deadline) return 'on-track';
-
   const now = new Date();
   const deadline = new Date(goal.deadline);
   if (isBefore(deadline, now)) return 'overdue';
-
   const createdAt = new Date(goal.createdAt);
   const totalDays = Math.max(1, differenceInCalendarDays(deadline, createdAt));
   const elapsedDays = Math.max(0, differenceInCalendarDays(now, createdAt));
   const expectedProgress = Math.min(100, Math.round((elapsedDays / totalDays) * 100));
-
   return goal.progress >= expectedProgress - 15 ? 'on-track' : 'at-risk';
 };
 
 const getSmartScore = (goal: Goal): number => {
   const smart = goal.smartCriteria;
   if (!smart) return 0;
-  return [
-    smart.specific,
-    smart.measurable,
-    smart.achievable,
-    smart.relevant,
-    smart.timeBound,
-  ].filter((field) => field && field.trim().length > 0).length;
+  return [smart.specific, smart.measurable, smart.achievable, smart.relevant, smart.timeBound]
+    .filter((f) => f && f.trim().length > 0).length;
 };
 
-const healthStyles: Record<GoalHealth, string> = {
-  'on-track': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-  'at-risk': 'bg-amber-100 text-amber-800 border-amber-200',
-  overdue: 'bg-red-100 text-red-800 border-red-200',
-  done: 'bg-slate-100 text-slate-700 border-slate-200',
+const healthConfig: Record<GoalHealth, { label: string; color: string; dot: string }> = {
+  'on-track': { label: 'On Track', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
+  'at-risk': { label: 'At Risk', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
+  overdue: { label: 'Überfällig', color: 'bg-red-500/15 text-red-400 border-red-500/20', dot: 'bg-red-400' },
+  done: { label: 'Erreicht', color: 'bg-white/08 text-white/40 border-white/10', dot: 'bg-white/30' },
 };
 
-function GoalWorkflowCard({ goal }: { goal: Goal }) {
+function DarkProgressBar({ value, max, color }: { value: number; max: number; color?: string }) {
+  const pct = Math.min(100, Math.round((value / max) * 100));
+  const barColor = color || '#7c3aed';
+  return (
+    <div className="w-full h-1.5 rounded-full bg-white/08 overflow-hidden">
+      <div
+        className="h-full rounded-full transition-all duration-700"
+        style={{ width: `${pct}%`, background: barColor }}
+      />
+    </div>
+  );
+}
+
+function GoalCard({ goal }: { goal: Goal }) {
   const { tasks, projects, updateGoal, deleteGoal, createTask } = useDataStore();
   const { openGoalModal, openTaskDetailModal } = useModals();
   const [expanded, setExpanded] = useState(false);
@@ -69,284 +75,207 @@ function GoalWorkflowCard({ goal }: { goal: Goal }) {
   const [quickTaskTitle, setQuickTaskTitle] = useState('');
 
   const goalTasks = tasks.filter((task) => getTaskGoalIds(task).includes(goal.id));
-  const openTasks = goalTasks.filter((task) => task.status !== 'completed' && task.status !== 'archived');
-  const completedTasks = goalTasks.filter((task) => task.status === 'completed');
-  const linkedProjects = projects.filter((project) => {
-    const linkedGoalIds = project.goalIds?.length ? project.goalIds : (project.goalId ? [project.goalId] : []);
-    return linkedGoalIds.includes(goal.id);
+  const openTasks = goalTasks.filter((t) => t.status !== 'completed' && t.status !== 'archived');
+  const completedTasks = goalTasks.filter((t) => t.status === 'completed');
+  const linkedProjects = projects.filter((p) => {
+    const ids = p.goalIds?.length ? p.goalIds : (p.goalId ? [p.goalId] : []);
+    return ids.includes(goal.id);
   });
   const health = getGoalHealth(goal);
   const smartScore = getSmartScore(goal);
   const weeklyPlan = goal.weeklyPlan || [];
   const milestones = goal.milestones || [];
-  const completedMilestones = milestones.filter((milestone) => milestone.completed).length;
-
-  const createMilestoneTasks = async () => {
-    const pendingMilestones = milestones.filter((milestone) => !milestone.completed);
-    if (pendingMilestones.length === 0) return 0;
-
-    const createdTitles = new Set(
-      openTasks.map((task) => task.title.trim().toLowerCase())
-    );
-
-    let created = 0;
-    for (const milestone of pendingMilestones) {
-      const title = `Meilenstein: ${milestone.title}`;
-      if (createdTitles.has(title.trim().toLowerCase())) continue;
-
-      await createTask({
-        title,
-        description: `Automatisch erstellt für Ziel "${goal.title}"`,
-        dueDate: milestone.targetDate ? new Date(milestone.targetDate) : new Date(goal.deadline),
-        priority: 'high',
-        status: 'todo',
-        tags: ['ziel', 'meilenstein'],
-        goalId: goal.id,
-        goalIds: [goal.id],
-      });
-      created += 1;
-    }
-    return created;
-  };
-
-  const createWeeklyTasksForToday = async () => {
-    const today = new Date().getDay();
-    const todaysActions = weeklyPlan.filter((item) => item.weekday === today);
-    if (todaysActions.length === 0) return 0;
-
-    const openTaskTitles = new Set(openTasks.map((task) => task.title.trim().toLowerCase()));
-    let created = 0;
-    for (const action of todaysActions) {
-      const title = `Wochenplan: ${action.title}`;
-      if (openTaskTitles.has(title.trim().toLowerCase())) continue;
-
-      await createTask({
-        title,
-        description: `Wochenplan aus Ziel "${goal.title}"`,
-        dueDate: startOfDay(new Date()),
-        priority: 'medium',
-        status: 'todo',
-        tags: ['ziel', 'wochenplan'],
-        estimatedMinutes: action.estimatedMinutes,
-        goalId: goal.id,
-        goalIds: [goal.id],
-      });
-      created += 1;
-    }
-    return created;
-  };
+  const completedMilestones = milestones.filter((m) => m.completed).length;
+  const hConfig = healthConfig[health];
 
   const handleToggleMilestone = async (milestoneId: string) => {
-    const updatedMilestones = milestones.map((milestone) =>
-      milestone.id === milestoneId ? { ...milestone, completed: !milestone.completed } : milestone
+    const updatedMilestones = milestones.map((m) =>
+      m.id === milestoneId ? { ...m, completed: !m.completed } : m
     );
-    const nextCompleted = updatedMilestones.filter((milestone) => milestone.completed).length;
+    const nextCompleted = updatedMilestones.filter((m) => m.completed).length;
     const nextProgress = updatedMilestones.length > 0 ? Math.round((nextCompleted / updatedMilestones.length) * 100) : goal.progress;
-
-    await updateGoal(goal.id, {
-      milestones: updatedMilestones,
-      progress: nextProgress,
-    });
+    await updateGoal(goal.id, { milestones: updatedMilestones, progress: nextProgress });
   };
 
   const handleQuickTask = async () => {
     const title = quickTaskTitle.trim();
     if (!title) return;
-    await createTask({
-      title,
-      description: `Nächster Schritt für Ziel "${goal.title}"`,
-      dueDate: startOfDay(new Date()),
-      priority: 'high',
-      status: 'todo',
-      tags: ['ziel'],
-      goalId: goal.id,
-      goalIds: [goal.id],
-    });
+    await createTask({ title, description: `Nächster Schritt für "${goal.title}"`, dueDate: startOfDay(new Date()), priority: 'high', status: 'todo', tags: ['ziel'], goalId: goal.id, goalIds: [goal.id] });
     setQuickTaskTitle('');
   };
 
   const runAutomation = async () => {
     try {
       setBusy(true);
-      const [weeklyCreated, milestoneCreated] = await Promise.all([
-        createWeeklyTasksForToday(),
-        createMilestoneTasks(),
-      ]);
-      if (weeklyCreated + milestoneCreated === 0) {
-        alert('Keine neuen Automationen nötig.');
-      } else {
-        alert(`${weeklyCreated + milestoneCreated} Aufgaben automatisch erstellt.`);
+      const pendingMilestones = milestones.filter((m) => !m.completed);
+      const openTaskTitles = new Set(openTasks.map((t) => t.title.trim().toLowerCase()));
+      let created = 0;
+      for (const m of pendingMilestones) {
+        const title = `Meilenstein: ${m.title}`;
+        if (openTaskTitles.has(title.toLowerCase())) continue;
+        await createTask({ title, dueDate: m.targetDate ? new Date(m.targetDate) : new Date(goal.deadline), priority: 'high', status: 'todo', tags: ['ziel', 'meilenstein'], goalId: goal.id, goalIds: [goal.id] });
+        created++;
       }
-    } catch (error) {
-      console.error('Ziel-Automation fehlgeschlagen:', error);
-      alert('Automation fehlgeschlagen.');
-    } finally {
-      setBusy(false);
-    }
+      if (created === 0) alert('Keine neuen Automationen nötig.');
+      else alert(`${created} Aufgaben erstellt.`);
+    } catch (e) { alert('Automation fehlgeschlagen.'); }
+    finally { setBusy(false); }
   };
 
   return (
     <>
-      <div className={`rounded-xl border bg-white ${expanded ? 'border-indigo-300 shadow-sm' : 'border-gray-200'}`}>
-        <button
-          onClick={() => setExpanded((value) => !value)}
-          className="w-full text-left p-4 hover:bg-gray-50 transition-colors"
-        >
-          <div className="flex items-start justify-between gap-3">
+      <div className={`rounded-2xl border transition-all duration-300 overflow-hidden card-hover ${
+        expanded ? 'border-violet-500/30' : 'border-white/08'
+      }`} style={{ background: expanded ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.03)' }}>
+
+        {/* Clickable header */}
+        <button onClick={() => setExpanded((v) => !v)} className="w-full text-left p-5 hover:bg-white/02 transition-colors">
+          <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 flex-wrap mb-1">
-                <h3 className="text-base font-semibold text-gray-900 truncate">{goal.title}</h3>
-                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-semibold ${healthStyles[health]}`}>
-                  {health === 'on-track' && 'On Track'}
-                  {health === 'at-risk' && 'At Risk'}
-                  {health === 'overdue' && 'Überfällig'}
-                  {health === 'done' && 'Erreicht'}
+              <div className="flex items-center gap-2 flex-wrap mb-2">
+                <h3 className="text-base font-semibold text-white truncate">{goal.title}</h3>
+                <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${hConfig.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${hConfig.dot}`} />
+                  {hConfig.label}
                 </span>
-                <span className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-semibold text-indigo-800">
+                <span className="inline-flex items-center rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-400">
                   SMART {smartScore}/5
                 </span>
               </div>
-              <p className="text-sm text-gray-700 line-clamp-1">{goal.description || 'Ohne Beschreibung'}</p>
-              <div className="mt-2">
-                <div className="flex items-center justify-between text-xs text-gray-700 mb-1">
+              <p className="text-sm text-white/40 line-clamp-1 mb-3">{goal.description || 'Keine Beschreibung'}</p>
+
+              <div className="mb-3">
+                <div className="flex items-center justify-between text-xs text-white/40 mb-1.5">
                   <span>{openTasks.length} offen · {completedTasks.length} erledigt</span>
-                  <span className="font-semibold text-gray-900">{goal.progress}%</span>
+                  <span className="font-bold text-white">{goal.progress}%</span>
                 </div>
-                <ProgressBar value={goal.progress} max={100} color={goal.color} size="sm" animated />
+                <DarkProgressBar value={goal.progress} max={100} color={goal.color} />
               </div>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-800">
+
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
                   <Calendar size={11} />
                   {goal.deadline ? format(new Date(goal.deadline), 'd. MMM yyyy', { locale: de }) : 'Keine Deadline'}
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-800">
+                <span className="inline-flex items-center rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
                   {completedMilestones}/{milestones.length} Meilensteine
                 </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-800">
-                  {weeklyPlan.length} Wochenaktionen
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-gray-800">
+                <span className="inline-flex items-center rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
                   {linkedProjects.length} Projekte
                 </span>
               </div>
             </div>
+            <div className="flex-shrink-0 mt-1">
+              {expanded ? <ChevronUp size={18} className="text-white/30" /> : <ChevronDown size={18} className="text-white/30" />}
+            </div>
           </div>
         </button>
 
+        {/* Expanded content */}
         {expanded && (
-          <div className="border-t border-gray-100 p-4 space-y-4">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => openGoalModal(goal)}
-                className="inline-flex items-center gap-1 rounded-md border border-gray-300 px-2.5 py-1.5 text-xs font-medium text-gray-800 hover:bg-gray-50"
-              >
-                <Edit2 size={12} />
-                Bearbeiten
+          <div className="border-t border-white/06 p-5 space-y-4 animate-fade-in">
+            {/* Actions */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => openGoalModal(goal)}
+                className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-white/60 hover:bg-white/05 hover:text-white transition-all">
+                <Edit2 size={12} /> Bearbeiten
               </button>
-              <button
-                onClick={() => setShowDeleteConfirm(true)}
-                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-              >
-                <Trash2 size={12} />
-                Löschen
+              <button onClick={() => setShowDeleteConfirm(true)}
+                className="flex items-center gap-1.5 rounded-xl border border-red-500/20 px-3 py-2 text-xs font-medium text-red-400 hover:bg-red-500/10 transition-all">
+                <Trash2 size={12} /> Löschen
               </button>
-              <button
-                onClick={() => void runAutomation()}
-                disabled={busy}
-                className="inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-800 hover:bg-indigo-100 disabled:opacity-50"
-              >
-                <Wand2 size={12} />
-                Automationen ausführen
+              <button onClick={() => void runAutomation()} disabled={busy}
+                className="flex items-center gap-1.5 rounded-xl border border-violet-500/25 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-400 hover:bg-violet-500/15 disabled:opacity-40 transition-all">
+                <Wand2 size={12} /> Automationen
               </button>
             </div>
 
-            <div className="rounded-lg border border-indigo-100 bg-indigo-50/70 p-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800 mb-2">Nächster Schritt</p>
+            {/* Quick Task */}
+            <div className="rounded-xl border border-violet-500/20 p-4" style={{ background: 'rgba(124,58,237,0.06)' }}>
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">Nächster Schritt</p>
               <div className="flex items-center gap-2">
                 <input
                   value={quickTaskTitle}
-                  onChange={(event) => setQuickTaskTitle(event.target.value)}
-                  placeholder="Konkrete nächste Aufgabe"
-                  className="flex-1 rounded-md border border-indigo-200 bg-white px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  onChange={(e) => setQuickTaskTitle(e.target.value)}
+                  placeholder="Konkrete nächste Aufgabe..."
+                  className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)' }}
                 />
-                <button
-                  onClick={() => void handleQuickTask()}
-                  className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-2.5 py-2 text-xs font-medium text-white hover:bg-indigo-700"
-                >
-                  <Plus size={12} />
-                  Hinzufügen
+                <button onClick={() => void handleQuickTask()}
+                  className="flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-500 transition-all">
+                  <Plus size={12} /> Hinzufügen
                 </button>
               </div>
             </div>
 
+            {/* Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <p className="text-sm font-semibold text-gray-900 mb-2">SMART-Fokus</p>
-                <ul className="space-y-1 text-xs text-gray-800">
-                  <li>Spezifisch: {goal.smartCriteria?.specific ? 'Ja' : 'Nein'}</li>
-                  <li>Messbar: {goal.smartCriteria?.measurable ? 'Ja' : 'Nein'}</li>
-                  <li>Erreichbar: {goal.smartCriteria?.achievable ? 'Ja' : 'Nein'}</li>
-                  <li>Relevant: {goal.smartCriteria?.relevant ? 'Ja' : 'Nein'}</li>
-                  <li>Terminiert: {goal.smartCriteria?.timeBound ? 'Ja' : 'Nein'}</li>
+              <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm font-semibold text-white mb-3">SMART-Kriterien</p>
+                <ul className="space-y-1.5 text-xs">
+                  {(['specific', 'measurable', 'achievable', 'relevant', 'timeBound'] as const).map((key) => {
+                    const labels: Record<string, string> = { specific: 'Spezifisch', measurable: 'Messbar', achievable: 'Erreichbar', relevant: 'Relevant', timeBound: 'Terminiert' };
+                    const has = !!(goal.smartCriteria?.[key]);
+                    return (
+                      <li key={key} className={`flex items-center gap-2 ${has ? 'text-white/60' : 'text-white/25'}`}>
+                        <CheckCircle2 size={13} className={has ? 'text-emerald-400' : 'text-white/15'} />
+                        {labels[key]}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
-              <div className="rounded-lg border border-gray-200 bg-white p-3">
-                <p className="text-sm font-semibold text-gray-900 mb-2">Wochenplan</p>
+              <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm font-semibold text-white mb-3">Wochenplan</p>
                 {weeklyPlan.length > 0 ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {weeklyPlan.slice(0, 5).map((item) => (
                       <div key={item.id} className="flex items-center justify-between gap-2 text-xs">
-                        <span className="text-gray-900 truncate">{item.title}</span>
-                        <span className="text-gray-700 whitespace-nowrap">
+                        <span className="text-white/60 truncate">{item.title}</span>
+                        <span className="text-white/30 whitespace-nowrap flex-shrink-0">
                           {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][item.weekday]}
                         </span>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  <p className="text-xs text-gray-700">Kein Wochenplan hinterlegt.</p>
-                )}
+                ) : <p className="text-xs text-white/25">Kein Wochenplan.</p>}
               </div>
             </div>
 
+            {/* Milestones */}
             {milestones.length > 0 && (
               <div>
-                <p className="text-sm font-semibold text-gray-900 mb-2">Meilensteine</p>
-                <div className="space-y-1.5">
+                <p className="text-sm font-semibold text-white mb-3">Meilensteine</p>
+                <div className="space-y-2">
                   {milestones.map((milestone) => (
-                    <button
-                      key={milestone.id}
-                      onClick={() => void handleToggleMilestone(milestone.id)}
-                      className="w-full flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-200"
-                    >
+                    <button key={milestone.id} onClick={() => void handleToggleMilestone(milestone.id)}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/06 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white/02 transition-all">
                       <div className="min-w-0">
-                        <span className={`text-sm ${milestone.completed ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                        <span className={`text-sm ${milestone.completed ? 'text-white/25 line-through' : 'text-white/70'}`}>
                           {milestone.title}
                         </span>
                         {milestone.targetDate && (
-                          <p className="text-xs text-gray-700">{format(new Date(milestone.targetDate), 'd. MMM yyyy', { locale: de })}</p>
+                          <p className="text-xs text-white/30 mt-0.5">{format(new Date(milestone.targetDate), 'd. MMM yyyy', { locale: de })}</p>
                         )}
                       </div>
-                      <CheckCircle2 size={15} className={milestone.completed ? 'text-emerald-600' : 'text-gray-400'} />
+                      <CheckCircle2 size={16} className={milestone.completed ? 'text-emerald-400' : 'text-white/20'} />
                     </button>
                   ))}
                 </div>
               </div>
             )}
 
+            {/* Open Tasks */}
             <div>
-              <p className="text-sm font-semibold text-gray-900 mb-2">Aktive Aufgaben</p>
+              <p className="text-sm font-semibold text-white mb-3">Aktive Aufgaben</p>
               {openTasks.length > 0 ? (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {openTasks.slice(0, 6).map((task) => (
-                    <button
-                      key={task.id}
-                      onClick={() => openTaskDetailModal(task)}
-                      className="w-full flex items-center justify-between gap-3 rounded-md border border-gray-200 bg-white px-3 py-2 text-left hover:border-indigo-200"
-                    >
-                      <span className="text-sm font-medium text-gray-900 truncate">{task.title}</span>
+                    <button key={task.id} onClick={() => openTaskDetailModal(task)}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/06 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white/02 transition-all">
+                      <span className="text-sm text-white/70 truncate">{task.title}</span>
                       {task.dueDate && (
-                        <span className="text-xs text-gray-700 whitespace-nowrap">
+                        <span className="text-xs text-white/30 whitespace-nowrap flex-shrink-0">
                           {format(new Date(task.dueDate), 'd. MMM', { locale: de })}
                         </span>
                       )}
@@ -354,8 +283,8 @@ function GoalWorkflowCard({ goal }: { goal: Goal }) {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-md border border-dashed border-gray-300 bg-gray-50 px-3 py-3 text-sm text-gray-700">
-                  Noch keine aktive Aufgabe. Erstelle oben den nächsten Schritt.
+                <div className="rounded-xl border border-dashed border-white/08 px-4 py-3 text-sm text-white/25">
+                  Noch keine Aufgabe. Erstelle oben den nächsten Schritt.
                 </div>
               )}
             </div>
@@ -381,36 +310,29 @@ export default function GoalsPage() {
   const [automationBusy, setAutomationBusy] = useState(false);
 
   const goalStats = useMemo(() => {
-    const healthStates = goals.map((goal) => getGoalHealth(goal));
-    const onTrack = healthStates.filter((state) => state === 'on-track').length;
-    const atRisk = healthStates.filter((state) => state === 'at-risk').length;
-    const overdue = healthStates.filter((state) => state === 'overdue').length;
-    const done = healthStates.filter((state) => state === 'done').length;
-    const smartReady = goals.filter((goal) => getSmartScore(goal) >= 4).length;
-    const weeklyActions = goals.reduce((sum, goal) => sum + (goal.weeklyPlan?.length || 0), 0);
-
-    return { onTrack, atRisk, overdue, done, smartReady, weeklyActions };
+    const healthStates = goals.map(getGoalHealth);
+    return {
+      onTrack: healthStates.filter((s) => s === 'on-track').length,
+      atRisk: healthStates.filter((s) => s === 'at-risk').length,
+      overdue: healthStates.filter((s) => s === 'overdue').length,
+      done: healthStates.filter((s) => s === 'done').length,
+      smartReady: goals.filter((g) => getSmartScore(g) >= 4).length,
+      weeklyActions: goals.reduce((sum, g) => sum + (g.weeklyPlan?.length || 0), 0),
+    };
   }, [goals]);
 
   const filteredGoals = useMemo(() => {
     if (filter === 'all') return goals;
-    return goals.filter((goal) => getGoalHealth(goal) === filter);
+    return goals.filter((g) => getGoalHealth(g) === filter);
   }, [filter, goals]);
 
   const nextMilestones = useMemo(() => {
-    const list = goals.flatMap((goal) =>
-      (goal.milestones || [])
-        .filter((milestone) => !milestone.completed && milestone.targetDate)
-        .map((milestone) => ({
-          goalTitle: goal.title,
-          milestoneTitle: milestone.title,
-          targetDate: new Date(milestone.targetDate as Date),
-        }))
+    const list = goals.flatMap((g) =>
+      (g.milestones || [])
+        .filter((m) => !m.completed && m.targetDate)
+        .map((m) => ({ goalTitle: g.title, milestoneTitle: m.title, targetDate: new Date(m.targetDate as Date) }))
     );
-    return list
-      .filter((item) => item.targetDate <= addDays(new Date(), 14))
-      .sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime())
-      .slice(0, 6);
+    return list.filter((m) => m.targetDate <= addDays(new Date(), 14)).sort((a, b) => a.targetDate.getTime() - b.targetDate.getTime()).slice(0, 6);
   }, [goals]);
 
   const runGlobalAutomation = async () => {
@@ -418,165 +340,148 @@ export default function GoalsPage() {
       setAutomationBusy(true);
       const todayWeekday = new Date().getDay();
       const openTaskTitlesByGoal = new Map<string, Set<string>>();
-
-      tasks
-        .filter((task) => task.status !== 'completed' && task.status !== 'archived')
-        .forEach((task) => {
-          const goalIds = getTaskGoalIds(task);
-          goalIds.forEach((goalId) => {
-            const existing = openTaskTitlesByGoal.get(goalId) || new Set<string>();
-            existing.add(task.title.trim().toLowerCase());
-            openTaskTitlesByGoal.set(goalId, existing);
-          });
+      tasks.filter((t) => t.status !== 'completed' && t.status !== 'archived').forEach((t) => {
+        getTaskGoalIds(t).forEach((gid) => {
+          const s = openTaskTitlesByGoal.get(gid) || new Set<string>();
+          s.add(t.title.trim().toLowerCase());
+          openTaskTitlesByGoal.set(gid, s);
         });
-
+      });
       let created = 0;
-      for (const goal of goals) {
-        const goalTaskTitles = openTaskTitlesByGoal.get(goal.id) || new Set<string>();
-
-        for (const action of goal.weeklyPlan || []) {
+      for (const g of goals) {
+        const titles = openTaskTitlesByGoal.get(g.id) || new Set<string>();
+        for (const action of g.weeklyPlan || []) {
           if (action.weekday !== todayWeekday) continue;
           const title = `Wochenplan: ${action.title}`;
-          if (goalTaskTitles.has(title.toLowerCase())) continue;
-
-          await createTask({
-            title,
-            description: `Automatisch aus Wochenplan für Ziel "${goal.title}"`,
-            dueDate: startOfDay(new Date()),
-            priority: 'medium',
-            status: 'todo',
-            tags: ['ziel', 'wochenplan'],
-            estimatedMinutes: action.estimatedMinutes,
-            goalId: goal.id,
-            goalIds: [goal.id],
-          });
-          goalTaskTitles.add(title.toLowerCase());
-          created += 1;
+          if (titles.has(title.toLowerCase())) continue;
+          await createTask({ title, dueDate: startOfDay(new Date()), priority: 'medium', status: 'todo', tags: ['ziel', 'wochenplan'], estimatedMinutes: action.estimatedMinutes, goalId: g.id, goalIds: [g.id] });
+          titles.add(title.toLowerCase());
+          created++;
         }
       }
-
-      if (created === 0) {
-        alert('Heute waren keine neuen Wochenplan-Aufgaben nötig.');
-      } else {
-        alert(`${created} Wochenplan-Aufgaben wurden erstellt.`);
-      }
-    } catch (error) {
-      console.error('Globale Ziel-Automation fehlgeschlagen:', error);
-      alert('Automation fehlgeschlagen.');
-    } finally {
-      setAutomationBusy(false);
-    }
+      if (created === 0) alert('Keine neuen Aufgaben nötig.');
+      else alert(`${created} Wochenplan-Aufgaben erstellt.`);
+    } catch { alert('Automation fehlgeschlagen.'); }
+    finally { setAutomationBusy(false); }
   };
 
+  const statCards = [
+    { label: 'On Track', value: goalStats.onTrack, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
+    { label: 'At Risk', value: goalStats.atRisk, color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+    { label: 'Überfällig', value: goalStats.overdue, color: 'from-red-500/20 to-red-600/10', border: 'border-red-500/20', text: 'text-red-400' },
+    { label: 'SMART Ready', value: goalStats.smartReady, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-400' },
+    { label: 'Wochenaktionen', value: goalStats.weeklyActions, color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/20', text: 'text-blue-400' },
+  ];
+
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Ziele</h1>
-          <p className="text-gray-700 mt-1">SMART + Hybrid-Workflow mit Meilensteinen und Wochenplan.</p>
+    <div className="max-w-5xl mx-auto space-y-6 animate-fade-in-up">
+
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-900/30">
+            <Target size={22} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Ziele</h1>
+            <p className="text-white/40 text-sm mt-0.5">SMART · Meilensteine · Wochenplan</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={() => openTaskModal()} variant="secondary" leftIcon={<Plus size={16} />}>
-            Aufgabe erstellen
-          </Button>
-          <Button onClick={() => openGoalModal()} variant="primary" leftIcon={<Target size={16} />}>
-            Neues Ziel
-          </Button>
+          <button onClick={() => openTaskModal()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/70 border border-white/10 hover:bg-white/05 hover:text-white transition-all">
+            <Plus size={15} /> Aufgabe
+          </button>
+          <button onClick={() => openGoalModal()}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-orange-900/20"
+            style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+            <Target size={15} /> Neues Ziel
+          </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
-        <Card className="p-4 border border-emerald-200 bg-emerald-50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-800">On Track</p>
-          <p className="text-2xl font-bold text-emerald-900 mt-1">{goalStats.onTrack}</p>
-        </Card>
-        <Card className="p-4 border border-amber-200 bg-amber-50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">At Risk</p>
-          <p className="text-2xl font-bold text-amber-900 mt-1">{goalStats.atRisk}</p>
-        </Card>
-        <Card className="p-4 border border-red-200 bg-red-50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-red-800">Überfällig</p>
-          <p className="text-2xl font-bold text-red-900 mt-1">{goalStats.overdue}</p>
-        </Card>
-        <Card className="p-4 border border-indigo-200 bg-indigo-50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-indigo-800">SMART Ready</p>
-          <p className="text-2xl font-bold text-indigo-900 mt-1">{goalStats.smartReady}</p>
-        </Card>
-        <Card className="p-4 border border-sky-200 bg-sky-50">
-          <p className="text-xs font-semibold uppercase tracking-wide text-sky-800">Wochenaktionen</p>
-          <p className="text-2xl font-bold text-sky-900 mt-1">{goalStats.weeklyActions}</p>
-        </Card>
+      {/* Stat Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        {statCards.map((card) => (
+          <div key={card.label} className={`rounded-2xl border ${card.border} p-4 bg-gradient-to-br ${card.color} card-hover`}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{card.label}</p>
+            <p className={`text-3xl font-bold mt-1 ${card.text}`}>{card.value}</p>
+          </div>
+        ))}
       </div>
 
-      <Card className="border border-indigo-100 bg-indigo-50/70">
-        <CardHeader
-          title="Goal Automation Board"
-          subtitle="Automatisiere wiederkehrende Zielarbeit und halte Momentum"
-          icon={<Sparkles size={16} className="text-indigo-700" />}
-        />
-        <CardContent className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-lg border border-indigo-100 bg-white p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-700 mb-2">Heute automatisch planen</p>
-            <p className="text-sm text-gray-800 mb-3">
-              Erstellt Aufgaben aus dem Wochenplan für den heutigen Wochentag.
-            </p>
-            <button
-              onClick={() => void runGlobalAutomation()}
-              disabled={automationBusy}
-              className="inline-flex items-center gap-1 rounded-md bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50"
-            >
-              <Wand2 size={12} />
-              Wochenplan ausführen
+      {/* Automation Board */}
+      <div className="rounded-2xl border border-violet-500/20 p-5" style={{ background: 'rgba(124,58,237,0.05)' }}>
+        <div className="flex items-center gap-2 mb-4">
+          <Sparkles size={16} className="text-violet-400" />
+          <p className="font-semibold text-white">Automation Board</p>
+          <p className="text-white/35 text-sm">— Wochenplan & Meilensteine automatisch planen</p>
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">Heute automatisch planen</p>
+            <p className="text-sm text-white/40 mb-3">Erstellt Aufgaben aus dem Wochenplan für den heutigen Tag.</p>
+            <button onClick={() => void runGlobalAutomation()} disabled={automationBusy}
+              className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40 transition-all">
+              <Wand2 size={12} /> Wochenplan ausführen
             </button>
           </div>
-          <div className="rounded-lg border border-amber-100 bg-white p-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 mb-2">Nächste Meilensteine (14 Tage)</p>
+          <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-amber-400 mb-2">Nächste Meilensteine (14 Tage)</p>
             {nextMilestones.length > 0 ? (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {nextMilestones.map((entry) => (
                   <div key={`${entry.goalTitle}-${entry.milestoneTitle}`} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-gray-900 truncate">{entry.goalTitle}: {entry.milestoneTitle}</span>
-                    <span className="text-xs text-amber-800">{format(entry.targetDate, 'd. MMM', { locale: de })}</span>
+                    <span className="text-white/60 truncate">{entry.goalTitle}: {entry.milestoneTitle}</span>
+                    <span className="text-xs text-amber-400 whitespace-nowrap flex-shrink-0">{format(entry.targetDate, 'd. MMM', { locale: de })}</span>
                   </div>
                 ))}
               </div>
-            ) : (
-              <p className="text-sm text-gray-700">Keine kurzfristigen Meilensteine offen.</p>
-            )}
+            ) : <p className="text-sm text-white/25">Keine kurzfristigen Meilensteine.</p>}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <div className="flex items-center gap-2 border-b border-gray-200">
-        {[
+      {/* Filter Tabs */}
+      <div className="flex items-center gap-1">
+        {([
           { key: 'all', label: 'Alle' },
           { key: 'on-track', label: 'On Track' },
           { key: 'at-risk', label: 'At Risk' },
           { key: 'overdue', label: 'Überfällig' },
           { key: 'done', label: 'Erreicht' },
-        ].map((entry) => (
+        ] as const).map((tab) => (
           <button
-            key={entry.key}
-            onClick={() => setFilter(entry.key as GoalFilter)}
-            className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${
-              filter === entry.key
-                ? 'border-indigo-600 text-indigo-700'
-                : 'border-transparent text-gray-700 hover:text-gray-900'
+            key={tab.key}
+            onClick={() => setFilter(tab.key)}
+            className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
+              filter === tab.key ? 'bg-violet-600 text-white' : 'text-white/40 hover:text-white/70 hover:bg-white/05'
             }`}
           >
-            {entry.label}
+            {tab.label}
           </button>
         ))}
       </div>
 
+      {/* Goal List */}
       <div className="space-y-3">
         {filteredGoals.length > 0 ? (
           filteredGoals
             .slice()
             .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
-            .map((goal) => <GoalWorkflowCard key={goal.id} goal={goal} />)
+            .map((goal) => <GoalCard key={goal.id} goal={goal} />)
         ) : (
-          <GoalsEmptyState onAdd={() => openGoalModal()} />
+          <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-white/04 flex items-center justify-center mx-auto mb-4">
+              <Target size={24} className="text-white/20" />
+            </div>
+            <p className="text-white/35 text-sm mb-4">Noch keine Ziele definiert.</p>
+            <button onClick={() => openGoalModal()}
+              className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
+              Erstes Ziel erstellen
+            </button>
+          </div>
         )}
       </div>
     </div>

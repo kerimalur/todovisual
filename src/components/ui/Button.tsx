@@ -36,20 +36,22 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary: `
-        bg-indigo-600 text-white
-        hover:bg-indigo-700 
-        focus:ring-indigo-500
+        text-white
+        hover:opacity-90
+        focus:ring-violet-500
         shadow-sm hover:shadow-md
+        [background:linear-gradient(135deg,#7c3aed,#6d28d9)]
       `,
       secondary: `
-        bg-white text-gray-900 border border-gray-300
-        hover:bg-gray-50 hover:border-gray-500
-        focus:ring-gray-500
+        text-white/70 border border-white/10
+        hover:bg-white/06 hover:text-white
+        focus:ring-white/20
+        [background:rgba(255,255,255,0.04)]
       `,
       ghost: `
-        bg-transparent text-gray-800
-        hover:bg-gray-100 hover:text-gray-900
-        focus:ring-gray-500
+        bg-transparent text-white/60
+        hover:bg-white/06 hover:text-white/80
+        focus:ring-white/20
       `,
       danger: `
         bg-red-600 text-white

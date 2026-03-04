@@ -23,10 +23,10 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     const baseStyles = 'rounded-xl transition-all duration-200';
 
     const variants = {
-      default: 'bg-white border border-gray-200',
-      bordered: 'bg-white border-2 border-gray-300',
-      elevated: 'bg-white shadow-lg border border-gray-100',
-      ghost: 'bg-gray-50 border border-transparent',
+      default: 'border border-white/08 [background:rgba(255,255,255,0.03)]',
+      bordered: 'border-2 border-white/12 [background:rgba(255,255,255,0.04)]',
+      elevated: 'shadow-lg border border-white/10 [background:rgba(255,255,255,0.05)]',
+      ghost: 'border border-transparent [background:rgba(255,255,255,0.02)]',
     };
 
     const paddings = {
@@ -37,7 +37,7 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
     };
 
     const hoverStyles = hoverable
-      ? 'hover:shadow-md hover:border-gray-300 cursor-pointer active:scale-[0.99]'
+      ? 'hover:shadow-md hover:border-white/15 cursor-pointer active:scale-[0.99]'
       : '';
 
     return (
@@ -67,18 +67,18 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(
     return (
       <div
         ref={ref}
-        className={`flex items-center justify-between pb-4 border-b border-gray-100 ${className}`}
+        className={`flex items-center justify-between pb-4 border-b border-white/06 ${className}`}
         {...props}
       >
         <div className="flex items-center gap-3">
           {icon && (
-            <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-white/08 flex items-center justify-center">
               {icon}
             </div>
           )}
           <div>
-            <h3 className="font-semibold text-gray-900">{title}</h3>
-            {subtitle && <p className="text-sm text-gray-700">{subtitle}</p>}
+            <h3 className="font-semibold text-white">{title}</h3>
+            {subtitle && <p className="text-sm text-white/40">{subtitle}</p>}
           </div>
         </div>
         {action}
