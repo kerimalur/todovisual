@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
@@ -14,10 +14,9 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Close on escape key
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
     };
 
     if (isOpen) {
@@ -31,9 +30,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     };
   }, [isOpen, onClose]);
 
-  // Close on click outside
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget) onClose();
+  const handleBackdropClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget) onClose();
   };
 
   if (!isOpen) return null;
@@ -45,136 +43,115 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
   };
 
   return (
-    <div 
-      className="fixed inset-0 z-[200] flex items-start justify-center pt-[5vh] pb-[5vh] px-4 overflow-y-auto"
+    <div
+      className="fixed inset-0 z-[220] flex items-start justify-center pt-[5vh] pb-[5vh] px-4 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-md" />
+      <div className="fixed inset-0 bg-[#040616]/70 backdrop-blur-sm" />
 
-      {/* Modal */}
       <div
         ref={modalRef}
         className={`
-          relative w-full ${sizeClasses[size]}
-          rounded-2xl shadow-2xl
-          animate-scale-in
-          max-h-[90vh] flex flex-col
-          border border-white/10
+          relative w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col
+          rounded-2xl border border-white/15 shadow-2xl animate-scale-in
         `}
-        style={{ background: '#14172a' }}
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(36,44,92,0.96) 0%, rgba(22,28,64,0.95) 100%)',
+        }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-white/08 flex-shrink-0">
-          <h2 className="text-lg font-semibold text-white">{title}</h2>
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/10 flex-shrink-0">
+          <h2 className="text-lg font-semibold text-[#f4f6ff]">{title}</h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-white/08 transition-all duration-200"
-            title="Schließen"
+            className="p-2 rounded-xl hover:bg-white/10 transition-colors"
+            title="Schliessen"
           >
-            <X size={18} className="text-white/50" />
+            <X size={18} className="text-white/60" />
           </button>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="px-6 py-5 overflow-y-auto flex-1">
-          {children}
-        </div>
+        <div className="px-6 py-5 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );
 }
 
-// Form Input Component (Notion-style)
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
 }
 
-export function Input({ label, className = '', ...props }: InputProps) {
+export function Input({ label, className = '', style, ...props }: InputProps) {
   return (
     <div className="space-y-1.5">
-      {label && (
-        <label className="block text-sm font-medium text-white/70">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-white/75">{label}</label>}
       <input
         className={`
-          w-full px-3 py-2.5 text-white rounded-lg border border-white/10
-          placeholder:text-white/25
-          focus:outline-none focus:border-violet-500/60 focus:ring-1 focus:ring-violet-500/20
-          transition-all duration-150
+          w-full px-3 py-2.5 text-white rounded-lg border border-white/15
+          placeholder:text-white/35
+          focus:outline-none focus:border-violet-300/70 focus:ring-2 focus:ring-violet-400/25
+          transition-colors
           ${className}
         `}
-        style={{ background: 'rgba(255,255,255,0.06)' }}
+        style={{ background: 'rgba(255,255,255,0.09)', colorScheme: 'dark', ...(style || {}) }}
         {...props}
       />
     </div>
   );
 }
 
-// Textarea Component (Notion-style)
 interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
 }
 
-export function Textarea({ label, className = '', ...props }: TextareaProps) {
+export function Textarea({ label, className = '', style, ...props }: TextareaProps) {
   return (
     <div className="space-y-1.5">
-      {label && (
-        <label className="block text-sm font-medium text-white/80">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-white/75">{label}</label>}
       <textarea
         className={`
-          w-full px-3 py-2.5
-          rounded-lg text-white placeholder:text-white/30
-          focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30
-          transition-all duration-150 resize-none
+          w-full px-3 py-2.5 rounded-lg text-white border border-white/15
+          placeholder:text-white/35
+          focus:outline-none focus:border-violet-300/70 focus:ring-2 focus:ring-violet-400/25
+          transition-colors resize-none
           ${className}
         `}
-        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+        style={{ background: 'rgba(255,255,255,0.09)', ...(style || {}) }}
         {...props}
       />
     </div>
   );
 }
 
-// Select Component (Notion-style)
 interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   options: { value: string; label: string }[];
 }
 
-export function Select({ label, options, className = '', ...props }: SelectProps) {
+export function Select({ label, options, className = '', style, ...props }: SelectProps) {
   return (
     <div className="space-y-1.5">
-      {label && (
-        <label className="block text-sm font-medium text-white/80">
-          {label}
-        </label>
-      )}
+      {label && <label className="block text-sm font-medium text-white/75">{label}</label>}
       <select
         className={`
-          w-full px-3 py-2.5
-          rounded-lg text-white
-          focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30
-          transition-all duration-150 cursor-pointer
+          w-full px-3 py-2.5 rounded-lg text-white border border-white/15
+          focus:outline-none focus:border-violet-300/70 focus:ring-2 focus:ring-violet-400/25
+          transition-colors cursor-pointer
           ${className}
         `}
-        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
+        style={{ background: 'rgba(255,255,255,0.09)', colorScheme: 'dark', ...(style || {}) }}
         {...props}
       >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} style={{ background: '#1a1d31' }}>{opt.label}</option>
+        {options.map((option) => (
+          <option key={option.value} value={option.value} style={{ background: '#1b2252' }}>
+            {option.label}
+          </option>
         ))}
       </select>
     </div>
   );
 }
 
-// Button Component
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md';
@@ -188,10 +165,11 @@ export function Button({
   ...props
 }: ButtonProps) {
   const variants = {
-    primary: 'text-white hover:opacity-90 shadow-sm [background:linear-gradient(135deg,#7c3aed,#6d28d9)]',
-    secondary: 'text-white/70 border border-white/10 hover:bg-white/06 hover:text-white [background:rgba(255,255,255,0.04)]',
-    danger: 'bg-red-600 text-white hover:bg-red-700 shadow-sm',
-    ghost: 'text-white/60 hover:bg-white/06 hover:text-white/80',
+    primary: 'text-white hover:opacity-90 shadow-sm [background:linear-gradient(135deg,#7c3aed,#5b7cff)]',
+    secondary:
+      'text-white/85 border border-white/15 hover:bg-white/10 hover:text-white [background:rgba(255,255,255,0.06)]',
+    danger: 'bg-red-600 text-white hover:bg-red-500 shadow-sm',
+    ghost: 'text-white/70 hover:bg-white/10 hover:text-white',
   };
 
   const sizes = {
@@ -203,7 +181,7 @@ export function Button({
     <button
       className={`
         ${variants[variant]} ${sizes[size]}
-        rounded-lg font-medium transition-all duration-150
+        rounded-lg font-medium transition-colors
         disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}

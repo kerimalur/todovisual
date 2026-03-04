@@ -1,14 +1,13 @@
-'use client';
+﻿'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   LayoutDashboard,
   ListTodo,
   Calendar,
   Target,
-  ChevronDown,
   Timer,
   Settings,
   Archive,
@@ -16,7 +15,6 @@ import {
   LogOut,
   Menu,
   X,
-  MoreHorizontal,
   FolderKanban,
   TrendingUp,
   BookOpen,
@@ -25,291 +23,216 @@ import {
 } from 'lucide-react';
 import { useAppStore, useTimerStore, useDataStore } from '@/store';
 import { useAuth } from '@/contexts/AuthContext';
-import { useMemo } from 'react';
 
-const primaryNavItems = [
-  { href: '/', label: 'Cockpit', icon: LayoutDashboard, color: 'from-violet-600 to-purple-600' },
+const navItems = [
+  { href: '/', label: 'Uebersicht', icon: LayoutDashboard, color: 'from-indigo-500 to-violet-500' },
   { href: '/tasks', label: 'Aufgaben', icon: ListTodo, color: 'from-emerald-500 to-teal-500' },
-  { href: '/calendar', label: 'Kalender', icon: Calendar, color: 'from-blue-500 to-cyan-500' },
-  { href: '/goals', label: 'Ziele', icon: Target, color: 'from-orange-500 to-amber-500' },
-];
-
-const secondaryNavItems = [
+  { href: '/habits', label: 'Gewohnheiten', icon: Repeat, color: 'from-pink-500 to-fuchsia-500' },
+  { href: '/goals', label: 'Ziele', icon: Target, color: 'from-amber-500 to-orange-500' },
   { href: '/projects', label: 'Projekte', icon: FolderKanban, color: 'from-violet-500 to-indigo-500' },
-  { href: '/habits', label: 'Gewohnheiten', icon: Repeat, color: 'from-pink-500 to-rose-500' },
-  { href: '/progress', label: 'Fortschritt', icon: TrendingUp, color: 'from-red-500 to-orange-500' },
-  { href: '/journal', label: 'Journal', icon: BookOpen, color: 'from-sky-500 to-blue-500' },
-  { href: '/notes', label: 'Notizen', icon: StickyNote, color: 'from-amber-500 to-yellow-500' },
+  { href: '/calendar', label: 'Kalender', icon: Calendar, color: 'from-sky-500 to-blue-500' },
+  { href: '/progress', label: 'Fortschritt', icon: TrendingUp, color: 'from-rose-500 to-red-500' },
+  { href: '/journal', label: 'Tagebuch', icon: BookOpen, color: 'from-blue-500 to-cyan-500' },
+  { href: '/notes', label: 'Notizen', icon: StickyNote, color: 'from-yellow-500 to-amber-500' },
 ];
 
-function NavLink({
-  item,
-  isActive,
+function MobileNavLink({
+  href,
+  label,
+  icon: Icon,
+  color,
+  active,
   onClick,
 }: {
-  item: { href: string; label: string; icon: React.ElementType; color: string };
-  isActive: boolean;
-  onClick?: () => void;
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  color: string;
+  active: boolean;
+  onClick: () => void;
 }) {
-  const Icon = item.icon;
-
   return (
     <Link
-      href={item.href}
+      href={href}
       onClick={onClick}
-      className={`group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-        isActive
-          ? 'text-white'
-          : 'text-white/55 hover:bg-white/06 hover:text-white/80'
-      }`}
-      style={isActive ? { background: 'rgba(255,255,255,0.08)' } : {}}
+      className={`
+        flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors
+        ${
+          active
+            ? 'border-violet-300/45 bg-violet-300/20 text-[#f8f7ff]'
+            : 'border-transparent text-white/70 hover:text-white hover:border-white/10 hover:bg-white/8'
+        }
+      `}
     >
-      <span className={`w-6 h-6 rounded-md flex items-center justify-center bg-gradient-to-br ${item.color} flex-shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105`}>
-        <Icon size={13} strokeWidth={2} className="text-white" />
+      <span className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br ${color}`}>
+        <Icon size={14} className="text-white" />
       </span>
-      <span className="truncate">{item.label}</span>
-      {isActive && (
-        <span className="ml-auto w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
-      )}
+      <span className="text-sm font-medium">{label}</span>
     </Link>
   );
 }
 
 export function MinimalSidebar() {
   const pathname = usePathname();
-  const {
-    mobileSidebarOpen,
-    setMobileSidebarOpen,
-    toggleZenMode,
-  } = useAppStore();
+  const { mobileSidebarOpen, setMobileSidebarOpen, toggleZenMode } = useAppStore();
   const { timer } = useTimerStore();
   const { tasks } = useDataStore();
   const { user, signOut } = useAuth();
 
-  const [showMore, setShowMore] = useState(false);
-
-  useEffect(() => {
-    setMobileSidebarOpen(false);
-    setShowMore(false);
-  }, [pathname, setMobileSidebarOpen]);
-
-  useEffect(() => {
-    if (mobileSidebarOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileSidebarOpen]);
-
   const openTasksCount = useMemo(
-    () => tasks.filter((t) => t.status !== 'completed' && t.status !== 'archived').length,
+    () => tasks.filter((task) => task.status !== 'completed' && task.status !== 'archived').length,
     [tasks]
   );
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+  useEffect(() => {
+    setMobileSidebarOpen(false);
+  }, [pathname, setMobileSidebarOpen]);
 
-  const closeMobileSidebar = () => setMobileSidebarOpen(false);
-  const isSecondaryActive = secondaryNavItems.some((item) => pathname === item.href);
+  useEffect(() => {
+    document.body.style.overflow = mobileSidebarOpen ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [mobileSidebarOpen]);
 
-  const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
-    <>
-      {/* Logo */}
-      <div className="h-13 flex items-center px-3 border-b border-white/08 flex-shrink-0" style={{ height: '52px' }}>
-        <Link href="/" className="flex items-center gap-2.5 group" onClick={onClose}>
-          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md shadow-violet-900/30 transition-transform duration-200 group-hover:scale-105">
-            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
-              <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-          <span className="font-semibold text-white text-sm">Productive</span>
-        </Link>
-      </div>
-
-      {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
-        {primaryNavItems.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            isActive={pathname === item.href}
-            onClick={onClose}
-          />
-        ))}
-
-        {/* Divider */}
-        <div className="my-2 border-t border-white/06" />
-
-        {/* More toggle */}
-        <button
-          onClick={() => setShowMore(!showMore)}
-          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-sm font-medium transition-all ${
-            isSecondaryActive ? 'text-white/80' : 'text-white/45'
-          } hover:text-white/70`}
-        >
-          <span className="flex items-center gap-2.5">
-            <span className="w-6 h-6 rounded-md flex items-center justify-center bg-white/08">
-              <MoreHorizontal size={13} className="text-white/60" />
-            </span>
-            Mehr
-          </span>
-          <ChevronDown
-            size={13}
-            className={`transition-transform duration-200 text-white/40 ${showMore ? 'rotate-180' : ''}`}
-          />
-        </button>
-
-        {(showMore || isSecondaryActive) && (
-          <div className="ml-1.5 space-y-0.5 animate-fade-in">
-            {secondaryNavItems.map((item) => (
-              <NavLink
-                key={item.href}
-                item={item}
-                isActive={pathname === item.href}
-                onClick={onClose}
-              />
-            ))}
-          </div>
-        )}
-      </nav>
-
-      {/* Timer Widget */}
-      {timer.isRunning && (
-        <div
-          onClick={() => { onClose?.(); toggleZenMode(); }}
-          className="mx-2.5 mb-2.5 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 cursor-pointer hover:bg-emerald-500/15 transition-colors"
-        >
-          <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium mb-1">
-            <Timer size={12} />
-            <span>Fokus aktiv</span>
-          </div>
-          <div className="font-mono text-base font-bold text-emerald-300">
-            {formatTime(timer.secondsRemaining)}
-          </div>
-        </div>
-      )}
-
-      {/* Focus Button */}
-      {!timer.isRunning && (
-        <div className="px-2.5 pb-2.5">
-          <button
-            onClick={() => { onClose?.(); toggleZenMode(); }}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
-          >
-            <Play size={13} fill="currentColor" />
-            Fokus starten
-          </button>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="border-t border-white/06 px-2.5 py-2 space-y-0.5 flex-shrink-0">
-        <Link
-          href="/archive"
-          onClick={onClose}
-          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/65 hover:bg-white/05 transition-all"
-        >
-          <Archive size={14} />
-          <span>Archiv</span>
-        </Link>
-        <Link
-          href="/settings"
-          onClick={onClose}
-          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/65 hover:bg-white/05 transition-all"
-        >
-          <Settings size={14} />
-          <span>Einstellungen</span>
-        </Link>
-        {user && (
-          <button
-            type="button"
-            onClick={() => { onClose?.(); signOut(); }}
-            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all"
-          >
-            <LogOut size={14} />
-            <span>Abmelden</span>
-          </button>
-        )}
-      </div>
-    </>
-  );
+  const closeSidebar = () => setMobileSidebarOpen(false);
 
   return (
     <>
-      {/* ========== MOBILE HEADER ========== */}
       <header
-        className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center justify-between px-4 border-b border-white/08"
-        style={{ background: 'rgba(13,15,30,0.95)', backdropFilter: 'blur(20px)' }}
+        className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center justify-between px-4 border-b border-white/10"
+        style={{
+          background:
+            'linear-gradient(90deg, rgba(28,34,74,0.96) 0%, rgba(20,25,58,0.96) 100%)',
+          backdropFilter: 'blur(16px)',
+        }}
       >
         <button
           onClick={() => setMobileSidebarOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-white/50 hover:text-white/80 hover:bg-white/08 transition-all"
-          aria-label="Menü öffnen"
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          aria-label="Navigation oeffnen"
         >
           <Menu size={20} />
         </button>
 
-        <Link href="/" className="font-semibold text-white text-sm">
+        <Link href="/" className="text-sm font-semibold text-[#f4f6ff]">
           Productive
         </Link>
 
         {timer.isRunning ? (
           <button
             onClick={toggleZenMode}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"
+            title="Fokus oeffnen"
           >
-            <Timer size={18} />
+            <Timer size={17} />
           </button>
         ) : (
-          <div className="w-10" />
+          <span className="w-10" />
         )}
       </header>
 
-      {/* ========== MOBILE OVERLAY ========== */}
       <div
-        className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
-          mobileSidebarOpen
-            ? 'bg-black/65 opacity-100 backdrop-blur-sm'
-            : 'opacity-0 pointer-events-none invisible'
+        className={`md:hidden fixed inset-0 z-50 transition-opacity duration-250 ${
+          mobileSidebarOpen ? 'opacity-100 bg-[#030511]/70 backdrop-blur-sm' : 'opacity-0 pointer-events-none'
         }`}
-        onClick={closeMobileSidebar}
+        onClick={closeSidebar}
       />
 
-      {/* ========== MOBILE SIDEBAR ========== */}
       <aside
-        className={`md:hidden fixed left-0 top-0 bottom-0 w-[240px] z-50 flex flex-col transition-transform duration-300 border-r border-white/08 ${
-          mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-        style={{ background: '#0d0f1e' }}
+        className={`
+          md:hidden fixed left-0 top-0 bottom-0 z-50 w-[268px] border-r border-white/10
+          transition-transform duration-300 flex flex-col
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        style={{
+          background:
+            'linear-gradient(180deg, rgba(28,34,74,0.98) 0%, rgba(18,22,49,0.97) 100%)',
+        }}
       >
-        <div className="h-14 flex items-center justify-between px-4 border-b border-white/08">
-          <span className="font-semibold text-white text-sm">Productive</span>
+        <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar}>
+            <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-950/35">
+              <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
+                <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+            <span className="text-sm font-semibold text-[#f4f6ff]">Productive</span>
+          </Link>
+
           <button
-            onClick={closeMobileSidebar}
-            className="w-9 h-9 flex items-center justify-center rounded-xl text-white/40 hover:text-white/70 hover:bg-white/08 transition-all"
-            aria-label="Menü schließen"
+            onClick={closeSidebar}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            aria-label="Navigation schliessen"
           >
             <X size={18} />
           </button>
         </div>
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <SidebarContent onClose={closeMobileSidebar} />
-        </div>
-      </aside>
 
-      {/* ========== DESKTOP SIDEBAR ========== */}
-      <aside
-        className="hidden md:flex fixed left-0 top-0 bottom-0 w-[196px] flex-col z-50 border-r border-white/08"
-        style={{ background: '#0d0f1e' }}
-      >
-        <SidebarContent />
+        <div className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1.5">
+          {navItems.map((item) => (
+            <MobileNavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              icon={item.icon}
+              color={item.color}
+              active={pathname === item.href}
+              onClick={closeSidebar}
+            />
+          ))}
+        </div>
+
+        <div className="p-3 border-t border-white/10 space-y-2">
+          <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2.5">
+            <p className="text-xs text-white/45">Offene Aufgaben</p>
+            <p className="text-lg leading-none font-semibold text-white mt-1">{openTasksCount}</p>
+          </div>
+
+          <button
+            onClick={() => {
+              closeSidebar();
+              toggleZenMode();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-white"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #5b7cff)' }}
+          >
+            <Play size={15} />
+            Fokus starten
+          </button>
+
+          <Link
+            href="/archive"
+            onClick={closeSidebar}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+          >
+            <Archive size={15} />
+            Archiv
+          </Link>
+          <Link
+            href="/settings"
+            onClick={closeSidebar}
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+          >
+            <Settings size={15} />
+            Einstellungen
+          </Link>
+          {user && (
+            <button
+              type="button"
+              onClick={() => {
+                closeSidebar();
+                signOut();
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-300 hover:text-red-200 hover:bg-red-500/15 transition-colors"
+            >
+              <LogOut size={15} />
+              Abmelden
+            </button>
+          )}
+        </div>
       </aside>
     </>
   );

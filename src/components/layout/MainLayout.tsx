@@ -1,6 +1,6 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useState, createContext, useContext } from 'react';
 import { usePathname } from 'next/navigation';
 import { useAppStore } from '@/store';
 import { Sidebar } from './Sidebar';
@@ -10,16 +10,21 @@ import { MotivationToast } from '../ui/MotivationToast';
 import { CommandPalette } from '../ui/CommandPalette';
 import { ZenMode } from '../zen/ZenMode';
 import { ZenWorkspace } from '../zen/ZenWorkspace';
-import { TaskModal, TaskDetailModal, HabitModal, GoalModal, ProjectModal, EventModal, TimerModal } from '../modals';
+import {
+  TaskModal,
+  TaskDetailModal,
+  HabitModal,
+  GoalModal,
+  ProjectModal,
+  EventModal,
+  TimerModal,
+} from '../modals';
 import { Task, Goal, Project, CalendarEvent, Habit } from '@/types';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
-
-// Create a context for modal management
-import { createContext, useContext } from 'react';
 
 interface ModalContextType {
   openTaskModal: (task?: Task | null) => void;
@@ -46,15 +51,12 @@ export function MainLayout({ children }: MainLayoutProps) {
   const isLoginPage = pathname === '/login';
   const { sidebarCollapsed, zenModeActive, zenWorkspaceActive } = useAppStore();
 
-  // Modal states - MUST be before conditional returns
   const [taskModalOpen, setTaskModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
-  // Task Detail Modal state
   const [taskDetailModalOpen, setTaskDetailModalOpen] = useState(false);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
 
-  // Habit Modal state
   const [habitModalOpen, setHabitModalOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
 
@@ -72,24 +74,20 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const [timerModalOpen, setTimerModalOpen] = useState(false);
 
-  // If on login page, render children without auth protection
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  // Modal handlers
   const openTaskModal = (task?: Task | null) => {
     setEditingTask(task || null);
     setTaskModalOpen(true);
   };
 
-  // Open detail view (schlichte Übersicht)
   const openTaskDetailModal = (task: Task) => {
     setViewingTask(task);
     setTaskDetailModalOpen(true);
   };
 
-  // Handler to switch from detail to edit modal
   const handleEditFromDetail = (task: Task) => {
     setTaskDetailModalOpen(false);
     setViewingTask(null);
@@ -97,7 +95,6 @@ export function MainLayout({ children }: MainLayoutProps) {
     setTaskModalOpen(true);
   };
 
-  // Habit modal handler
   const openHabitModal = (habit?: Habit | null) => {
     setEditingHabit(habit || null);
     setHabitModalOpen(true);
@@ -110,7 +107,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
   const openProjectModal = (project?: Project | null, goalIdOrCategory?: string) => {
     setEditingProject(project || null);
-    // Check if it's a category (known categories) or goalId
+
     const categories = ['trading', 'finance', 'fitness', 'health', 'wealth', 'programming', 'improvement', 'other'];
     if (goalIdOrCategory && categories.includes(goalIdOrCategory)) {
       setPreselectedCategory(goalIdOrCategory);
@@ -119,6 +116,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       setPreselectedGoalId(goalIdOrCategory || '');
       setPreselectedCategory('');
     }
+
     setProjectModalOpen(true);
   };
 
@@ -142,12 +140,10 @@ export function MainLayout({ children }: MainLayoutProps) {
     openTimerModal,
   };
 
-  // Focus mode (with task selection and timer)
   if (zenModeActive) {
     return <ZenMode />;
   }
 
-  // Zen workspace mode (relaxed working mode)
   if (zenWorkspaceActive) {
     return <ZenWorkspace />;
   }
@@ -155,84 +151,79 @@ export function MainLayout({ children }: MainLayoutProps) {
   return (
     <ProtectedRoute>
       <ModalContext.Provider value={modalContext}>
-        <div className="min-h-screen bg-[var(--background-secondary)]">
+        <div className="min-h-screen bg-page">
           <MinimalSidebar />
           <Sidebar />
 
           <main
             className={`
-              min-h-screen transition-all duration-300 bg-gray-50 pt-14 md:pt-0
-              ${sidebarCollapsed ? 'md:ml-[72px]' : 'md:ml-[260px]'}
+              min-h-screen pt-14 md:pt-0 transition-[margin] duration-300
+              ${sidebarCollapsed ? 'md:ml-[92px]' : 'md:ml-[228px]'}
             `}
           >
-            <div className="p-6 md:p-8">
+            <div className="mx-auto w-full max-w-[1320px] p-4 md:p-7">
               {children}
             </div>
           </main>
 
-        <FloatingActionButton 
-          onOpenTaskModal={() => openTaskModal()}
-          onOpenGoalModal={() => openGoalModal()}
-          onOpenProjectModal={() => openProjectModal()}
-          onOpenEventModal={() => openEventModal()}
-          onOpenTimerModal={openTimerModal}
-        />
-        <MotivationToast />
+          <FloatingActionButton
+            onOpenTaskModal={() => openTaskModal()}
+            onOpenGoalModal={() => openGoalModal()}
+            onOpenProjectModal={() => openProjectModal()}
+            onOpenEventModal={() => openEventModal()}
+            onOpenTimerModal={openTimerModal}
+          />
+          <MotivationToast />
 
-        {/* Modals */}
-        <TaskModal 
-          isOpen={taskModalOpen} 
-          onClose={() => setTaskModalOpen(false)}
-          editTask={editingTask}
-        />
-        <TaskDetailModal
-          isOpen={taskDetailModalOpen}
-          onClose={() => {
-            setTaskDetailModalOpen(false);
-            setViewingTask(null);
-          }}
-          task={viewingTask}
-          onEdit={handleEditFromDetail}
-        />
-        <HabitModal
-          isOpen={habitModalOpen}
-          onClose={() => {
-            setHabitModalOpen(false);
-            setEditingHabit(null);
-          }}
-          editHabit={editingHabit}
-        />
-        <GoalModal 
-          isOpen={goalModalOpen} 
-          onClose={() => setGoalModalOpen(false)}
-          editGoal={editingGoal}
-        />
-        <ProjectModal 
-          isOpen={projectModalOpen} 
-          onClose={() => setProjectModalOpen(false)}
-          editProject={editingProject}
-          preselectedGoalId={preselectedGoalId}
-          preselectedCategory={preselectedCategory}
-        />
-        <EventModal 
-          isOpen={eventModalOpen} 
-          onClose={() => setEventModalOpen(false)}
-          editEvent={editingEvent}
-          preselectedDate={preselectedDate}
-        />
-        <TimerModal 
-          isOpen={timerModalOpen} 
-          onClose={() => setTimerModalOpen(false)}
-        />
+          <TaskModal
+            isOpen={taskModalOpen}
+            onClose={() => setTaskModalOpen(false)}
+            editTask={editingTask}
+          />
+          <TaskDetailModal
+            isOpen={taskDetailModalOpen}
+            onClose={() => {
+              setTaskDetailModalOpen(false);
+              setViewingTask(null);
+            }}
+            task={viewingTask}
+            onEdit={handleEditFromDetail}
+          />
+          <HabitModal
+            isOpen={habitModalOpen}
+            onClose={() => {
+              setHabitModalOpen(false);
+              setEditingHabit(null);
+            }}
+            editHabit={editingHabit}
+          />
+          <GoalModal
+            isOpen={goalModalOpen}
+            onClose={() => setGoalModalOpen(false)}
+            editGoal={editingGoal}
+          />
+          <ProjectModal
+            isOpen={projectModalOpen}
+            onClose={() => setProjectModalOpen(false)}
+            editProject={editingProject}
+            preselectedGoalId={preselectedGoalId}
+            preselectedCategory={preselectedCategory}
+          />
+          <EventModal
+            isOpen={eventModalOpen}
+            onClose={() => setEventModalOpen(false)}
+            editEvent={editingEvent}
+            preselectedDate={preselectedDate}
+          />
+          <TimerModal isOpen={timerModalOpen} onClose={() => setTimerModalOpen(false)} />
 
-        {/* Command Palette (CMD+K) */}
-        <CommandPalette
-          onOpenTaskModal={() => openTaskModal()}
-          onOpenGoalModal={() => openGoalModal()}
-          onOpenEventModal={() => openEventModal()}
-        />
-      </div>
-    </ModalContext.Provider>
+          <CommandPalette
+            onOpenTaskModal={() => openTaskModal()}
+            onOpenGoalModal={() => openGoalModal()}
+            onOpenEventModal={() => openEventModal()}
+          />
+        </div>
+      </ModalContext.Provider>
     </ProtectedRoute>
   );
 }
