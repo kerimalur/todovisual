@@ -44,12 +44,12 @@ body {
 }
 
 /* ===== DARK THEME OVERRIDES (reset light Tailwind grays) ===== */
-.text-gray-300 { color: rgba(255,255,255,0.6) !important; }
-.text-gray-400 { color: rgba(255,255,255,0.5) !important; }
-.text-gray-500 { color: rgba(255,255,255,0.4) !important; }
-.text-gray-600 { color: rgba(255,255,255,0.35) !important; }
-.text-gray-700 { color: rgba(255,255,255,0.55) !important; }
-.text-gray-800 { color: rgba(255,255,255,0.7) !important; }
+.text-gray-300 { color: rgba(255,255,255,0.72) !important; }
+.text-gray-400 { color: rgba(255,255,255,0.60) !important; }
+.text-gray-500 { color: rgba(255,255,255,0.52) !important; }
+.text-gray-600 { color: rgba(255,255,255,0.48) !important; }
+.text-gray-700 { color: rgba(255,255,255,0.65) !important; }
+.text-gray-800 { color: rgba(255,255,255,0.80) !important; }
 .text-gray-900 { color: #ffffff !important; }
 
 .bg-white { background-color: var(--surface) !important; }
@@ -57,9 +57,9 @@ body {
 .bg-gray-100 { background-color: rgba(255,255,255,0.07) !important; }
 .bg-gray-200 { background-color: rgba(255,255,255,0.1) !important; }
 
-.border-gray-100 { border-color: rgba(255,255,255,0.06) !important; }
-.border-gray-200 { border-color: rgba(255,255,255,0.09) !important; }
-.border-gray-300 { border-color: rgba(255,255,255,0.12) !important; }
+.border-gray-100 { border-color: rgba(255,255,255,0.08) !important; }
+.border-gray-200 { border-color: rgba(255,255,255,0.11) !important; }
+.border-gray-300 { border-color: rgba(255,255,255,0.15) !important; }
 
 input::placeholder,
 textarea::placeholder {
@@ -312,4 +312,237 @@ textarea:focus-visible {
   background-image:
     radial-gradient(ellipse at 20% 20%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.06) 0%, transparent 50%);
+}
+
+/* ===== CALENDAR PAGE UTILITIES ===== */
+.cal-surface {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-header-row {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-cell-border {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cal-cell-border-last {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cal-cell:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.cal-cell-today {
+  background: rgba(124, 58, 237, 0.08);
+}
+
+.cal-cell-other-month {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.cal-divider {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.cal-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cal-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cal-view-switcher {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-nav-group {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-nav-btn {
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cal-nav-btn-last:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cal-amber-banner {
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  background: rgba(251, 191, 36, 0.06);
+}
+
+.cal-week-col-border {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-week-header-cell {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-week-day-cell:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.cal-all-day-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-all-day-cell {
+  background: rgba(255, 255, 255, 0.01);
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cal-all-day-cell:hover {
+  background: rgba(124, 58, 237, 0.04);
+}
+
+.cal-hour-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cal-hour-label {
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-hour-slot {
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cal-hour-slot:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.cal-event-col {
+  border-right: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.cal-day-header {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-day-num {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cal-all-day-tasks-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cal-all-day-tasks-section-filled {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.cal-all-day-tasks-section-empty {
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.cal-time-slot-row:hover {
+  background: rgba(124, 58, 237, 0.05);
+}
+
+.cal-weekly-review {
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  background: rgba(124, 58, 237, 0.06);
+}
+
+.cal-weekly-review-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+}
+
+.cal-weekly-review-btn:hover:not(:disabled) {
+  background: rgba(124, 58, 237, 0.15);
+}
+
+.cal-upcoming-empty {
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.cal-upcoming-list {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cal-upcoming-row {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cal-upcoming-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cal-modal-overlay {
+  background: rgba(0, 0, 0, 0.60);
+}
+
+.cal-modal-panel {
+  background: #161827;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cal-modal-input {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.cal-modal-input:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+  outline: none;
+}
+
+.cal-modal-btn-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+}
+
+.cal-modal-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cal-modal-btn-ghost {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.cal-modal-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.cal-gradient-btn {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+}
+
+.cal-gradient-btn:hover {
+  opacity: 0.9;
+}
+
+/* Week header top row shares the same bg as cal-header-row */
+.cal-week-header-row {
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Fixed height for the 18-hour time grid (18 × 60px) */
+.cal-time-grid-height {
+  height: 1080px;
+}
+
+/* Touch-action for scrollable event wrappers */
+.cal-event-wrapper {
+  touch-action: pan-y;
 }

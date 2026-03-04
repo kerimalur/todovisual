@@ -758,26 +758,22 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         )}
 
         {/* Wiederkehrende Aufgabe */}
-        <div className="p-4 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+        <div className="p-4 rounded-xl border border-violet-500/20" style={{ background: 'rgba(124,58,237,0.06)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <Repeat size={16} className="text-purple-600" />
-              <span className="text-sm font-medium text-gray-900">Wiederkehrende Aufgabe</span>
+              <Repeat size={16} className="text-violet-400" />
+              <span className="text-sm font-medium text-white/80">Wiederkehrende Aufgabe</span>
             </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={isRecurring}
-                onChange={(e) => setIsRecurring(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
-            </label>
+            <div
+              className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${isRecurring ? 'bg-violet-600' : 'bg-white/15'}`}
+              onClick={() => setIsRecurring(!isRecurring)}
+            >
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${isRecurring ? 'left-4' : 'left-0.5'}`} />
+            </div>
           </div>
 
           {isRecurring && (
             <div className="space-y-3">
-              {/* Frequency Selection */}
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'daily', label: 'Täglich', icon: '📅' },
@@ -790,9 +786,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                     onClick={() => setRecurringFrequency(opt.value as 'daily' | 'weekly' | 'monthly')}
                     className={`p-2 rounded-lg text-center transition-all border ${
                       recurringFrequency === opt.value
-                        ? 'bg-purple-100 border-purple-300 text-purple-700'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                        ? 'border-violet-500/40 text-violet-300'
+                        : 'border-white/10 text-white/50 hover:bg-white/04'
                     }`}
+                    style={{ background: recurringFrequency === opt.value ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.03)' }}
                   >
                     <span className="text-lg">{opt.icon}</span>
                     <div className="text-xs font-medium mt-1">{opt.label}</div>
@@ -800,10 +797,9 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                 ))}
               </div>
 
-              {/* Weekly Day Selection */}
               {recurringFrequency === 'weekly' && (
                 <div>
-                  <label className="block text-xs text-gray-600 mb-2">An welchen Tagen?</label>
+                  <label className="block text-xs text-white/40 mb-2">An welchen Tagen?</label>
                   <div className="flex gap-1">
                     {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day, index) => (
                       <button
@@ -818,8 +814,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                         }}
                         className={`w-9 h-9 rounded-lg text-xs font-medium transition-all ${
                           recurringDays.includes(index)
-                            ? 'bg-purple-600 text-white'
-                            : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+                            ? 'bg-violet-600 text-white'
+                            : 'border border-white/10 text-white/40 hover:bg-white/06'
                         }`}
                       >
                         {day}
@@ -829,18 +825,18 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                 </div>
               )}
 
-              {/* Interval */}
               <div className="flex items-center gap-2">
-                <span className="text-xs text-gray-600">Alle</span>
+                <span className="text-xs text-white/40">Alle</span>
                 <input
                   type="number"
                   min="1"
                   max="30"
                   value={recurringInterval}
                   onChange={(e) => setRecurringInterval(parseInt(e.target.value) || 1)}
-                  className="w-16 px-2 py-1 text-sm border border-gray-200 rounded-lg text-center"
+                  className="w-16 px-2 py-1 text-sm text-white border border-white/10 rounded-lg text-center"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
-                <span className="text-xs text-gray-600">
+                <span className="text-xs text-white/40">
                   {recurringFrequency === 'daily' ? 'Tage' : recurringFrequency === 'weekly' ? 'Wochen' : 'Monate'}
                 </span>
               </div>
@@ -849,44 +845,43 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         </div>
 
         {/* Subtasks / Schritte */}
-        <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+        <div className="p-4 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <ListChecks size={16} className="text-indigo-600" />
-              <span className="text-sm font-medium text-gray-900">Teilschritte</span>
+              <ListChecks size={16} className="text-violet-400" />
+              <span className="text-sm font-medium text-white/80">Teilschritte</span>
               {subtasks.length > 0 && (
-                <span className="text-xs text-gray-500">({subtasks.filter(s => s.completed).length}/{subtasks.length})</span>
+                <span className="text-xs text-white/40">({subtasks.filter(s => s.completed).length}/{subtasks.length})</span>
               )}
             </div>
           </div>
 
-          {/* Existing Subtasks */}
           {subtasks.length > 0 && (
             <div className="space-y-2 mb-3">
               {subtasks.map((subtask) => (
-                <div key={subtask.id} className="flex items-center gap-2 p-2 bg-white rounded-lg border border-gray-100">
+                <div key={subtask.id} className="flex items-center gap-2 p-2 rounded-lg border border-white/06" style={{ background: 'rgba(255,255,255,0.03)' }}>
                   <button
                     type="button"
                     onClick={() => {
-                      setSubtasks(subtasks.map(s => 
+                      setSubtasks(subtasks.map(s =>
                         s.id === subtask.id ? { ...s, completed: !s.completed } : s
                       ));
                     }}
                     className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all ${
-                      subtask.completed 
-                        ? 'bg-emerald-500 border-emerald-500' 
-                        : 'border-gray-300 hover:border-indigo-400'
+                      subtask.completed
+                        ? 'bg-emerald-500 border-emerald-500'
+                        : 'border-white/20 hover:border-violet-400'
                     }`}
                   >
                     {subtask.completed && <CheckCircle2 size={12} className="text-white" />}
                   </button>
-                  <span className={`flex-1 text-sm ${subtask.completed ? 'text-gray-400 line-through' : 'text-gray-900'}`}>
+                  <span className={`flex-1 text-sm ${subtask.completed ? 'text-white/30 line-through' : 'text-white/80'}`}>
                     {subtask.title}
                   </span>
                   <button
                     type="button"
                     onClick={() => setSubtasks(subtasks.filter(s => s.id !== subtask.id))}
-                    className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-all"
+                    className="p-1 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded transition-all"
                   >
                     <X size={14} />
                   </button>
@@ -895,7 +890,6 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             </div>
           )}
 
-          {/* Add New Subtask */}
           <div className="flex items-center gap-2">
             <input
               type="text"
@@ -909,9 +903,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                   setNewSubtask('');
                 }
               }}
-              className="flex-1 px-3 py-2 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                         placeholder:text-gray-400"
+              className="flex-1 px-3 py-2 text-sm text-white border border-white/10 rounded-lg
+                         focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
+                         placeholder:text-white/25"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
             <button
               type="button"
@@ -921,7 +916,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                   setNewSubtask('');
                 }
               }}
-              className="p-2 bg-indigo-100 text-indigo-600 rounded-lg hover:bg-indigo-200 transition-all"
+              className="p-2 rounded-lg text-violet-400 hover:bg-violet-500/15 transition-all border border-violet-500/20"
             >
               <Plus size={16} />
             </button>
@@ -929,51 +924,38 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-          {/* Left side - Delete button or time estimate */}
+        <div className="flex items-center justify-between pt-4 border-t border-white/08">
           <div className="flex items-center gap-3">
             {editTask && !showDeleteConfirm && (
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setShowDeleteConfirm(true)}
-                className="text-red-600 hover:bg-red-50"
+                className="text-red-400 hover:bg-red-500/10"
               >
                 <Trash2 size={16} />
                 Löschen
               </Button>
             )}
             {!showDeleteConfirm && estimatedMinutes && (
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-white/30">
                 ⏱ {estimatedMinutes} Min
               </div>
             )}
           </div>
 
-          {/* Delete Confirmation */}
           {showDeleteConfirm && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Wirklich löschen?</span>
-              <Button
-                type="button"
-                variant="danger"
-                onClick={handleDelete}
-                className="text-sm"
-              >
+              <span className="text-sm text-white/60">Wirklich löschen?</span>
+              <Button type="button" variant="danger" onClick={handleDelete} className="text-sm">
                 Ja, löschen
               </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="text-sm"
-              >
+              <Button type="button" variant="ghost" onClick={() => setShowDeleteConfirm(false)} className="text-sm">
                 Abbrechen
               </Button>
             </div>
           )}
 
-          {/* Right side - Save/Cancel buttons */}
           {!showDeleteConfirm && (
             <div className="flex items-center gap-3">
               <Button type="button" variant="ghost" onClick={onClose}>
@@ -982,9 +964,9 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               <button
                 type="submit"
                 disabled={!title.trim()}
-                className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 text-white text-sm font-medium
-                           rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition-all shadow-sm
-                           disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-5 py-2.5 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-all
+                           disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2 shadow-lg shadow-violet-900/30"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
               >
                 <CheckCircle2 size={16} />
                 {editTask ? 'Speichern' : 'Aufgabe erstellen'}

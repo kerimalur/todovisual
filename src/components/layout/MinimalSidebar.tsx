@@ -57,15 +57,15 @@ function NavLink({
     <Link
       href={item.href}
       onClick={onClick}
-      className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+      className={`group flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
         isActive
-          ? 'bg-white/10 text-white shadow-sm'
-          : 'text-white/50 hover:bg-white/06 hover:text-white/80'
+          ? 'text-white'
+          : 'text-white/55 hover:bg-white/06 hover:text-white/80'
       }`}
       style={isActive ? { background: 'rgba(255,255,255,0.08)' } : {}}
     >
-      <span className={`w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br ${item.color} flex-shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105`}>
-        <Icon size={14} strokeWidth={2} className="text-white" />
+      <span className={`w-6 h-6 rounded-md flex items-center justify-center bg-gradient-to-br ${item.color} flex-shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-105`}>
+        <Icon size={13} strokeWidth={2} className="text-white" />
       </span>
       <span className="truncate">{item.label}</span>
       {isActive && (
@@ -119,10 +119,10 @@ export function MinimalSidebar() {
   const SidebarContent = ({ onClose }: { onClose?: () => void }) => (
     <>
       {/* Logo */}
-      <div className="h-16 flex items-center px-4 border-b border-white/08 flex-shrink-0">
-        <Link href="/" className="flex items-center gap-3 group" onClick={onClose}>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-lg shadow-violet-900/30 transition-transform duration-200 group-hover:scale-105">
-            <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-white">
+      <div className="h-13 flex items-center px-3 border-b border-white/08 flex-shrink-0" style={{ height: '52px' }}>
+        <Link href="/" className="flex items-center gap-2.5 group" onClick={onClose}>
+          <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-700 flex items-center justify-center shadow-md shadow-violet-900/30 transition-transform duration-200 group-hover:scale-105">
+            <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 text-white">
               <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -133,7 +133,7 @@ export function MinimalSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-0.5">
         {primaryNavItems.map((item) => (
           <NavLink
             key={item.href}
@@ -144,29 +144,29 @@ export function MinimalSidebar() {
         ))}
 
         {/* Divider */}
-        <div className="my-3 border-t border-white/06" />
+        <div className="my-2 border-t border-white/06" />
 
         {/* More toggle */}
         <button
           onClick={() => setShowMore(!showMore)}
-          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-            isSecondaryActive ? 'text-white/80' : 'text-white/40'
+          className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-sm font-medium transition-all ${
+            isSecondaryActive ? 'text-white/80' : 'text-white/45'
           } hover:text-white/70`}
         >
-          <span className="flex items-center gap-3">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/08">
-              <MoreHorizontal size={14} className="text-white/60" />
+          <span className="flex items-center gap-2.5">
+            <span className="w-6 h-6 rounded-md flex items-center justify-center bg-white/08">
+              <MoreHorizontal size={13} className="text-white/60" />
             </span>
             Mehr
           </span>
           <ChevronDown
-            size={14}
+            size={13}
             className={`transition-transform duration-200 text-white/40 ${showMore ? 'rotate-180' : ''}`}
           />
         </button>
 
         {(showMore || isSecondaryActive) && (
-          <div className="ml-2 space-y-0.5 animate-fade-in">
+          <div className="ml-1.5 space-y-0.5 animate-fade-in">
             {secondaryNavItems.map((item) => (
               <NavLink
                 key={item.href}
@@ -183,13 +183,13 @@ export function MinimalSidebar() {
       {timer.isRunning && (
         <div
           onClick={() => { onClose?.(); toggleZenMode(); }}
-          className="mx-3 mb-3 p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 cursor-pointer hover:bg-emerald-500/15 transition-colors"
+          className="mx-2.5 mb-2.5 p-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 cursor-pointer hover:bg-emerald-500/15 transition-colors"
         >
           <div className="flex items-center gap-2 text-emerald-400 text-xs font-medium mb-1">
-            <Timer size={13} />
+            <Timer size={12} />
             <span>Fokus aktiv</span>
           </div>
-          <div className="font-mono text-lg font-bold text-emerald-300">
+          <div className="font-mono text-base font-bold text-emerald-300">
             {formatTime(timer.secondsRemaining)}
           </div>
         </div>
@@ -197,43 +197,43 @@ export function MinimalSidebar() {
 
       {/* Focus Button */}
       {!timer.isRunning && (
-        <div className="px-3 pb-3">
+        <div className="px-2.5 pb-2.5">
           <button
             onClick={() => { onClose?.(); toggleZenMode(); }}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold text-white transition-all duration-200 hover:opacity-90 active:scale-95"
             style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
           >
-            <Play size={14} fill="currentColor" />
+            <Play size={13} fill="currentColor" />
             Fokus starten
           </button>
         </div>
       )}
 
       {/* Footer */}
-      <div className="border-t border-white/06 px-3 py-3 space-y-0.5 flex-shrink-0">
+      <div className="border-t border-white/06 px-2.5 py-2 space-y-0.5 flex-shrink-0">
         <Link
           href="/archive"
           onClick={onClose}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/35 hover:text-white/60 hover:bg-white/05 transition-all"
+          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/65 hover:bg-white/05 transition-all"
         >
-          <Archive size={15} />
+          <Archive size={14} />
           <span>Archiv</span>
         </Link>
         <Link
           href="/settings"
           onClick={onClose}
-          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-white/35 hover:text-white/60 hover:bg-white/05 transition-all"
+          className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-white/40 hover:text-white/65 hover:bg-white/05 transition-all"
         >
-          <Settings size={15} />
+          <Settings size={14} />
           <span>Einstellungen</span>
         </Link>
         {user && (
           <button
             type="button"
             onClick={() => { onClose?.(); signOut(); }}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all"
+            className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs text-red-400/70 hover:text-red-400 hover:bg-red-500/10 transition-all"
           >
-            <LogOut size={15} />
+            <LogOut size={14} />
             <span>Abmelden</span>
           </button>
         )}
@@ -274,16 +274,17 @@ export function MinimalSidebar() {
 
       {/* ========== MOBILE OVERLAY ========== */}
       <div
-        className={`md:hidden fixed inset-0 bg-black/70 z-50 transition-opacity duration-300 ${
-          mobileSidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`md:hidden fixed inset-0 z-50 transition-all duration-300 ${
+          mobileSidebarOpen
+            ? 'bg-black/65 opacity-100 backdrop-blur-sm'
+            : 'opacity-0 pointer-events-none invisible'
         }`}
         onClick={closeMobileSidebar}
-        style={{ backdropFilter: 'blur(4px)' }}
       />
 
       {/* ========== MOBILE SIDEBAR ========== */}
       <aside
-        className={`md:hidden fixed left-0 top-0 bottom-0 w-[260px] z-50 flex flex-col transition-transform duration-300 border-r border-white/08 ${
+        className={`md:hidden fixed left-0 top-0 bottom-0 w-[240px] z-50 flex flex-col transition-transform duration-300 border-r border-white/08 ${
           mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ background: '#0d0f1e' }}
@@ -305,7 +306,7 @@ export function MinimalSidebar() {
 
       {/* ========== DESKTOP SIDEBAR ========== */}
       <aside
-        className="hidden md:flex fixed left-0 top-0 bottom-0 w-[220px] flex-col z-50 border-r border-white/08"
+        className="hidden md:flex fixed left-0 top-0 bottom-0 w-[196px] flex-col z-50 border-r border-white/08"
         style={{ background: '#0d0f1e' }}
       >
         <SidebarContent />

@@ -122,18 +122,19 @@ export function Textarea({ label, className = '', ...props }: TextareaProps) {
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-900">
+        <label className="block text-sm font-medium text-white/80">
           {label}
         </label>
       )}
       <textarea
         className={`
-          w-full px-3 py-2.5 bg-white border border-gray-300
-          rounded-lg text-gray-900 placeholder:text-gray-500
-          focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+          w-full px-3 py-2.5
+          rounded-lg text-white placeholder:text-white/30
+          focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30
           transition-all duration-150 resize-none
           ${className}
         `}
+        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
         {...props}
       />
     </div>
@@ -150,22 +151,23 @@ export function Select({ label, options, className = '', ...props }: SelectProps
   return (
     <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-900">
+        <label className="block text-sm font-medium text-white/80">
           {label}
         </label>
       )}
       <select
         className={`
-          w-full px-3 py-2.5 bg-white border border-gray-300
-          rounded-lg text-gray-900
-          focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20
+          w-full px-3 py-2.5
+          rounded-lg text-white
+          focus:outline-none focus:border-violet-500/50 focus:ring-2 focus:ring-violet-500/30
           transition-all duration-150 cursor-pointer
           ${className}
         `}
+        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
         {...props}
       >
         {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>{opt.label}</option>
+          <option key={opt.value} value={opt.value} style={{ background: '#1a1d31' }}>{opt.label}</option>
         ))}
       </select>
     </div>

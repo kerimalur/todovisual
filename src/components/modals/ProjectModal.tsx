@@ -188,28 +188,30 @@ export function ProjectModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-900">Kategorie</label>
+            <label className="block text-sm font-medium text-white/80">Kategorie</label>
             <select
               value={category}
               onChange={(event) => setCategory(event.target.value as ProjectCategory)}
-              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2.5 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+                <option key={option.value} value={option.value} style={{ background: '#1a1d31' }}>
                   {option.label}
                 </option>
               ))}
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-900">Status</label>
+            <label className="block text-sm font-medium text-white/80">Status</label>
             <select
               value={status}
               onChange={(event) => setStatus(event.target.value as Project['status'])}
-              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2.5 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               {statusOptions.map((option) => (
-                <option key={option.value} value={option.value}>
+                <option key={option.value} value={option.value} style={{ background: '#1a1d31' }}>
                   {option.label}
                 </option>
               ))}
@@ -218,7 +220,7 @@ export function ProjectModal({
         </div>
 
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-gray-900">Priorität</label>
+          <label className="block text-sm font-medium text-white/80">Priorität</label>
           <div className="grid grid-cols-4 gap-2">
             {priorityOptions.map((option) => (
               <button
@@ -227,9 +229,13 @@ export function ProjectModal({
                 onClick={() => setPriority(option.value)}
                 className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${
                   priority === option.value
-                    ? 'border-indigo-300 bg-indigo-100 text-indigo-800'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    ? 'border-violet-500/40 text-violet-300'
+                    : 'text-white/50 hover:text-white/70'
                 }`}
+                style={priority === option.value
+                  ? { background: 'rgba(124,58,237,0.20)' }
+                  : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)' }
+                }
               >
                 {option.label}
               </button>
@@ -237,8 +243,8 @@ export function ProjectModal({
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-3">
-          <label className="block text-sm font-medium text-gray-900 mb-2">Ziele verknüpfen (mehrfach möglich)</label>
+        <div className="rounded-xl p-3" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+          <label className="block text-sm font-medium text-white/80 mb-2">Ziele verknüpfen (mehrfach möglich)</label>
           {goals.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {goals.map((goal) => {
@@ -248,10 +254,14 @@ export function ProjectModal({
                     key={goal.id}
                     type="button"
                     onClick={() => toggleGoalLink(goal.id)}
-                    className={
+                    className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
                       active
-                        ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-indigo-300 bg-indigo-100 text-indigo-800'
-                        : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'border-violet-500/40 text-violet-300'
+                        : 'text-white/50 hover:text-white/70'
+                    }`}
+                    style={active
+                      ? { background: 'rgba(124,58,237,0.20)' }
+                      : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)' }
                     }
                   >
                     {goal.title}
@@ -260,7 +270,7 @@ export function ProjectModal({
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-700">Noch keine Ziele vorhanden.</p>
+            <p className="text-xs text-white/40">Noch keine Ziele vorhanden.</p>
           )}
         </div>
 
@@ -271,35 +281,37 @@ export function ProjectModal({
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-900">Review-Takt</label>
+            <label className="block text-sm font-medium text-white/80">Review-Takt</label>
             <select
               value={reviewCadence}
               onChange={(event) => setReviewCadence(event.target.value as 'daily' | 'weekly' | 'biweekly')}
-              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2.5 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
-              <option value="daily">Täglich</option>
-              <option value="weekly">Wöchentlich</option>
-              <option value="biweekly">Alle 2 Wochen</option>
+              <option value="daily" style={{ background: '#1a1d31' }}>Täglich</option>
+              <option value="weekly" style={{ background: '#1a1d31' }}>Wöchentlich</option>
+              <option value="biweekly" style={{ background: '#1a1d31' }}>Alle 2 Wochen</option>
             </select>
           </div>
           <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-gray-900">Risikolevel</label>
+            <label className="block text-sm font-medium text-white/80">Risikolevel</label>
             <select
               value={riskLevel}
               onChange={(event) => setRiskLevel(event.target.value as 'low' | 'medium' | 'high')}
-              className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2.5 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
-              <option value="low">Niedrig</option>
-              <option value="medium">Mittel</option>
-              <option value="high">Hoch</option>
+              <option value="low" style={{ background: '#1a1d31' }}>Niedrig</option>
+              <option value="medium" style={{ background: '#1a1d31' }}>Mittel</option>
+              <option value="high" style={{ background: '#1a1d31' }}>Hoch</option>
             </select>
           </div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-3 space-y-3">
+        <div className="rounded-xl p-3 space-y-3" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
           <div className="flex items-center gap-2">
-            <Milestone size={15} className="text-indigo-600" />
-            <p className="text-sm font-semibold text-gray-900">Timeline-Phasen</p>
+            <Milestone size={15} className="text-violet-400" />
+            <p className="text-sm font-semibold text-white">Timeline-Phasen</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-[1fr_220px_150px_auto] gap-2">
             <input
@@ -307,25 +319,29 @@ export function ProjectModal({
               value={newPhaseTitle}
               onChange={(event) => setNewPhaseTitle(event.target.value)}
               placeholder="Phase (z. B. Planung, Umsetzung, Abnahme)"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2 text-sm rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             />
             <input
               type="text"
               value={newPhaseDescription}
               onChange={(event) => setNewPhaseDescription(event.target.value)}
               placeholder="Beschreibung"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2 text-sm rounded-lg text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             />
             <input
               type="date"
               value={newPhaseDate}
               onChange={(event) => setNewPhaseDate(event.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              className="w-full px-3 py-2 text-sm rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', colorScheme: 'dark' }}
             />
             <button
               type="button"
               onClick={addPhase}
-              className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
             >
               <Plus size={14} />
             </button>
@@ -334,10 +350,10 @@ export function ProjectModal({
           {timelinePhases.length > 0 && (
             <div className="space-y-2">
               {timelinePhases.map((phase) => (
-                <div key={phase.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                <div key={phase.id} className="flex items-center justify-between gap-2 rounded-lg px-3 py-2" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{phase.title}</p>
-                    <p className="text-xs text-gray-700">
+                    <p className="text-sm font-medium text-white">{phase.title}</p>
+                    <p className="text-xs text-white/40">
                       {phase.description || 'Ohne Beschreibung'}
                       {phase.targetDate ? ` · ${new Date(phase.targetDate).toLocaleDateString('de-DE')}` : ''}
                     </p>
@@ -345,7 +361,7 @@ export function ProjectModal({
                   <button
                     type="button"
                     onClick={() => setTimelinePhases((current) => current.filter((entry) => entry.id !== phase.id))}
-                    className="rounded-md p-1 text-gray-500 hover:bg-red-50 hover:text-red-700"
+                    className="rounded-md p-1 text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -355,10 +371,10 @@ export function ProjectModal({
           )}
         </div>
 
-        <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-3">
+        <div className="rounded-xl p-3" style={{ border: '1px solid rgba(124,58,237,0.20)', background: 'rgba(124,58,237,0.06)' }}>
           <div className="flex items-center gap-2 mb-2">
-            <CalendarClock size={15} className="text-indigo-700" />
-            <p className="text-sm font-semibold text-indigo-900">Delivery-Notizen</p>
+            <CalendarClock size={15} className="text-violet-400" />
+            <p className="text-sm font-semibold text-white/80">Delivery-Notizen</p>
           </div>
           <Textarea
             placeholder="Blocker, offene Risiken, Abhängigkeiten, nächste Entscheidungen ..."
@@ -368,7 +384,7 @@ export function ProjectModal({
           />
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+        <div className="flex items-center justify-end gap-2 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <Button type="button" variant="ghost" onClick={onClose}>
             Abbrechen
           </Button>

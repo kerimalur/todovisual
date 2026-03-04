@@ -259,28 +259,23 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Basic Info Section */}
-        <div className="space-y-4 p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100">
-          {/* Icon & Color Picker */}
+        <div className="space-y-4 p-4 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="flex items-start gap-4">
-            {/* Icon Selection */}
             <div className="flex-shrink-0">
-              <label className="block text-xs font-medium text-gray-500 mb-1">Icon</label>
-              <div className="relative">
-                <button
-                  type="button"
-                  className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl border-2 border-gray-200 hover:border-gray-300 transition-colors"
-                  style={{ backgroundColor: color + '20' }}
-                  onClick={() => {
-                    const current = iconOptions.indexOf(icon);
-                    setIcon(iconOptions[(current + 1) % iconOptions.length]);
-                  }}
-                >
-                  {icon}
-                </button>
-              </div>
+              <label className="block text-xs font-medium text-white/50 mb-1">Icon</label>
+              <button
+                type="button"
+                className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl border-2 border-white/15 hover:border-white/30 transition-colors"
+                style={{ backgroundColor: color + '30' }}
+                onClick={() => {
+                  const current = iconOptions.indexOf(icon);
+                  setIcon(iconOptions[(current + 1) % iconOptions.length]);
+                }}
+              >
+                {icon}
+              </button>
             </div>
 
-            {/* Title & Description */}
             <div className="flex-1 space-y-3">
               <Input
                 placeholder="z.B. Morgens Gym, 15 Seiten lesen, Supplements"
@@ -298,15 +293,15 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
             </div>
           </div>
 
-          {/* Color Picker */}
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-2">Farbe</label>
+            <label className="block text-xs font-medium text-white/50 mb-2">Farbe</label>
             <div className="flex flex-wrap gap-2">
               {colorOptions.map((c) => (
                 <button
                   key={c}
                   type="button"
-                  className={`w-7 h-7 rounded-full transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : ''}`}
+                  title={`Farbe ${c}`}
+                  className={`w-7 h-7 rounded-full transition-transform hover:scale-110 ${color === c ? 'ring-2 ring-offset-1 ring-white scale-110' : 'opacity-70 hover:opacity-100'}`}
                   style={{ backgroundColor: c }}
                   onClick={() => setColor(c)}
                 />
@@ -314,10 +309,9 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
             </div>
           </div>
 
-          {/* Category Selection */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="flex items-center gap-1.5 text-xs font-medium text-gray-500">
+              <label className="flex items-center gap-1.5 text-xs font-medium text-white/50">
                 <Tag size={12} />
                 Kategorie
               </label>
@@ -325,7 +319,7 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                 <button
                   type="button"
                   onClick={() => setShowNewCategory(true)}
-                  className="flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-700"
+                  className="flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300"
                 >
                   <Plus size={12} />
                   Neue Kategorie
@@ -333,17 +327,18 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
               )}
             </div>
 
-            {/* New Category Form */}
             {showNewCategory && (
-              <div className="mb-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+              <div className="mb-3 p-3 rounded-lg border border-violet-500/20" style={{ background: 'rgba(124,58,237,0.08)' }}>
                 <div className="flex items-center gap-2 mb-2">
                   <select
                     value={newCategoryEmoji}
                     onChange={(e) => setNewCategoryEmoji(e.target.value)}
-                    className="w-12 h-9 text-lg text-center bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    title="Kategorie-Emoji"
+                    className="w-12 h-9 text-lg text-center border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500/30"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
                   >
                     {defaultCategoryEmojis.map((emoji) => (
-                      <option key={emoji} value={emoji}>{emoji}</option>
+                      <option key={emoji} value={emoji} style={{ background: '#1a1d31' }}>{emoji}</option>
                     ))}
                   </select>
                   <input
@@ -351,20 +346,22 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                     placeholder="Kategorie-Name"
                     value={newCategoryName}
                     onChange={(e) => setNewCategoryName(e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="flex-1 px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500/30 placeholder:text-white/25"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
                   />
                   <button
                     type="button"
                     onClick={handleAddCategory}
                     disabled={!newCategoryName.trim()}
-                    className="px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-3 py-2 text-sm font-medium text-white rounded-lg hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
                   >
                     Hinzufügen
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowNewCategory(false)}
-                    className="p-2 text-gray-400 hover:text-gray-600"
+                    className="p-2 text-white/30 hover:text-white/60"
                   >
                     <X size={16} />
                   </button>
@@ -374,7 +371,7 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                     <button
                       key={c}
                       type="button"
-                      className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${newCategoryColor === c ? 'ring-2 ring-offset-1 ring-gray-400 scale-110' : ''}`}
+                      className={`w-6 h-6 rounded-full transition-transform hover:scale-110 ${newCategoryColor === c ? 'ring-2 ring-offset-1 ring-white scale-110' : 'opacity-70'}`}
                       style={{ backgroundColor: c }}
                       onClick={() => setNewCategoryColor(c)}
                     />
@@ -383,14 +380,13 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
               </div>
             )}
 
-            {/* Category List */}
             {habitCategories.length === 0 && !showNewCategory ? (
-              <div className="p-4 text-center bg-gray-50 rounded-lg border border-gray-100">
-                <p className="text-sm text-gray-500 mb-2">Noch keine Kategorien erstellt</p>
+              <div className="p-4 text-center rounded-lg border border-white/06" style={{ background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm text-white/40 mb-2">Noch keine Kategorien erstellt</p>
                 <button
                   type="button"
                   onClick={() => setShowNewCategory(true)}
-                  className="inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
+                  className="inline-flex items-center gap-1 text-sm text-violet-400 hover:text-violet-300"
                 >
                   <Plus size={14} />
                   Erste Kategorie erstellen
@@ -405,9 +401,10 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                     onClick={() => setCategory(cat.id)}
                     className={`group relative px-3 py-2 rounded-lg border-2 transition-all flex items-center gap-2 ${
                       category === cat.id
-                        ? 'border-indigo-500 bg-indigo-50'
-                        : 'border-gray-100 hover:border-gray-200 bg-white'
+                        ? 'border-violet-500/50 text-white'
+                        : 'border-white/10 text-white/60 hover:border-white/20 hover:text-white/80'
                     }`}
+                    style={{ background: category === cat.id ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.03)' }}
                   >
                     <span className="text-lg">{cat.emoji}</span>
                     <span className="text-sm font-medium">{cat.name}</span>
@@ -430,10 +427,10 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
         </div>
 
         {/* Frequency Section */}
-        <div className="space-y-4 p-4 bg-gradient-to-br from-indigo-50/50 to-white rounded-xl border border-indigo-100">
-          <div className="flex items-center gap-2 text-indigo-700">
+        <div className="space-y-4 p-4 rounded-xl border border-violet-500/15" style={{ background: 'rgba(124,58,237,0.05)' }}>
+          <div className="flex items-center gap-2 text-violet-400">
             <Repeat size={18} />
-            <span className="font-medium">Häufigkeit</span>
+            <span className="font-medium text-white/80">Häufigkeit</span>
           </div>
 
           <div className="grid grid-cols-3 gap-2">
@@ -444,20 +441,20 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                 onClick={() => setFrequency(freq.value)}
                 className={`p-3 rounded-lg text-left border-2 transition-all ${
                   frequency === freq.value
-                    ? 'border-indigo-500 bg-indigo-50'
-                    : 'border-gray-100 hover:border-gray-200 bg-white'
+                    ? 'border-violet-500/50 text-white'
+                    : 'border-white/08 text-white/60 hover:border-white/15'
                 }`}
+                style={{ background: frequency === freq.value ? 'rgba(124,58,237,0.15)' : 'rgba(255,255,255,0.03)' }}
               >
                 <div className="text-sm font-medium">{freq.label}</div>
-                <div className="text-xs text-gray-500 mt-0.5">{freq.description}</div>
+                <div className="text-xs text-white/40 mt-0.5">{freq.description}</div>
               </button>
             ))}
           </div>
 
-          {/* Weekly Target */}
           {frequency === 'weekly' && (
-            <div className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-100">
-              <span className="text-sm text-gray-600">Ziel:</span>
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-white/06" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <span className="text-sm text-white/50">Ziel:</span>
               <div className="flex items-center gap-2">
                 {[2, 3, 4, 5, 6, 7].map((num) => (
                   <button
@@ -466,22 +463,21 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                     onClick={() => setTargetPerWeek(num)}
                     className={`w-9 h-9 rounded-lg font-medium transition-all ${
                       targetPerWeek === num
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-violet-600 text-white'
+                        : 'text-white/50 border border-white/10 hover:bg-white/06'
                     }`}
                   >
                     {num}
                   </button>
                 ))}
               </div>
-              <span className="text-sm text-gray-600">mal pro Woche</span>
+              <span className="text-sm text-white/50">mal pro Woche</span>
             </div>
           )}
 
-          {/* Specific Days */}
           {frequency === 'specific-days' && (
-            <div className="flex items-center gap-2 p-3 bg-white rounded-lg border border-gray-100">
-              <span className="text-sm text-gray-600 mr-2">An diesen Tagen:</span>
+            <div className="flex items-center gap-2 p-3 rounded-lg border border-white/06" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <span className="text-sm text-white/50 mr-2">An diesen Tagen:</span>
               {dayLabels.map((day, index) => (
                 <button
                   key={day}
@@ -489,8 +485,8 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                   onClick={() => toggleDay(index)}
                   className={`w-9 h-9 rounded-lg font-medium text-sm transition-all ${
                     specificDays.includes(index)
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-violet-600 text-white'
+                      : 'text-white/50 border border-white/10 hover:bg-white/06'
                   }`}
                 >
                   {day}
@@ -500,33 +496,22 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
           )}
         </div>
 
-        {/* Tracking Section (optional) */}
-        <div className="space-y-3 p-4 bg-gradient-to-br from-emerald-50/50 to-white rounded-xl border border-emerald-100">
+        {/* Tracking Section */}
+        <div className="space-y-3 p-4 rounded-xl border border-emerald-500/15" style={{ background: 'rgba(16,185,129,0.04)' }}>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
               checked={hasTargetValue}
               onChange={(e) => setHasTargetValue(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              className="w-4 h-4 rounded border-white/20 text-emerald-500 focus:ring-emerald-500/30"
             />
-            <span className="text-sm font-medium text-gray-700">Zielwert tracken (z.B. 10.000 Schritte, 15 Seiten)</span>
+            <span className="text-sm font-medium text-white/70">Zielwert tracken (z.B. 10.000 Schritte, 15 Seiten)</span>
           </label>
 
           {hasTargetValue && (
             <div className="flex gap-3 pl-7">
-              <Input
-                type="number"
-                placeholder="Zielwert"
-                value={targetValue}
-                onChange={(e) => setTargetValue(e.target.value)}
-                className="w-32"
-              />
-              <Input
-                placeholder="Einheit (z.B. Schritte, Seiten, Min.)"
-                value={targetUnit}
-                onChange={(e) => setTargetUnit(e.target.value)}
-                className="flex-1"
-              />
+              <Input type="number" placeholder="Zielwert" value={targetValue} onChange={(e) => setTargetValue(e.target.value)} className="w-32" />
+              <Input placeholder="Einheit (z.B. Schritte, Seiten, Min.)" value={targetUnit} onChange={(e) => setTargetUnit(e.target.value)} className="flex-1" />
             </div>
           )}
         </div>
@@ -535,19 +520,18 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center gap-2 w-full p-3 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gray-50 hover:bg-gray-100 rounded-lg transition-colors"
+          className="flex items-center gap-2 w-full p-3 text-sm font-medium text-white/55 hover:text-white/80 rounded-lg transition-colors border border-white/08 hover:bg-white/04"
         >
           {showAdvanced ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
           Erweiterte Einstellungen
-          <span className="text-xs text-gray-400 ml-auto">Energie, Erinnerungen, Verknüpfungen</span>
+          <span className="text-xs text-white/30 ml-auto">Energie, Erinnerungen, Verknüpfungen</span>
         </button>
 
         {showAdvanced && (
           <div className="space-y-4">
-            {/* Energy & Time */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 rounded-xl">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-white/50 mb-2">
                   <Zap size={14} />
                   Benötigte Energie
                 </label>
@@ -559,9 +543,10 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                       onClick={() => setEnergyLevel(opt.value as 'low' | 'medium' | 'high')}
                       className={`flex-1 p-2 rounded-lg text-center border-2 transition-all ${
                         energyLevel === opt.value
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-gray-100 bg-white hover:border-gray-200'
+                          ? 'border-violet-500/50 text-white'
+                          : 'border-white/08 text-white/45 hover:border-white/15'
                       }`}
+                      style={{ background: energyLevel === opt.value ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.02)' }}
                     >
                       <div className="text-xs font-medium">{opt.label}</div>
                     </button>
@@ -570,7 +555,7 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-xs font-medium text-gray-500 mb-2">
+                <label className="flex items-center gap-2 text-xs font-medium text-white/50 mb-2">
                   <Clock size={14} />
                   Beste Tageszeit
                 </label>
@@ -582,9 +567,10 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
                       onClick={() => setBestTimeOfDay(opt.value as any)}
                       className={`flex-1 p-2 rounded-lg text-center border-2 transition-all ${
                         bestTimeOfDay === opt.value
-                          ? 'border-indigo-500 bg-indigo-50'
-                          : 'border-gray-100 bg-white hover:border-gray-200'
+                          ? 'border-violet-500/50 text-white'
+                          : 'border-white/08 text-white/45 hover:border-white/15'
                       }`}
+                      style={{ background: bestTimeOfDay === opt.value ? 'rgba(124,58,237,0.12)' : 'rgba(255,255,255,0.02)' }}
                     >
                       <div className="text-[10px] font-medium">{opt.label}</div>
                     </button>
@@ -593,66 +579,45 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
               </div>
             </div>
 
-            {/* Reminder */}
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <label className="flex items-center justify-between cursor-pointer">
+            <div className="p-4 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Bell size={16} className="text-gray-500" />
-                  <span className="text-sm font-medium text-gray-700">Erinnerung</span>
+                  <Bell size={16} className="text-white/45" />
+                  <span className="text-sm font-medium text-white/70">Erinnerung</span>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={reminderEnabled}
-                  onChange={(e) => setReminderEnabled(e.target.checked)}
-                  className="w-4 h-4 rounded border-gray-300 text-indigo-600"
-                />
-              </label>
+                <div
+                  className={`w-9 h-5 rounded-full transition-colors relative cursor-pointer ${reminderEnabled ? 'bg-violet-600' : 'bg-white/15'}`}
+                  onClick={() => setReminderEnabled(!reminderEnabled)}
+                >
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${reminderEnabled ? 'left-4' : 'left-0.5'}`} />
+                </div>
+              </div>
               {reminderEnabled && (
                 <div className="mt-3 ml-6">
-                  <Input
-                    type="time"
-                    value={reminderTime}
-                    onChange={(e) => setReminderTime(e.target.value)}
-                    className="w-32"
-                  />
+                  <Input type="time" value={reminderTime} onChange={(e) => setReminderTime(e.target.value)} className="w-32" />
                 </div>
               )}
             </div>
 
-            {/* Links to Goals/Projects */}
-            <div className="p-4 bg-gray-50 rounded-xl space-y-3">
-              <div className="flex items-center gap-2 text-sm font-medium text-gray-600">
+            <div className="p-4 rounded-xl border border-white/08 space-y-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              <div className="flex items-center gap-2 text-sm font-medium text-white/60">
                 <Link2 size={16} />
                 Verknüpfungen
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                  <label className="flex items-center gap-1.5 text-xs text-white/45 mb-1">
                     <Target size={12} />
                     Mit Ziel verknüpfen
                   </label>
-                  <Select
-                    value={goalId}
-                    onChange={(e) => setGoalId(e.target.value)}
-                    options={[
-                      { value: '', label: 'Kein Ziel' },
-                      ...goals.map((g) => ({ value: g.id, label: g.title }))
-                    ]}
-                  />
+                  <Select value={goalId} onChange={(e) => setGoalId(e.target.value)} options={[{ value: '', label: 'Kein Ziel' }, ...goals.map((g) => ({ value: g.id, label: g.title }))]} />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1.5 text-xs text-gray-500 mb-1">
+                  <label className="flex items-center gap-1.5 text-xs text-white/45 mb-1">
                     <FolderKanban size={12} />
                     Mit Projekt verknüpfen
                   </label>
-                  <Select
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    options={[
-                      { value: '', label: 'Kein Projekt' },
-                      ...projects.map((p) => ({ value: p.id, label: p.title }))
-                    ]}
-                  />
+                  <Select value={projectId} onChange={(e) => setProjectId(e.target.value)} options={[{ value: '', label: 'Kein Projekt' }, ...projects.map((p) => ({ value: p.id, label: p.title }))]} />
                 </div>
               </div>
             </div>
@@ -663,80 +628,60 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
         <button
           type="button"
           onClick={() => setShowMotivation(!showMotivation)}
-          className="flex items-center gap-2 w-full p-3 text-sm font-medium text-gray-600 hover:text-gray-800 bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-100 hover:to-orange-100 rounded-lg transition-colors"
+          className="flex items-center gap-2 w-full p-3 text-sm font-medium text-amber-400/80 hover:text-amber-400 rounded-lg transition-colors border border-amber-500/20 hover:bg-amber-500/08"
+          style={{ background: 'rgba(245,158,11,0.05)' }}
         >
           {showMotivation ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-          <Lightbulb size={16} className="text-amber-500" />
+          <Lightbulb size={16} className="text-amber-400" />
           Motivation & Habit-Stacking
-          <span className="text-xs text-gray-400 ml-auto">Warum & Wie</span>
+          <span className="text-xs text-white/30 ml-auto">Warum & Wie</span>
         </button>
 
         {showMotivation && (
-          <div className="space-y-4 p-4 bg-gradient-to-br from-amber-50/50 to-orange-50/30 rounded-xl border border-amber-100">
-            <div className="flex items-start gap-2 p-3 bg-white/70 rounded-lg">
-              <Info size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-gray-600">
-                <strong>Habit-Loop:</strong> Jede Gewohnheit besteht aus einem <em>Auslöser</em> (Cue), 
-                einer <em>Routine</em> (die Gewohnheit) und einer <em>Belohnung</em>. 
+          <div className="space-y-4 p-4 rounded-xl border border-amber-500/15 animate-fade-in" style={{ background: 'rgba(245,158,11,0.04)' }}>
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-500/15" style={{ background: 'rgba(245,158,11,0.08)' }}>
+              <Info size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-white/60">
+                <strong className="text-white/80">Habit-Loop:</strong> Jede Gewohnheit besteht aus einem <em>Auslöser</em> (Cue),
+                einer <em>Routine</em> (die Gewohnheit) und einer <em>Belohnung</em>.
                 Definiere diese für besseren Erfolg!
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-3">
               <div>
-                <label className="text-xs font-medium text-gray-500 mb-1 block flex items-center gap-1">
+                <label className="text-xs font-medium text-white/50 mb-1 flex items-center gap-1">
                   <Lightbulb size={12} />
                   Warum ist diese Gewohnheit wichtig für dich?
                 </label>
-                <Textarea
-                  placeholder="z.B. Ich möchte gesünder leben und mehr Energie haben..."
-                  value={motivation}
-                  onChange={(e) => setMotivation(e.target.value)}
-                  rows={2}
-                />
+                <Textarea placeholder="z.B. Ich möchte gesünder leben..." value={motivation} onChange={(e) => setMotivation(e.target.value)} rows={2} />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block flex items-center gap-1">
+                  <label className="text-xs font-medium text-white/50 mb-1 flex items-center gap-1">
                     <Target size={12} />
                     Auslöser (Cue)
                   </label>
-                  <Input
-                    placeholder="z.B. Nach dem Aufstehen"
-                    value={cue}
-                    onChange={(e) => setCue(e.target.value)}
-                  />
+                  <Input placeholder="z.B. Nach dem Aufstehen" value={cue} onChange={(e) => setCue(e.target.value)} />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 mb-1 block flex items-center gap-1">
+                  <label className="text-xs font-medium text-white/50 mb-1 flex items-center gap-1">
                     <Gift size={12} />
                     Belohnung
                   </label>
-                  <Input
-                    placeholder="z.B. Einen Kaffee genießen"
-                    value={reward}
-                    onChange={(e) => setReward(e.target.value)}
-                  />
+                  <Input placeholder="z.B. Einen Kaffee genießen" value={reward} onChange={(e) => setReward(e.target.value)} />
                 </div>
               </div>
 
-              <div className="border-t border-amber-200 pt-3">
-                <label className="text-xs font-medium text-amber-700 mb-2 block flex items-center gap-1">
+              <div className="border-t border-amber-500/15 pt-3">
+                <label className="text-xs font-medium text-amber-400 mb-2 flex items-center gap-1">
                   <Link2 size={12} />
-                  Habit-Stacking (Verknüpfe mit bestehenden Gewohnheiten)
+                  Habit-Stacking
                 </label>
                 <div className="grid grid-cols-2 gap-3">
-                  <Input
-                    placeholder="Mache ich NACH: z.B. Zähneputzen"
-                    value={stackBefore}
-                    onChange={(e) => setStackBefore(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Mache ich VOR: z.B. Frühstück"
-                    value={stackAfter}
-                    onChange={(e) => setStackAfter(e.target.value)}
-                  />
+                  <Input placeholder="Mache ich NACH: z.B. Zähneputzen" value={stackBefore} onChange={(e) => setStackBefore(e.target.value)} />
+                  <Input placeholder="Mache ich VOR: z.B. Frühstück" value={stackAfter} onChange={(e) => setStackAfter(e.target.value)} />
                 </div>
               </div>
             </div>
@@ -744,12 +689,12 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4 border-t border-white/08">
           {editHabit ? (
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
             >
               <Trash2 size={16} />
               Löschen
@@ -759,9 +704,7 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
           )}
 
           <div className="flex items-center gap-3">
-            <Button type="button" variant="ghost" onClick={onClose}>
-              Abbrechen
-            </Button>
+            <Button type="button" variant="ghost" onClick={onClose}>Abbrechen</Button>
             <Button type="submit" variant="primary" disabled={!title.trim()}>
               {editHabit ? 'Speichern' : 'Gewohnheit erstellen'}
             </Button>
@@ -770,19 +713,15 @@ export function HabitModal({ isOpen, onClose, editHabit }: HabitModalProps) {
 
         {/* Delete Confirmation */}
         {showDeleteConfirm && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDeleteConfirm(false)}>
-            <div className="bg-white rounded-xl p-6 max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Gewohnheit löschen?</h3>
-              <p className="text-gray-600 text-sm mb-4">
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[300]" onClick={() => setShowDeleteConfirm(false)}>
+            <div className="rounded-xl p-6 max-w-sm mx-4 border border-white/10 shadow-2xl" style={{ background: '#1a1d31' }} onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-white mb-2">Gewohnheit löschen?</h3>
+              <p className="text-white/60 text-sm mb-4">
                 Alle Daten und der Streak gehen verloren. Diese Aktion kann nicht rückgängig gemacht werden.
               </p>
               <div className="flex justify-end gap-3">
-                <Button type="button" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>
-                  Abbrechen
-                </Button>
-                <Button type="button" variant="danger" onClick={handleDelete}>
-                  Löschen
-                </Button>
+                <Button type="button" variant="ghost" onClick={() => setShowDeleteConfirm(false)}>Abbrechen</Button>
+                <Button type="button" variant="danger" onClick={handleDelete}>Löschen</Button>
               </div>
             </div>
           </div>

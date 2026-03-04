@@ -149,8 +149,8 @@ export function MinimalLayout({ children }: MinimalLayoutProps) {
         <div className="min-h-screen bg-page">
           <MinimalSidebar />
 
-          {/* Main content - Fixed width sidebar (220px) */}
-          <main className="min-h-screen transition-all duration-200 pt-14 md:pt-0 md:ml-[220px]">
+          {/* Main content - Fixed width sidebar (196px) */}
+          <main className="min-h-screen transition-all duration-200 pt-14 md:pt-0 md:ml-[196px]">
             <div className="p-4 md:p-6 lg:p-8">
               {children}
             </div>

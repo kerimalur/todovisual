@@ -204,34 +204,21 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
       size="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-lg">
-          <button
-            type="button"
-            onClick={() => setActiveTab('outcome')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'outcome' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            Outcome
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('smart')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'smart' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            SMART
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab('execution')}
-            className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'execution' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-700 hover:text-gray-900'
-            }`}
-          >
-            Ausführung
-          </button>
+        <div className="flex gap-1 p-1 rounded-lg border border-white/08" style={{ background: 'rgba(255,255,255,0.04)' }}>
+          {(['outcome', 'smart', 'execution'] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 px-4 py-2 text-sm font-medium rounded-md transition-all ${
+                activeTab === tab
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white/80 hover:bg-white/05'
+              }`}
+            >
+              {tab === 'outcome' ? 'Outcome' : tab === 'smart' ? 'SMART' : 'Ausführung'}
+            </button>
+          ))}
         </div>
 
         {activeTab === 'outcome' && (
@@ -260,14 +247,15 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
                 required
               />
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-900">Kategorie</label>
+                <label className="block text-sm font-medium text-white/60">Kategorie</label>
                 <select
                   value={category}
                   onChange={(event) => setCategory(event.target.value as GoalCategory)}
-                  className="w-full px-3 py-2.5 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2.5 text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 >
                   {categoryOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
+                    <option key={option.value} value={option.value} style={{ background: '#1a1d31' }}>
                       {option.label}
                     </option>
                   ))}
@@ -275,17 +263,17 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-900">Priorität</label>
+              <label className="block text-sm font-medium text-white/60">Priorität</label>
               <div className="grid grid-cols-4 gap-2">
                 {priorityOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setPriority(option.value)}
-                    className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-colors ${
+                    className={`rounded-lg border px-2 py-2 text-xs font-semibold transition-all ${
                       priority === option.value
-                        ? 'border-indigo-300 bg-indigo-100 text-indigo-800'
-                        : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                        ? 'border-violet-500/40 bg-violet-500/20 text-violet-300'
+                        : 'border-white/10 text-white/50 hover:bg-white/06'
                     }`}
                   >
                     {option.label}
@@ -294,14 +282,14 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="block text-sm font-medium text-gray-900">Farbe</label>
+              <label className="block text-sm font-medium text-white/60">Farbe</label>
               <div className="flex gap-2">
                 {colorOptions.map((option) => (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => setColor(option.value)}
-                    className={`h-7 w-7 rounded-full border-2 ${color === option.value ? 'border-gray-900' : 'border-transparent'}`}
+                    className={`h-7 w-7 rounded-full border-2 transition-all ${color === option.value ? 'border-white scale-110' : 'border-transparent opacity-70 hover:opacity-100'}`}
                     style={{ backgroundColor: option.value }}
                     title={option.label}
                   />
@@ -326,7 +314,7 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
 
         {activeTab === 'smart' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-900">
+            <div className="rounded-xl border border-violet-500/20 px-4 py-3 text-sm text-violet-300" style={{ background: 'rgba(124,58,237,0.1)' }}>
               SMART-Abdeckung: <span className="font-semibold">{smartFieldsCompleted}/5</span>
             </div>
             <Textarea
@@ -369,10 +357,10 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
 
         {activeTab === 'execution' && (
           <div className="space-y-4 animate-fade-in">
-            <div className="rounded-xl border border-gray-200 bg-white p-3">
+            <div className="rounded-xl border border-white/08 p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Target size={15} className="text-indigo-600" />
-                <p className="text-sm font-semibold text-gray-900">Meilensteine</p>
+                <Target size={15} className="text-violet-400" />
+                <p className="text-sm font-semibold text-white/80">Meilensteine</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-[1fr_170px_auto] gap-2">
                 <input
@@ -380,18 +368,21 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
                   value={newMilestoneTitle}
                   onChange={(event) => setNewMilestoneTitle(event.target.value)}
                   placeholder="Meilenstein hinzufügen"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 placeholder:text-white/25"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
                 <input
                   type="date"
                   value={newMilestoneDate}
                   onChange={(event) => setNewMilestoneDate(event.target.value)}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
                 <button
                   type="button"
                   onClick={handleAddMilestone}
-                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                  className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
                 >
                   <Plus size={14} />
                 </button>
@@ -399,17 +390,17 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
               {milestones.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {milestones.map((milestone) => (
-                    <div key={milestone.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                    <div key={milestone.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/08 px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{milestone.title}</p>
+                        <p className="text-sm font-medium text-white/80">{milestone.title}</p>
                         {milestone.targetDate && (
-                          <p className="text-xs text-gray-700">{new Date(milestone.targetDate).toLocaleDateString('de-DE')}</p>
+                          <p className="text-xs text-white/45">{new Date(milestone.targetDate).toLocaleDateString('de-DE')}</p>
                         )}
                       </div>
                       <button
                         type="button"
                         onClick={() => setMilestones((current) => current.filter((entry) => entry.id !== milestone.id))}
-                        className="rounded-md p-1 text-gray-500 hover:bg-red-50 hover:text-red-700"
+                        className="rounded-md p-1 text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -419,19 +410,20 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
               )}
             </div>
 
-            <div className="rounded-xl border border-gray-200 bg-white p-3">
+            <div className="rounded-xl border border-white/08 p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <Sparkles size={15} className="text-indigo-600" />
-                <p className="text-sm font-semibold text-gray-900">Wochenplan (Hybrid)</p>
+                <Sparkles size={15} className="text-violet-400" />
+                <p className="text-sm font-semibold text-white/80">Wochenplan (Hybrid)</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-[170px_1fr_130px_auto] gap-2">
                 <select
                   value={weeklyActionDay}
                   onChange={(event) => setWeeklyActionDay(parseInt(event.target.value, 10))}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 >
                   {weekdays.map((day) => (
-                    <option key={day.value} value={day.value}>
+                    <option key={day.value} value={day.value} style={{ background: '#1a1d31' }}>
                       {day.label}
                     </option>
                   ))}
@@ -441,7 +433,8 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
                   value={weeklyActionTitle}
                   onChange={(event) => setWeeklyActionTitle(event.target.value)}
                   placeholder="Wöchentliche Aktion"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 placeholder:text-white/25"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
                 <input
                   type="number"
@@ -449,12 +442,14 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
                   onChange={(event) => setWeeklyActionMinutes(event.target.value)}
                   placeholder="Min"
                   min={0}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                  className="w-full px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 placeholder:text-white/25"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
                 <button
                   type="button"
                   onClick={handleAddWeeklyAction}
-                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                  className="inline-flex items-center justify-center rounded-lg px-3 py-2 text-sm font-medium text-white hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#6d28d9)' }}
                 >
                   <Plus size={14} />
                 </button>
@@ -463,10 +458,10 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
               {weeklyPlan.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {weeklyPlan.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 px-3 py-2">
+                    <div key={item.id} className="flex items-center justify-between gap-2 rounded-lg border border-white/08 px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)' }}>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-900">{item.title}</p>
-                        <p className="text-xs text-gray-700">
+                        <p className="text-sm font-medium text-white/80">{item.title}</p>
+                        <p className="text-xs text-white/45">
                           {weekdays.find((entry) => entry.value === item.weekday)?.label || 'Tag'}
                           {item.estimatedMinutes ? ` · ${item.estimatedMinutes} Min` : ''}
                         </p>
@@ -474,7 +469,7 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
                       <button
                         type="button"
                         onClick={() => setWeeklyPlan((current) => current.filter((entry) => entry.id !== item.id))}
-                        className="rounded-md p-1 text-gray-500 hover:bg-red-50 hover:text-red-700"
+                        className="rounded-md p-1 text-white/30 hover:bg-red-500/10 hover:text-red-400 transition-colors"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -486,7 +481,7 @@ export function GoalModal({ isOpen, onClose, editGoal }: GoalModalProps) {
           </div>
         )}
 
-        <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+        <div className="flex items-center justify-end gap-2 border-t border-white/08 pt-4">
           <Button type="button" variant="ghost" onClick={onClose}>
             Abbrechen
           </Button>

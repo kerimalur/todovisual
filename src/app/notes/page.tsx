@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { 
-  StickyNote, Search, Plus, Trash2, Edit2, X, Star, 
-  Lightbulb, Grid3X3, List, Filter, Tag, Clock, 
+import {
+  StickyNote, Search, Plus, Trash2, Edit2, X, Star,
+  Lightbulb, Grid3X3, List, Filter, Tag, Clock,
   Sparkles, Brain, Zap, ChevronDown, Archive, Pin
 } from 'lucide-react';
 import { useDataStore } from '@/store';
@@ -48,13 +48,13 @@ export default function NotesPage() {
   const [brainstormIdeas, setBrainstormIdeas] = useState<string[]>(['']);
   const [newIdea, setNewIdea] = useState('');
 
-  const { 
-    notes = [], 
+  const {
+    notes = [],
     brainstormSessions = [],
     tags = [],
-    addNote, 
-    updateNote, 
-    deleteNote, 
+    addNote,
+    updateNote,
+    deleteNote,
     archiveNote,
     addBrainstormSession,
     updateBrainstormSession,
@@ -65,7 +65,7 @@ export default function NotesPage() {
   const filteredNotes = useMemo(() => {
     if (!searchQuery) return notes.filter(n => !n.archivedAt);
     const query = searchQuery.toLowerCase();
-    return notes.filter(n => 
+    return notes.filter(n =>
       !n.archivedAt && (
         n.title.toLowerCase().includes(query) ||
         n.content.toLowerCase().includes(query)
@@ -210,18 +210,24 @@ export default function NotesPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto animate-fade-in-up">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Notizen & Ideen</h1>
-            <p className="text-gray-500 mt-1">Halte deine Gedanken und Ideen fest</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #f59e0b, #eab308)' }}>
+              <StickyNote size={22} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">Notizen & Ideen</h1>
+              <p className="text-white/50 mt-1">Halte deine Gedanken und Ideen fest</p>
+            </div>
           </div>
 
           <button
             onClick={() => activeTab === 'notes' ? setShowNoteForm(true) : setShowBrainstormForm(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-xl shadow-sm hover:shadow-md transition-all"
+            className="inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-xl shadow-sm hover:opacity-90 transition-all"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
           >
             <Plus size={16} />
             {activeTab === 'notes' ? 'Neue Notiz' : 'Neue Session'}
@@ -232,18 +238,18 @@ export default function NotesPage() {
       {/* Tabs & Controls */}
       <div className="flex items-center justify-between mb-6">
         {/* Tab Switcher */}
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+        <div className="flex gap-1 p-1 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.04)' }}>
           <button
             onClick={() => setActiveTab('notes')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'notes'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-white/60 hover:text-white hover:bg-white/08'
             }`}
           >
             <StickyNote size={16} />
             Notizen
-            <span className="ml-1 px-1.5 py-0.5 text-xs bg-gray-200 rounded-full">
+            <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${activeTab === 'notes' ? 'bg-white/20 text-white' : 'text-white/40'}`} style={activeTab !== 'notes' ? { background: 'rgba(255,255,255,0.08)' } : {}}>
               {notes.filter(n => !n.archivedAt).length}
             </span>
           </button>
@@ -251,13 +257,13 @@ export default function NotesPage() {
             onClick={() => setActiveTab('brainstorm')}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
               activeTab === 'brainstorm'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-violet-600 text-white shadow-sm'
+                : 'text-white/60 hover:text-white hover:bg-white/08'
             }`}
           >
             <Brain size={16} />
             Brainstorming
-            <span className="ml-1 px-1.5 py-0.5 text-xs bg-gray-200 rounded-full">
+            <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${activeTab === 'brainstorm' ? 'bg-white/20 text-white' : 'text-white/40'}`} style={activeTab !== 'brainstorm' ? { background: 'rgba(255,255,255,0.08)' } : {}}>
               {brainstormSessions.length}
             </span>
           </button>
@@ -266,28 +272,29 @@ export default function NotesPage() {
         {/* Search & View Controls */}
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600" />
+            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30" />
             <input
               type="text"
               placeholder="Suchen..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 pr-4 py-2 text-sm text-gray-900 placeholder:text-gray-600 bg-white border border-gray-300 rounded-lg shadow-sm w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500/25 focus:border-indigo-600"
+              className="pl-10 pr-4 py-2 text-sm text-white placeholder:text-white/30 rounded-lg border border-white/10 w-64 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
           </div>
 
           {activeTab === 'notes' && (
-            <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
+            <div className="flex items-center border border-white/10 rounded-lg overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)' }}>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'grid' ? 'bg-violet-600 text-white' : 'text-white/40 hover:bg-white/08 hover:text-white/70'}`}
                 title="Raster-Ansicht"
               >
                 <Grid3X3 size={16} />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-gray-100 text-gray-900' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`p-2 transition-colors ${viewMode === 'list' ? 'bg-violet-600 text-white' : 'text-white/40 hover:bg-white/08 hover:text-white/70'}`}
                 title="Listen-Ansicht"
               >
                 <List size={16} />
@@ -299,17 +306,17 @@ export default function NotesPage() {
 
       {/* Note Form */}
       {showNoteForm && (
-        <div className="mb-6 border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-            <h3 className="font-medium text-gray-800">
+        <div className="mb-6 border border-white/08 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="p-4 border-b border-white/08 flex items-center justify-between">
+            <h3 className="font-medium text-white">
               {editingNote ? 'Notiz bearbeiten' : 'Neue Notiz'}
             </h3>
             <button
               onClick={resetNoteForm}
-              className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-white/08 rounded-lg transition-colors"
               title="Schließen"
             >
-              <X size={16} className="text-gray-400" />
+              <X size={16} className="text-white/40" />
             </button>
           </div>
 
@@ -330,7 +337,7 @@ export default function NotesPage() {
             />
           </div>
 
-          <div className="p-4 border-t border-gray-100 flex items-center justify-between">
+          <div className="p-4 border-t border-white/08 flex items-center justify-between">
             <div className="flex items-center gap-4">
               {/* Color Picker */}
               <div className="flex items-center gap-1">
@@ -339,7 +346,7 @@ export default function NotesPage() {
                     key={color.value}
                     onClick={() => setNoteColor(color.value)}
                     className={`w-6 h-6 rounded-full border-2 transition-all ${
-                      noteColor === color.value ? 'scale-110 ring-2 ring-offset-1 ring-gray-400' : 'hover:scale-105'
+                      noteColor === color.value ? 'scale-110 ring-2 ring-offset-1 ring-violet-400' : 'hover:scale-105'
                     }`}
                     style={{ backgroundColor: color.value, borderColor: color.value === '#ffffff' ? '#e5e7eb' : 'transparent' }}
                     title={color.label}
@@ -351,8 +358,9 @@ export default function NotesPage() {
               <button
                 onClick={() => setNotePinned(!notePinned)}
                 className={`p-2 rounded-lg transition-colors ${
-                  notePinned ? 'bg-amber-100 text-amber-600' : 'text-gray-400 hover:bg-gray-100'
+                  notePinned ? 'text-amber-400' : 'text-white/30 hover:bg-white/08 hover:text-white/60'
                 }`}
+                style={notePinned ? { background: 'rgba(245,158,11,0.15)' } : {}}
                 title={notePinned ? 'Nicht mehr anheften' : 'Anheften'}
               >
                 <Pin size={16} />
@@ -362,14 +370,14 @@ export default function NotesPage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={resetNoteForm}
-                className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                className="px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/08 rounded-lg transition-colors"
               >
                 Abbrechen
               </button>
               <button
                 onClick={handleSaveNote}
                 disabled={!noteContent.trim()}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+                className="px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:opacity-30 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
               >
                 {editingNote ? 'Speichern' : 'Notiz erstellen'}
               </button>
@@ -380,8 +388,8 @@ export default function NotesPage() {
 
       {/* Brainstorm Form */}
       {showBrainstormForm && (
-        <div className="mb-6 border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
-          <div className="p-4 bg-gradient-to-r from-yellow-500 to-orange-500 text-white flex items-center justify-between">
+        <div className="mb-6 border border-white/08 rounded-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+          <div className="p-4 text-white flex items-center justify-between" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
             <div className="flex items-center gap-2">
               <Lightbulb size={20} />
               <h3 className="font-medium">
@@ -403,19 +411,20 @@ export default function NotesPage() {
               placeholder="Thema / Fragestellung"
               value={brainstormTopic}
               onChange={(e) => setBrainstormTopic(e.target.value)}
-              className="w-full px-4 py-3 text-lg font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500"
+              className="w-full px-4 py-3 text-lg font-medium text-white placeholder:text-white/30 rounded-lg border border-white/10 focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500/50 transition-colors"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-white/70 mb-2">
                 💡 Ideen ({brainstormIdeas.filter(i => i.trim()).length})
               </label>
-              
+
               <div className="space-y-2 mb-3">
                 {brainstormIdeas.map((idea, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <Sparkles size={14} className="text-yellow-500 flex-shrink-0" />
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-500/20" style={{ background: 'rgba(245,158,11,0.08)' }}>
+                      <Sparkles size={14} className="text-amber-400 flex-shrink-0" />
                       <input
                         type="text"
                         value={idea}
@@ -425,13 +434,13 @@ export default function NotesPage() {
                           setBrainstormIdeas(newIdeas);
                         }}
                         placeholder={`Idee ${index + 1}...`}
-                        className="flex-1 bg-transparent border-none focus:outline-none text-sm"
+                        className="flex-1 bg-transparent border-none focus:outline-none text-sm text-white placeholder:text-white/30"
                       />
                     </div>
                     {brainstormIdeas.length > 1 && (
                       <button
                         onClick={() => removeIdea(index)}
-                        className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-white/30 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
                         title="Idee entfernen"
                       >
                         <X size={14} />
@@ -443,7 +452,7 @@ export default function NotesPage() {
 
               <button
                 onClick={() => setBrainstormIdeas([...brainstormIdeas, ''])}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
               >
                 <Plus size={14} />
                 Weitere Idee
@@ -451,17 +460,17 @@ export default function NotesPage() {
             </div>
           </div>
 
-          <div className="p-4 border-t border-gray-100 flex items-center justify-end gap-2">
+          <div className="p-4 border-t border-white/08 flex items-center justify-end gap-2">
             <button
               onClick={resetBrainstormForm}
-              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm text-white/60 hover:text-white hover:bg-white/08 rounded-lg transition-colors"
             >
               Abbrechen
             </button>
             <button
               onClick={handleSaveBrainstorm}
               disabled={!brainstormTopic.trim() || brainstormIdeas.filter(i => i.trim()).length === 0}
-              className="px-4 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 text-white text-sm font-medium rounded-lg transition-colors"
+              className="px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:opacity-30 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors"
             >
               {editingSession ? 'Speichern' : 'Session erstellen'}
             </button>
@@ -473,15 +482,15 @@ export default function NotesPage() {
       {activeTab === 'notes' && (
         <>
           {sortedNotes.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
-              <StickyNote size={48} className="mx-auto text-gray-300 mb-3" />
-              <h3 className="text-lg font-medium text-gray-800 mb-1">Noch keine Notizen</h3>
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="text-center py-16 border border-dashed border-white/10 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <StickyNote size={48} className="mx-auto text-white/20 mb-3" />
+              <h3 className="text-lg font-medium text-white/70 mb-1">Noch keine Notizen</h3>
+              <p className="text-sm text-white/40 mb-4">
                 Erstelle deine erste Notiz, um Gedanken festzuhalten.
               </p>
               <button
                 onClick={() => setShowNoteForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Plus size={16} />
                 Erste Notiz erstellen
@@ -492,8 +501,8 @@ export default function NotesPage() {
               {sortedNotes.map(note => (
                 <div
                   key={note.id}
-                  className="group relative p-4 rounded-xl border shadow-sm hover:shadow-md transition-all cursor-pointer"
-                  style={{ 
+                  className="group relative p-4 rounded-xl border hover:shadow-lg transition-all cursor-pointer"
+                  style={{
                     backgroundColor: note.color || '#ffffff',
                     borderColor: note.color === '#ffffff' || !note.color ? '#e5e7eb' : 'transparent'
                   }}
@@ -502,19 +511,19 @@ export default function NotesPage() {
                   {note.isPinned && (
                     <Pin size={14} className="absolute top-3 right-3 text-amber-500" />
                   )}
-                  
+
                   <h3 className="font-medium text-gray-800 mb-2 line-clamp-1">
                     {note.title || 'Unbenannte Notiz'}
                   </h3>
                   <p className="text-sm text-gray-600 line-clamp-4 whitespace-pre-wrap">
                     {note.content}
                   </p>
-                  
+
                   <div className="mt-3 pt-3 border-t border-black/10 flex items-center justify-between">
                     <span className="text-xs text-gray-500">
                       {format(new Date(note.updatedAt || note.createdAt), 'dd.MM.yy', { locale: de })}
                     </span>
-                    
+
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => { e.stopPropagation(); archiveNote(note.id); }}
@@ -540,23 +549,24 @@ export default function NotesPage() {
               {sortedNotes.map(note => (
                 <div
                   key={note.id}
-                  className="group flex items-start gap-4 p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all cursor-pointer"
+                  className="group flex items-start gap-4 p-4 border border-white/08 rounded-xl hover:bg-white/[0.02] transition-all cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.03)' }}
                   onClick={() => handleEditNote(note)}
                 >
-                  <div 
+                  <div
                     className="w-3 h-3 rounded-full flex-shrink-0 mt-1.5"
-                    style={{ backgroundColor: note.color || '#6366f1' }}
+                    style={{ backgroundColor: note.color || '#7c3aed' }}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium text-gray-800 truncate">
+                      <h3 className="font-medium text-white truncate">
                         {note.title || 'Unbenannte Notiz'}
                       </h3>
-                      {note.isPinned && <Pin size={12} className="text-amber-500" />}
+                      {note.isPinned && <Pin size={12} className="text-amber-400" />}
                     </div>
-                    <p className="text-sm text-gray-500 line-clamp-1">{note.content}</p>
+                    <p className="text-sm text-white/50 line-clamp-1">{note.content}</p>
                   </div>
-                  <span className="text-xs text-gray-400 flex-shrink-0">
+                  <span className="text-xs text-white/30 flex-shrink-0">
                     {format(new Date(note.updatedAt || note.createdAt), 'dd.MM.yy HH:mm', { locale: de })}
                   </span>
                 </div>
@@ -570,15 +580,15 @@ export default function NotesPage() {
       {activeTab === 'brainstorm' && (
         <>
           {filteredSessions.length === 0 ? (
-            <div className="text-center py-16 bg-white border border-gray-200 rounded-xl">
-              <Brain size={48} className="mx-auto text-gray-300 mb-3" />
-              <h3 className="text-lg font-medium text-gray-800 mb-1">Noch keine Brainstorming-Sessions</h3>
-              <p className="text-sm text-gray-500 mb-4">
+            <div className="text-center py-16 border border-dashed border-white/10 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <Brain size={48} className="mx-auto text-white/20 mb-3" />
+              <h3 className="text-lg font-medium text-white/70 mb-1">Noch keine Brainstorming-Sessions</h3>
+              <p className="text-sm text-white/40 mb-4">
                 Starte eine Session, um Ideen zu sammeln.
               </p>
               <button
                 onClick={() => setShowBrainstormForm(true)}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white text-sm font-medium rounded-lg transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-lg transition-colors"
               >
                 <Lightbulb size={16} />
                 Erste Session starten
@@ -589,55 +599,57 @@ export default function NotesPage() {
               {filteredSessions.map(session => (
                 <div
                   key={session.id}
-                  className="group p-5 bg-gradient-to-br from-yellow-50 to-orange-50 border border-orange-200 rounded-xl hover:shadow-md transition-all cursor-pointer"
+                  className="group p-5 border border-amber-500/20 rounded-xl hover:shadow-lg transition-all cursor-pointer"
+                  style={{ background: 'rgba(245,158,11,0.06)' }}
                   onClick={() => handleEditSession(session)}
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <div className="p-2 bg-orange-100 rounded-lg">
-                        <Lightbulb size={18} className="text-orange-600" />
+                      <div className="p-2 rounded-lg" style={{ background: 'rgba(245,158,11,0.15)' }}>
+                        <Lightbulb size={18} className="text-amber-400" />
                       </div>
                       <div>
-                        <h3 className="font-medium text-gray-800">{session.title}</h3>
-                        <p className="text-xs text-gray-500">
+                        <h3 className="font-medium text-white">{session.title}</h3>
+                        <p className="text-xs text-white/40">
                           {format(new Date(session.createdAt), 'dd.MM.yyyy', { locale: de })}
                         </p>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={(e) => { e.stopPropagation(); setShowDeleteConfirm(session.id); }}
-                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                        className="p-1.5 hover:bg-red-500/10 rounded-lg transition-colors"
                         title="Löschen"
                       >
-                        <Trash2 size={14} className="text-gray-500 hover:text-red-500" />
+                        <Trash2 size={14} className="text-white/30 hover:text-red-400" />
                       </button>
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
                     {session.ideas.slice(0, 4).map((idea, index) => (
-                      <div 
+                      <div
                         key={idea.id || index}
-                        className="flex items-center gap-2 px-3 py-2 bg-white/60 rounded-lg text-sm"
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                        style={{ background: 'rgba(255,255,255,0.05)' }}
                       >
-                        <Sparkles size={12} className="text-orange-400 flex-shrink-0" />
-                        <span className="text-gray-700 line-clamp-1">{idea.content}</span>
+                        <Sparkles size={12} className="text-amber-400 flex-shrink-0" />
+                        <span className="text-white/70 line-clamp-1">{idea.content}</span>
                       </div>
                     ))}
                     {session.ideas.length > 4 && (
-                      <p className="text-xs text-orange-600 font-medium pl-2">
+                      <p className="text-xs text-amber-400 font-medium pl-2">
                         +{session.ideas.length - 4} weitere Ideen
                       </p>
                     )}
                   </div>
 
-                  <div className="mt-3 pt-3 border-t border-orange-200 flex items-center justify-between">
-                    <span className="text-xs font-medium text-orange-600">
+                  <div className="mt-3 pt-3 border-t border-amber-500/20 flex items-center justify-between">
+                    <span className="text-xs font-medium text-amber-400">
                       {session.ideas.length} Ideen
                     </span>
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                    <span className="text-xs px-2 py-0.5 rounded-full text-green-400" style={{ background: 'rgba(34,197,94,0.12)' }}>
                       Aktiv
                     </span>
                   </div>

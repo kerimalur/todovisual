@@ -17,10 +17,10 @@ interface EventModalProps {
 type EventType = 'event' | 'timeblock';
 
 const priorityOptions = [
-  { value: 'low', label: 'Niedrig', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: '○' },
-  { value: 'medium', label: 'Mittel', color: 'bg-blue-100 text-blue-600 border-blue-200', icon: '◐' },
-  { value: 'high', label: 'Hoch', color: 'bg-orange-100 text-orange-600 border-orange-200', icon: '◉' },
-  { value: 'urgent', label: 'Dringend', color: 'bg-red-100 text-red-600 border-red-200', icon: '●' },
+  { value: 'low', label: 'Niedrig', activeStyle: { background: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.20)' }, activeClass: 'text-white/70', icon: '○' },
+  { value: 'medium', label: 'Mittel', activeStyle: { background: 'rgba(59,130,246,0.15)', borderColor: 'rgba(59,130,246,0.40)' }, activeClass: 'text-blue-300', icon: '◐' },
+  { value: 'high', label: 'Hoch', activeStyle: { background: 'rgba(249,115,22,0.15)', borderColor: 'rgba(249,115,22,0.40)' }, activeClass: 'text-orange-300', icon: '◉' },
+  { value: 'urgent', label: 'Dringend', activeStyle: { background: 'rgba(239,68,68,0.15)', borderColor: 'rgba(239,68,68,0.40)' }, activeClass: 'text-red-300', icon: '●' },
 ];
 
 const timeBlockColors = [
@@ -240,14 +240,14 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Event Type Selector - only for new events */}
         {!editEvent && (
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-xl">
+          <div className="flex gap-2 p-1 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
             <button
               type="button"
               onClick={() => setEventType('event')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 eventType === 'event'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white/80'
               }`}
             >
               <Clock size={16} />
@@ -258,8 +258,8 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
               onClick={() => setEventType('timeblock')}
               className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                 eventType === 'timeblock'
-                  ? 'bg-white text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'bg-violet-600 text-white shadow-sm'
+                  : 'text-white/50 hover:text-white/80'
               }`}
             >
               <Timer size={16} />
@@ -270,8 +270,8 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
 
         {/* Time Block: Link existing task OR create new */}
         {eventType === 'timeblock' && !editEvent && (
-          <div className="p-3 bg-indigo-50 rounded-xl border border-indigo-100">
-            <label className="block text-xs font-medium text-indigo-700 mb-2 flex items-center gap-1.5">
+          <div className="p-3 rounded-xl" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.20)' }}>
+            <label className="block text-xs font-medium text-violet-400 mb-2 flex items-center gap-1.5">
               <Link2 size={12} />
               Mit bestehender Aufgabe verknüpfen
             </label>
@@ -288,19 +288,18 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                 }
               }}
               title="Aufgabe verknüpfen"
-              className="w-full px-3 py-2.5 text-sm bg-white border border-indigo-200 rounded-lg text-gray-900
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
-                         transition-all cursor-pointer"
+              className="w-full px-3 py-2.5 text-sm rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition-all cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
-              <option value="">Neue Aufgabe erstellen...</option>
+              <option value="" style={{ background: '#1a1d31' }}>Neue Aufgabe erstellen...</option>
               {availableTasks.map(t => (
-                <option key={t.id} value={t.id}>
+                <option key={t.id} value={t.id} style={{ background: '#1a1d31' }}>
                   {t.title}
                 </option>
               ))}
             </select>
             {linkedTaskId && (
-              <p className="text-xs text-indigo-600 mt-2 flex items-center gap-1">
+              <p className="text-xs text-violet-400 mt-2 flex items-center gap-1">
                 <CheckSquare size={12} />
                 Zeitblock wird mit dieser Aufgabe verknüpft
               </p>
@@ -339,7 +338,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
         {/* Time Block Color Picker */}
         {eventType === 'timeblock' && (
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-2">Farbe</label>
+            <label className="block text-xs font-medium text-white/50 mb-2">Farbe</label>
             <div className="flex gap-2">
               {timeBlockColors.map(color => (
                 <button
@@ -347,7 +346,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                   type="button"
                   onClick={() => setBlockColor(color.value)}
                   className={`w-8 h-8 rounded-full transition-all ${
-                    blockColor === color.value ? 'ring-2 ring-offset-2 ring-gray-400 scale-110' : 'hover:scale-105'
+                    blockColor === color.value ? 'ring-2 ring-white scale-110' : 'opacity-60 hover:opacity-90 hover:scale-105'
                   }`}
                   style={{ backgroundColor: color.value }}
                   title={color.label}
@@ -361,26 +360,21 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
         {eventType === 'event' && (
           <label className="flex items-center gap-3 cursor-pointer">
             <div
-              className={`
-                w-10 h-6 rounded-full transition-colors relative cursor-pointer
-                ${allDay ? 'bg-indigo-600' : 'bg-gray-200'}
-              `}
+              className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${allDay ? 'bg-violet-600' : ''}`}
+              style={allDay ? {} : { background: 'rgba(255,255,255,0.12)' }}
               onClick={() => setAllDay(!allDay)}
             >
               <div
-                className={`
-                  absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm
-                  ${allDay ? 'left-5' : 'left-1'}
-                `}
+                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${allDay ? 'left-5' : 'left-1'}`}
               />
             </div>
-            <span className="text-sm text-gray-700 font-medium">Ganztägig</span>
+            <span className="text-sm text-white/70 font-medium">Ganztägig</span>
           </label>
         )}
 
         {eventType === 'event' && (
-          <div className="rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2.5">
-            <p className="text-xs text-sky-700">
+          <div className="rounded-xl px-3 py-2.5" style={{ border: '1px solid rgba(14,165,233,0.20)', background: 'rgba(14,165,233,0.06)' }}>
+            <p className="text-xs text-sky-400">
               Termine bleiben eigenstaendige Kalender-Eintraege und werden nicht als Aufgabe angelegt.
             </p>
           </div>
@@ -406,14 +400,14 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
 
         {/* Aufgaben-Eigenschaften - only for time blocks */}
         {eventType === 'timeblock' && (
-          <div className="pt-3 border-t border-gray-100">
-            <p className="text-xs font-medium text-gray-600 mb-3">
+          <div className="pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-xs font-medium text-white/50 mb-3">
               ⏰ Fokuszeit-Eigenschaften
             </p>
 
             {/* Priorität */}
             <div className="mb-3">
-              <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+              <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                 <AlertTriangle size={12} />
                 Priorität
               </label>
@@ -423,13 +417,13 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                     key={opt.value}
                     type="button"
                     onClick={() => setPriority(opt.value as Task['priority'])}
-                    className={`
-                      px-2 py-2 rounded-lg text-xs font-medium transition-all border
-                      ${priority === opt.value
-                        ? `${opt.color} ring-2 ring-offset-1 ring-gray-300`
-                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
-                      }
-                    `}
+                    className={`px-2 py-2 rounded-lg text-xs font-medium transition-all border ${
+                      priority === opt.value ? opt.activeClass : 'text-white/40 hover:text-white/60'
+                    }`}
+                    style={priority === opt.value
+                      ? opt.activeStyle
+                      : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.10)' }
+                    }
                     title={opt.label}
                   >
                     {opt.icon}
@@ -441,7 +435,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
             {/* Ziel & Projekt */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                   <Target size={12} />
                   Ziel
                 </label>
@@ -452,19 +446,18 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                     setProjectId('');
                   }}
                   title="Ziel auswählen"
-                  className="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 rounded-lg text-gray-900
-                             focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
-                             transition-all cursor-pointer"
+                  className="w-full px-3 py-2.5 text-sm rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition-all cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                 >
-                  <option value="">Kein Ziel</option>
+                  <option value="" style={{ background: '#1a1d31' }}>Kein Ziel</option>
                   {goals.map(g => (
-                    <option key={g.id} value={g.id}>{g.title}</option>
+                    <option key={g.id} value={g.id} style={{ background: '#1a1d31' }}>{g.title}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                   <FolderKanban size={12} />
                   Projekt
                 </label>
@@ -472,13 +465,12 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                   value={projectId}
                   onChange={(e) => setProjectId(e.target.value)}
                   title="Projekt auswählen"
-                  className="w-full px-3 py-2.5 text-sm bg-white border border-gray-200 rounded-lg text-gray-900
-                             focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500
-                             transition-all cursor-pointer"
+                  className="w-full px-3 py-2.5 text-sm rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50 transition-all cursor-pointer"
+                  style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }}
                 >
-                  <option value="">Kein Projekt</option>
+                  <option value="" style={{ background: '#1a1d31' }}>Kein Projekt</option>
                   {(goalId ? projects.filter(p => p.goalId === goalId) : projects).map(p => (
-                    <option key={p.id} value={p.id}>{p.title}</option>
+                    <option key={p.id} value={p.id} style={{ background: '#1a1d31' }}>{p.title}</option>
                   ))}
                 </select>
               </div>
@@ -487,7 +479,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           {!showDeleteConfirm && (
             <div className="flex items-center gap-2">
               {canMarkAttendance && (
@@ -497,7 +489,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                   onClick={() => void handleToggleAttendance()}
                   disabled={attendanceSaving}
                   className={`${
-                    isAttended ? 'text-emerald-700 hover:bg-emerald-50' : 'text-sky-700 hover:bg-sky-50'
+                    isAttended ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-sky-400 hover:bg-sky-500/10'
                   }`}
                 >
                   <CheckSquare size={16} />
@@ -513,7 +505,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
                   type="button"
                   variant="ghost"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="text-red-600 hover:bg-red-50"
+                  className="text-red-400 hover:bg-red-500/10"
                 >
                   <Trash2 size={16} />
                   Löschen
@@ -525,7 +517,7 @@ export function EventModal({ isOpen, onClose, editEvent, preselectedDate }: Even
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-900 font-medium">Wirklich löschen?</span>
+              <span className="text-sm text-white font-medium">Wirklich löschen?</span>
               <Button
                 type="button"
                 variant="danger"

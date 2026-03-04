@@ -43,7 +43,7 @@ export function TimerModal({ isOpen, onClose }: TimerModalProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Preset Times */}
         <div className="space-y-1.5">
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-white/70">
             Schnellauswahl
           </label>
           <div className="flex gap-2 flex-wrap">
@@ -52,13 +52,15 @@ export function TimerModal({ isOpen, onClose }: TimerModalProps) {
                 key={time}
                 type="button"
                 onClick={() => setMinutes(time.toString())}
-                className={`
-                  px-3 py-1.5 rounded-md text-sm font-medium transition-colors
-                  ${minutes === time.toString()
-                    ? 'bg-indigo-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                  }
-                `}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                  minutes === time.toString()
+                    ? 'bg-violet-600 text-white'
+                    : 'text-white/50 hover:text-white/70'
+                }`}
+                style={minutes === time.toString()
+                  ? {}
+                  : { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' }
+                }
               >
                 {time} min
               </button>
@@ -86,7 +88,7 @@ export function TimerModal({ isOpen, onClose }: TimerModalProps) {
         />
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-3 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           <Button type="button" variant="ghost" onClick={onClose}>
             Abbrechen
           </Button>

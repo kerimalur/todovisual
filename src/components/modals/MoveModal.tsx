@@ -58,32 +58,29 @@ export function MoveModal({
     <Modal isOpen={isOpen} onClose={onClose} title="Verschieben" size="md">
       <div className="space-y-4">
         {/* Item Info */}
-        <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-          <div className="p-2 rounded-lg bg-indigo-100">
-            <MoveRight size={16} className="text-indigo-600" />
+        <div className="flex items-start gap-3 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="p-2 rounded-lg" style={{ background: 'rgba(124,58,237,0.15)' }}>
+            <MoveRight size={16} className="text-violet-400" />
           </div>
           <div className="flex-1">
-            <div className="text-xs text-gray-500 mb-1">
+            <div className="text-xs text-white/40 mb-1">
               {itemType === 'task' ? 'Aufgabe' : 'Termin'} verschieben
             </div>
-            <div className="font-medium text-gray-800">{itemTitle}</div>
+            <div className="font-medium text-white">{itemTitle}</div>
           </div>
         </div>
 
         {/* Move Type Selection */}
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Verschieben als</label>
+          <label className="text-sm font-medium text-white/70">Verschieben als</label>
           <div className="flex gap-2">
             <button
               type="button"
               onClick={() => setMoveType('date')}
-              className={`
-                flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                ${moveType === 'date'
-                  ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                moveType === 'date' ? 'bg-violet-600 text-white' : 'text-white/50 hover:text-white/70'
+              }`}
+              style={moveType !== 'date' ? { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' } : {}}
             >
               <Calendar size={16} className="inline mr-2" />
               Nur Datum
@@ -91,13 +88,10 @@ export function MoveModal({
             <button
               type="button"
               onClick={() => setMoveType('datetime')}
-              className={`
-                flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                ${moveType === 'datetime'
-                  ? 'bg-indigo-100 text-indigo-700 ring-2 ring-indigo-500'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }
-              `}
+              className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                moveType === 'datetime' ? 'bg-violet-600 text-white' : 'text-white/50 hover:text-white/70'
+              }`}
+              style={moveType !== 'datetime' ? { background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)' } : {}}
             >
               <Clock size={16} className="inline mr-2" />
               Datum & Uhrzeit
@@ -107,7 +101,7 @@ export function MoveModal({
 
         {/* Date Selection */}
         <div className="space-y-2">
-          <label htmlFor="move-date" className="text-sm font-medium text-gray-700">
+          <label htmlFor="move-date" className="text-sm font-medium text-white/70">
             Neues Datum
           </label>
           <input
@@ -115,14 +109,15 @@ export function MoveModal({
             type="date"
             value={selectedDate}
             onChange={(e) => setSelectedDate(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 bg-gray-50"
+            className="w-full px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', colorScheme: 'dark' }}
           />
         </div>
 
         {/* Time Selection (conditional) */}
         {moveType === 'datetime' && (
           <div className="space-y-2">
-            <label htmlFor="move-time" className="text-sm font-medium text-gray-700">
+            <label htmlFor="move-time" className="text-sm font-medium text-white/70">
               Uhrzeit
             </label>
             <input
@@ -130,17 +125,18 @@ export function MoveModal({
               type="time"
               value={selectedTime}
               onChange={(e) => setSelectedTime(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900 bg-gray-50"
+              className="w-full px-4 py-2 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500/50"
+              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)', colorScheme: 'dark' }}
             />
           </div>
         )}
 
         {/* Preview */}
-        <div className="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-          <div className="text-xs text-indigo-600 font-medium mb-1">Vorschau</div>
-          <div className="text-sm text-indigo-900">
+        <div className="p-3 rounded-lg" style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(124,58,237,0.20)' }}>
+          <div className="text-xs text-violet-400 font-medium mb-1">Vorschau</div>
+          <div className="text-sm text-white/70">
             Wird verschoben zu:{' '}
-            <span className="font-semibold">
+            <span className="font-semibold text-white">
               {format(new Date(selectedDate), 'EEEE, d. MMMM yyyy', { locale: de })}
               {moveType === 'datetime' && selectedTime && (
                 <> um {selectedTime} Uhr</>
@@ -150,14 +146,14 @@ export function MoveModal({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+        <div className="flex items-center justify-between pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
           {/* Delete Button */}
           {onDelete && !showDeleteConfirm && (
             <Button
               type="button"
               variant="ghost"
               onClick={() => setShowDeleteConfirm(true)}
-              className="text-red-600 hover:bg-red-50"
+              className="text-red-400 hover:bg-red-500/10"
             >
               <Trash2 size={16} />
               Löschen
@@ -167,7 +163,7 @@ export function MoveModal({
           {/* Delete Confirmation */}
           {showDeleteConfirm && (
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-900 font-medium">Wirklich löschen?</span>
+              <span className="text-sm text-white font-medium">Wirklich löschen?</span>
               <Button
                 type="button"
                 variant="danger"

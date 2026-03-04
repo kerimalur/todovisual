@@ -339,27 +339,33 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto pb-24">
+    <div className="max-w-6xl mx-auto pb-24 animate-fade-in-up">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Kalender</h1>
-            <p className="text-gray-500 mt-1">{getHeaderTitle()}</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20 flex-shrink-0">
+              <CalendarIcon size={22} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">Kalender</h1>
+              <p className="text-white/50 mt-1">{getHeaderTitle()}</p>
+            </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {/* View Switcher */}
-            <div className="flex items-center bg-gray-100 rounded-xl p-1">
+            <div className="cal-view-switcher flex items-center rounded-xl p-1">
               {(['month', 'week', 'day'] as ViewType[]).map((view) => (
                 <button
                   key={view}
+                  type="button"
                   onClick={() => setViewType(view)}
                   className={`
                     px-4 py-2 text-sm font-medium rounded-lg transition-all
-                    ${viewType === view 
-                      ? 'bg-white text-gray-900 shadow-sm' 
-                      : 'text-gray-500 hover:text-gray-700'
+                    ${viewType === view
+                      ? 'bg-violet-600 text-white shadow-sm shadow-violet-900/40'
+                      : 'text-white/50 hover:text-white/80'
                     }
                   `}
                 >
@@ -368,33 +374,39 @@ export default function CalendarPage() {
               ))}
             </div>
 
-            <div className="h-6 w-px bg-gray-200" />
+            <div className="cal-divider h-6 w-px" />
 
             <button
+              type="button"
               onClick={handleToday}
-              className="px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+              className="cal-btn-ghost px-3 py-2 text-sm font-medium text-white/60 hover:text-white rounded-lg transition-colors"
             >
               Heute
             </button>
-            <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden">
+
+            <div className="cal-nav-group flex items-center rounded-xl overflow-hidden">
               <button
+                type="button"
                 onClick={handlePrev}
-                className="p-2.5 hover:bg-gray-50 transition-colors border-r border-gray-200"
+                className="cal-nav-btn p-2.5 transition-colors"
                 title="Zurück"
               >
-                <ChevronLeft size={16} className="text-gray-500" />
+                <ChevronLeft size={16} className="text-white/50" />
               </button>
               <button
+                type="button"
                 onClick={handleNext}
-                className="p-2.5 hover:bg-gray-50 transition-colors"
+                className="cal-nav-btn-last p-2.5 transition-colors"
                 title="Weiter"
               >
-                <ChevronRight size={16} className="text-gray-500" />
+                <ChevronRight size={16} className="text-white/50" />
               </button>
             </div>
+
             <button
+              type="button"
               onClick={() => openTaskModal()}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-sm font-medium rounded-xl shadow-sm hover:shadow-md transition-all"
+              className="cal-gradient-btn inline-flex items-center gap-2 px-4 py-2.5 text-white text-sm font-medium rounded-xl shadow-sm transition-all"
             >
               <Plus size={16} />
               Aufgabe
@@ -404,21 +416,22 @@ export default function CalendarPage() {
       </div>
 
       {(overdueCount > 0 || replanMessage) && (
-        <div className="mb-6 p-4 rounded-xl border border-amber-200 bg-amber-50">
+        <div className="cal-amber-banner mb-6 p-4 rounded-xl">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-amber-800">Smart Rescheduler</p>
-              <p className="text-xs text-amber-700 mt-1">
+              <p className="text-sm font-semibold text-amber-400">Smart Rescheduler</p>
+              <p className="text-xs text-amber-400/70 mt-1">
                 {overdueCount > 0
                   ? `${overdueCount} überfällige Aufgaben können automatisch auf die nächsten Tage verteilt werden.`
                   : replanMessage}
               </p>
-              {replanMessage && overdueCount > 0 && <p className="text-xs text-amber-700 mt-1">{replanMessage}</p>}
+              {replanMessage && overdueCount > 0 && <p className="text-xs text-amber-400/70 mt-1">{replanMessage}</p>}
             </div>
             <button
+              type="button"
               onClick={() => void handleSmartReplan()}
               disabled={replanBusy}
-              className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-600 text-white hover:bg-amber-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 text-xs font-medium rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {replanBusy ? 'Plane...' : 'Jetzt neu planen'}
             </button>
@@ -428,13 +441,13 @@ export default function CalendarPage() {
 
       {/* MONTH VIEW */}
       {viewType === 'month' && (
-        <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="cal-surface rounded-xl overflow-hidden">
           {/* Weekday Headers */}
-          <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+          <div className="cal-header-row grid grid-cols-7">
             {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
-              <div 
-                key={day} 
-                className="p-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wide"
+              <div
+                key={day}
+                className="p-3 text-center text-xs font-medium text-white/40 uppercase tracking-wide"
               >
                 {day}
               </div>
@@ -446,7 +459,7 @@ export default function CalendarPage() {
             {calendarDays.map((date, index) => {
               const isCurrentMonth = isSameMonth(date, currentDate);
               const isCurrentDay = isToday(date);
-              
+
               const dayEvents = appointmentEvents.filter((e) =>
                 isSameDay(new Date(e.startTime), date)
               );
@@ -462,11 +475,9 @@ export default function CalendarPage() {
                     setViewType('day');
                   }}
                   className={`
-                    min-h-[100px] p-2 border-b border-r border-gray-100 cursor-pointer
-                    transition-all hover:bg-indigo-50/30
-                    ${!isCurrentMonth ? 'bg-gray-50/50' : ''}
-                    ${isCurrentDay ? 'bg-indigo-50/50' : ''}
-                    ${index % 7 === 6 ? 'border-r-0' : ''}
+                    cal-cell min-h-[100px] p-2 cursor-pointer transition-all
+                    ${index % 7 === 6 ? 'cal-cell-border-last' : 'cal-cell-border'}
+                    ${isCurrentDay ? 'cal-cell-today' : !isCurrentMonth ? 'cal-cell-other-month' : ''}
                   `}
                 >
                   {/* Day Number */}
@@ -480,10 +491,10 @@ export default function CalendarPage() {
                     <span className={`
                       w-7 h-7 flex items-center justify-center rounded-lg text-sm font-medium
                       ${isCurrentDay
-                        ? 'bg-indigo-600 text-white'
+                        ? 'bg-violet-600 text-white'
                         : isCurrentMonth
-                        ? 'text-gray-700'
-                        : 'text-gray-300'
+                        ? 'text-white/70'
+                        : 'text-white/20'
                       }
                     `}>
                       {format(date, 'd')}
@@ -497,8 +508,8 @@ export default function CalendarPage() {
                         key={event.id}
                         className={`text-[10px] px-1.5 py-0.5 rounded truncate font-medium ${
                           event.attendanceStatus === 'attended'
-                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                            : 'bg-violet-100 text-violet-700 hover:bg-violet-200'
+                            ? 'bg-emerald-500/20 text-emerald-300'
+                            : 'bg-violet-500/20 text-violet-300'
                         }`}
                         onClick={() => openEventModal(event)}
                       >
@@ -518,10 +529,10 @@ export default function CalendarPage() {
                         className={`
                           text-[10px] px-1.5 py-0.5 rounded truncate
                           ${task.priority === 'urgent'
-                            ? 'bg-red-100 text-red-700'
+                            ? 'bg-red-500/20 text-red-300'
                             : task.priority === 'high'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-amber-500/20 text-amber-300'
+                            : 'bg-white/[0.06] text-white/50'
                           }
                         `}
                         onClick={() => openTaskDetailModal(task)}
@@ -529,9 +540,9 @@ export default function CalendarPage() {
                         {task.title}
                       </CalendarItem>
                     ))}
-                    
+
                     {(dayTasks.length + dayEvents.length) > 4 && (
-                      <div className="text-[10px] text-gray-400 pl-1 font-medium">
+                      <div className="text-[10px] text-white/30 pl-1 font-medium">
                         +{dayTasks.length + dayEvents.length - 4} weitere
                       </div>
                     )}
@@ -545,10 +556,10 @@ export default function CalendarPage() {
 
       {/* WEEK VIEW */}
       {viewType === 'week' && (
-        <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="cal-surface rounded-xl overflow-hidden">
           {/* Week Header */}
-          <div className="grid grid-cols-8 border-b border-gray-100 bg-gray-50/50">
-            <div className="p-3 text-xs font-medium text-gray-400 border-r border-gray-100">
+          <div className="cal-week-header-row grid grid-cols-8">
+            <div className="p-3 text-white/30 cal-week-col-border">
               <Clock size={14} />
             </div>
             {weekDays.map((day) => {
@@ -561,17 +572,16 @@ export default function CalendarPage() {
                     setCurrentDate(day);
                     setViewType('day');
                   }}
-                  className={`
-                    p-3 text-center cursor-pointer hover:bg-indigo-50/50 transition-colors
-                    ${isToday(day) ? 'bg-indigo-50/50' : ''}
-                  `}
+                  className={`cal-week-day-cell p-3 text-center cursor-pointer transition-colors ${
+                    isToday(day) ? 'cal-cell-today' : ''
+                  }`}
                 >
-                  <div className="text-xs font-medium text-gray-500 uppercase">
+                  <div className="text-xs font-medium text-white/40 uppercase">
                     {format(day, 'EEE', { locale: de })}
                   </div>
                   <div className={`
                     text-lg font-semibold mt-0.5
-                    ${isToday(day) ? 'text-indigo-600' : 'text-gray-700'}
+                    ${isToday(day) ? 'text-violet-400' : 'text-white/70'}
                   `}>
                     {format(day, 'd')}
                   </div>
@@ -579,10 +589,10 @@ export default function CalendarPage() {
                   {(allDayTasks.length > 0 || dayEvents.length > 0) && (
                     <div className="mt-1 flex items-center justify-center gap-2 text-[10px] font-medium">
                       {allDayTasks.length > 0 && (
-                        <span className="text-blue-500">{allDayTasks.length} T</span>
+                        <span className="text-blue-400">{allDayTasks.length} T</span>
                       )}
                       {dayEvents.length > 0 && (
-                        <span className="text-indigo-500">{dayEvents.length} E</span>
+                        <span className="text-violet-400">{dayEvents.length} E</span>
                       )}
                     </div>
                   )}
@@ -592,8 +602,8 @@ export default function CalendarPage() {
           </div>
 
           {/* All-day tasks row */}
-          <div className="grid grid-cols-8 border-b border-gray-100 min-h-[80px] max-h-[200px]">
-            <div className="p-2 text-xs text-gray-400 text-right pr-3 border-r border-gray-100 flex items-center justify-end">
+          <div className="cal-all-day-row grid grid-cols-8 min-h-[80px] max-h-[200px]">
+            <div className="cal-week-col-border p-2 text-xs text-white/30 text-right pr-3 flex items-center justify-end">
               Aufgaben
             </div>
             {weekDays.map((day) => {
@@ -601,7 +611,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={day.toISOString()}
-                  className="p-1 border-r border-gray-50 last:border-r-0 bg-gray-50/30 hover:bg-indigo-50/30 transition-all overflow-y-auto"
+                  className="cal-all-day-cell p-1 last:border-r-0 overflow-y-auto"
                 >
                   {allDayTasks.map((task) => (
                     <CalendarItem
@@ -609,10 +619,10 @@ export default function CalendarPage() {
                       className={`
                         text-[10px] px-1.5 py-0.5 rounded mb-0.5 truncate
                         ${task.priority === 'urgent'
-                          ? 'bg-red-100 text-red-700'
+                          ? 'bg-red-500/20 text-red-300'
                           : task.priority === 'high'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-blue-100 text-blue-700'
+                          ? 'bg-amber-500/20 text-amber-300'
+                          : 'bg-blue-500/20 text-blue-300'
                         }
                       `}
                       onClick={(e) => { e.stopPropagation(); openTaskDetailModal(task); }}
@@ -621,7 +631,7 @@ export default function CalendarPage() {
                     </CalendarItem>
                   ))}
                   {allDayTasks.length === 0 && (
-                    <div className="text-[9px] text-gray-300 italic p-1">Keine Aufgaben</div>
+                    <div className="text-[9px] text-white/20 italic p-1">Keine Aufgaben</div>
                   )}
                 </div>
               );
@@ -632,9 +642,9 @@ export default function CalendarPage() {
           <div className="max-h-[600px] overflow-y-auto relative">
             {/* Hour grid */}
             {dayHours.map((hour) => (
-              <div key={hour} className="grid grid-cols-8 border-b border-gray-50 h-[60px]">
+              <div key={hour} className="cal-hour-row grid grid-cols-8 h-[60px]">
                 {/* Hour Label */}
-                <div className="p-2 text-xs text-gray-400 text-right pr-3 border-r border-gray-100">
+                <div className="cal-hour-label p-2 text-xs text-white/30 text-right pr-3">
                   {hour.toString().padStart(2, '0')}:00
                 </div>
 
@@ -643,41 +653,41 @@ export default function CalendarPage() {
                   <div
                     key={day.toISOString()}
                     onClick={() => openSlotActions(getSlotDate(day, hour))}
-                    className="border-r border-gray-50 last:border-r-0 hover:bg-indigo-50/30 cursor-pointer transition-all"
+                    className="cal-hour-slot cursor-pointer"
                   />
                 ))}
               </div>
             ))}
 
             {/* Events layer - absolutely positioned for each day */}
-            <div className="absolute top-0 left-0 right-0 grid grid-cols-8 pointer-events-none" style={{ height: `${dayHours.length * 60}px` }}>
+            <div className="cal-time-grid-height absolute top-0 left-0 right-0 grid grid-cols-8 pointer-events-none">
               {/* Empty first column for hour labels */}
-              <div className="border-r border-gray-100" />
+              <div className="cal-week-col-border" />
 
               {/* Event columns for each day */}
               {weekDays.map((day) => {
                 const dayEvents = getEventsForDay(day);
                 const timedTasks = getTimedTasksForDay(day);
                 return (
-                  <div key={day.toISOString()} className="relative border-r border-gray-50 last:border-r-0">
+                  <div key={day.toISOString()} className="cal-event-col relative">
                     {/* Render Events */}
                     {dayEvents.map((event) => {
                       const style = getEventStyle(event, dayHours[0]);
                       const appointmentColorClass =
                         event.attendanceStatus === 'attended'
-                          ? 'bg-emerald-100 text-emerald-700 border-l-emerald-500 hover:bg-emerald-200'
-                          : 'bg-violet-100 text-violet-700 border-l-violet-500 hover:bg-violet-200';
+                          ? 'bg-emerald-500/20 text-emerald-300 border-l-emerald-500 hover:opacity-80'
+                          : 'bg-violet-500/20 text-violet-300 border-l-violet-500 hover:opacity-80';
                       return (
                         <div
                           key={event.id}
-                          className="absolute left-0 right-0 px-0.5 pointer-events-auto"
-                          style={{ ...style, touchAction: 'pan-y' }}
+                          className="cal-event-wrapper absolute left-0 right-0 px-0.5 pointer-events-auto"
+                          style={style}
                           onClick={(e) => {
                             e.stopPropagation();
                             openEventModal(event);
                           }}
                         >
-                          <div className={`h-full px-1.5 py-1 rounded transition-colors cursor-pointer border-l-2 shadow-sm overflow-hidden ${appointmentColorClass}`}>
+                          <div className={`h-full px-1.5 py-1 rounded transition-opacity cursor-pointer border-l-2 overflow-hidden ${appointmentColorClass}`}>
                             <div className="text-[10px] font-medium truncate">
                               {event.attendanceStatus === 'attended' ? '✓ ' : ''}
                               {event.title}
@@ -696,26 +706,26 @@ export default function CalendarPage() {
                     {timedTasks.map((item) => {
                       const style = getEventStyle(item.event, dayHours[0]);
                       const task = item.task;
-                      
+
                       const priorityColors: Record<string, string> = {
-                        low: 'bg-gray-100 text-gray-700 border-l-gray-400',
-                        medium: 'bg-blue-100 text-blue-700 border-l-blue-500',
-                        high: 'bg-orange-100 text-orange-700 border-l-orange-500',
-                        urgent: 'bg-red-100 text-red-700 border-l-red-500',
+                        low: 'bg-white/[0.05] text-white/50 border-l-white/20 hover:opacity-80',
+                        medium: 'bg-blue-500/20 text-blue-300 border-l-blue-500 hover:opacity-80',
+                        high: 'bg-orange-500/20 text-orange-300 border-l-orange-500 hover:opacity-80',
+                        urgent: 'bg-red-500/20 text-red-300 border-l-red-500 hover:opacity-80',
                       };
                       const colorClass = priorityColors[task.priority] || priorityColors['medium'];
 
                       return (
                         <div
                           key={`${task.id}-${item.event.id}`}
-                          className="absolute left-0 right-0 px-0.5 pointer-events-auto"
-                          style={{ ...style, touchAction: 'pan-y' }}
+                          className="cal-event-wrapper absolute left-0 right-0 px-0.5 pointer-events-auto"
+                          style={style}
                           onClick={(e) => {
                             e.stopPropagation();
                             openTaskDetailModal(task);
                           }}
                         >
-                          <div className={`h-full px-1.5 py-1 rounded ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-2 shadow-sm overflow-hidden`}>
+                          <div className={`h-full px-1.5 py-1 rounded transition-opacity cursor-pointer border-l-2 overflow-hidden ${colorClass}`}>
                             <div className="text-[10px] font-medium truncate">
                               {task.title}
                             </div>
@@ -738,29 +748,30 @@ export default function CalendarPage() {
 
       {/* DAY VIEW */}
       {viewType === 'day' && (
-        <div className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="cal-surface rounded-xl overflow-hidden">
           {/* Day Header */}
-          <div className="p-4 border-b border-gray-100 bg-gray-50/50">
+          <div className="cal-day-header p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className={`
                   w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold
-                  ${isToday(currentDate) ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-700'}
+                  ${isToday(currentDate) ? 'bg-violet-600 text-white' : 'cal-day-num text-white/70'}
                 `}>
                   {format(currentDate, 'd')}
                 </div>
                 <div>
-                  <div className="text-lg font-semibold text-gray-800">
+                  <div className="text-lg font-semibold text-white">
                     {format(currentDate, 'EEEE', { locale: de })}
                   </div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-white/50">
                     {format(currentDate, 'd. MMMM yyyy', { locale: de })}
                   </div>
                 </div>
               </div>
-              
+
               {/* Quick add task button */}
               <button
+                type="button"
                 onClick={() => openTaskModal()}
                 className="btn btn-ghost text-sm"
               >
@@ -773,15 +784,14 @@ export default function CalendarPage() {
           {/* All-day tasks section - always visible for drag & drop */}
           {(() => {
             const allDayTasks = getAllDayTasksForDate(currentDate);
-            
+
             return (
-              <div 
-                className={`p-3 border-b border-gray-100 min-h-[60px] transition-all
-                  ${allDayTasks.length > 0 ? 'bg-blue-50/30' : 'bg-gray-50/30'}`}
-              >
+              <div className={`cal-all-day-tasks-section p-3 min-h-[60px] transition-all ${
+                allDayTasks.length > 0 ? 'cal-all-day-tasks-section-filled' : 'cal-all-day-tasks-section-empty'
+              }`}>
                 <div className="flex items-center gap-2 mb-2">
-                  <CalendarIcon size={14} className={allDayTasks.length > 0 ? 'text-blue-500' : 'text-gray-400'} />
-                  <span className={`text-xs font-medium ${allDayTasks.length > 0 ? 'text-blue-600' : 'text-gray-500'}`}>
+                  <CalendarIcon size={14} className={allDayTasks.length > 0 ? 'text-blue-400' : 'text-white/30'} />
+                  <span className={`text-xs font-medium ${allDayTasks.length > 0 ? 'text-blue-400' : 'text-white/40'}`}>
                     Aufgaben für diesen Tag {allDayTasks.length > 0 && `(${allDayTasks.length})`}
                   </span>
                 </div>
@@ -793,25 +803,25 @@ export default function CalendarPage() {
                         className={`
                           flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors
                           ${task.priority === 'urgent'
-                            ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                            ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
                             : task.priority === 'high'
-                            ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                            : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                            ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30'
+                            : 'bg-blue-500/20 text-blue-300 hover:bg-blue-500/30'
                           }
                         `}
                         onClick={(e) => { e.stopPropagation(); openTaskDetailModal(task); }}
                       >
                         <div className={`
                           w-2 h-2 rounded-full
-                          ${task.priority === 'urgent' ? 'bg-red-500' :
-                            task.priority === 'high' ? 'bg-amber-500' : 'bg-blue-500'}
+                          ${task.priority === 'urgent' ? 'bg-red-400' :
+                            task.priority === 'high' ? 'bg-amber-400' : 'bg-blue-400'}
                         `} />
                         <span>{task.title}</span>
                       </CalendarItem>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-xs text-gray-400 italic">Keine Aufgaben für diesen Tag.</p>
+                  <p className="text-xs text-white/30 italic">Keine Aufgaben für diesen Tag.</p>
                 )}
               </div>
             );
@@ -824,10 +834,10 @@ export default function CalendarPage() {
               <div
                 key={hour}
                 onClick={() => openSlotActions(getSlotDate(currentDate, hour))}
-                className="flex border-b border-gray-50 h-[60px] cursor-pointer hover:bg-indigo-50/30 transition-all"
+                className="cal-hour-row cal-time-slot-row flex h-[60px] cursor-pointer transition-all"
               >
                 {/* Hour Label */}
-                <div className="w-20 p-3 text-sm text-gray-400 text-right border-r border-gray-100 flex-shrink-0">
+                <div className="cal-hour-label w-20 p-3 text-sm text-white/30 text-right flex-shrink-0">
                   {hour.toString().padStart(2, '0')}:00
                 </div>
 
@@ -837,25 +847,25 @@ export default function CalendarPage() {
             ))}
 
             {/* Events layer - absolutely positioned */}
-            <div className="absolute top-0 left-20 right-0 pointer-events-none" style={{ height: `${dayHours.length * 60}px` }}>
+            <div className="cal-time-grid-height absolute top-0 left-20 right-0 pointer-events-none">
               {/* Render Events */}
               {getEventsForDay(currentDate).map((event) => {
                 const style = getEventStyle(event, dayHours[0]);
                 const appointmentColorClass =
                   event.attendanceStatus === 'attended'
-                    ? 'bg-emerald-100 text-emerald-700 border-l-emerald-500 hover:bg-emerald-200'
-                    : 'bg-violet-100 text-violet-700 border-l-violet-500 hover:bg-violet-200';
+                    ? 'bg-emerald-500/20 text-emerald-300 border-l-emerald-500 hover:opacity-80'
+                    : 'bg-violet-500/20 text-violet-300 border-l-violet-500 hover:opacity-80';
                 return (
                   <div
                     key={event.id}
-                    className="absolute left-0 right-0 px-2 pointer-events-auto"
-                    style={{ ...style, touchAction: 'pan-y' }}
+                    className="cal-event-wrapper absolute left-0 right-0 px-2 pointer-events-auto"
+                    style={style}
                     onClick={(e) => {
                       e.stopPropagation();
                       openEventModal(event);
                     }}
                   >
-                    <div className={`h-full px-3 py-1.5 rounded-lg transition-colors cursor-pointer border-l-4 shadow-sm overflow-hidden ${appointmentColorClass}`}>
+                    <div className={`h-full px-3 py-1.5 rounded-lg transition-opacity cursor-pointer border-l-4 overflow-hidden ${appointmentColorClass}`}>
                       <div className="font-medium text-sm truncate">
                         {event.attendanceStatus === 'attended' ? '✓ ' : ''}
                         {event.title}
@@ -872,26 +882,26 @@ export default function CalendarPage() {
               {getTimedTasksForDay(currentDate).map((item) => {
                 const style = getEventStyle(item.event, dayHours[0]);
                 const task = item.task;
-                
+
                 const priorityColors: Record<string, string> = {
-                  low: 'bg-gray-100 text-gray-700 border-l-gray-400',
-                  medium: 'bg-blue-100 text-blue-700 border-l-blue-500',
-                  high: 'bg-orange-100 text-orange-700 border-l-orange-500',
-                  urgent: 'bg-red-100 text-red-700 border-l-red-500',
+                  low: 'bg-white/[0.05] text-white/50 border-l-white/20 hover:opacity-80',
+                  medium: 'bg-blue-500/20 text-blue-300 border-l-blue-500 hover:opacity-80',
+                  high: 'bg-orange-500/20 text-orange-300 border-l-orange-500 hover:opacity-80',
+                  urgent: 'bg-red-500/20 text-red-300 border-l-red-500 hover:opacity-80',
                 };
                 const colorClass = priorityColors[task.priority] || priorityColors['medium'];
 
                 return (
                   <div
                     key={`${task.id}-${item.event.id}`}
-                    className="absolute left-0 right-0 px-2 pointer-events-auto"
-                    style={{ ...style, touchAction: 'pan-y' }}
+                    className="cal-event-wrapper absolute left-0 right-0 px-2 pointer-events-auto"
+                    style={style}
                     onClick={(e) => {
                       e.stopPropagation();
                       openTaskDetailModal(task);
                     }}
                   >
-                    <div className={`h-full px-3 py-1.5 rounded-lg ${colorClass} hover:opacity-80 transition-opacity cursor-pointer border-l-4 shadow-sm overflow-hidden`}>
+                    <div className={`h-full px-3 py-1.5 rounded-lg transition-opacity cursor-pointer border-l-4 overflow-hidden ${colorClass}`}>
                       <div className="font-medium text-sm truncate">
                         {task.title}
                       </div>
@@ -907,135 +917,142 @@ export default function CalendarPage() {
         </div>
       )}
 
-      <div className="mt-6 p-5 rounded-xl border border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
+      {/* Weekly Review */}
+      <div className="cal-weekly-review mt-6 p-5 rounded-xl">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-600">Weekly Review Assistant</p>
-            <p className="text-sm text-gray-700 mt-1">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">Weekly Review Assistant</p>
+            <p className="text-sm text-white/70 mt-1">
               Erledigt {weeklyReview.completed} von {weeklyReview.planned} geplanten Aufgaben (
-              <span className="font-semibold">{weeklyReview.completionRate}%</span>)
+              <span className="font-semibold text-white">{weeklyReview.completionRate}%</span>)
             </p>
           </div>
           <button
+            type="button"
             onClick={() => void handleSmartReplan()}
             disabled={replanBusy || overdueCount === 0}
-            className="px-3 py-2 text-xs font-medium rounded-lg bg-white border border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="cal-weekly-review-btn px-3 py-2 text-xs font-medium rounded-lg text-violet-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Fokus-Replan
           </button>
         </div>
         <ul className="mt-3 space-y-1.5">
           {weeklyReview.recommendations.slice(0, 3).map((recommendation) => (
-            <li key={recommendation} className="text-sm text-gray-700">• {recommendation}</li>
+            <li key={recommendation} className="text-sm text-white/60">• {recommendation}</li>
           ))}
         </ul>
       </div>
 
       {/* Upcoming Events */}
       <div className="mt-6">
-        <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+        <h2 className="text-xs font-medium text-white/40 uppercase tracking-wider mb-3">
           Kommende Termine
         </h2>
-        
+
         {upcomingAppointments.length === 0 ? (
-          <div className="p-8 border border-dashed border-gray-200 rounded-xl text-center bg-white/50">
-            <CalendarIcon size={32} className="mx-auto text-gray-300 mb-2" />
-            <p className="text-sm text-gray-500">Keine Termine geplant</p>
+          <div className="cal-upcoming-empty p-8 rounded-xl text-center">
+            <CalendarIcon size={32} className="mx-auto text-white/20 mb-2" />
+            <p className="text-sm text-white/40">Keine Termine geplant</p>
           </div>
         ) : (
-          <div className="border border-gray-200 rounded-xl bg-white shadow-sm max-h-[380px] overflow-y-auto divide-y divide-gray-100">
+          <div className="cal-upcoming-list rounded-xl max-h-[380px] overflow-y-auto">
             {upcomingAppointments.map((event) => (
-                <div 
-                  key={event.id}
-                  className="group flex items-center justify-between p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => openEventModal(event)}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      event.attendanceStatus === 'attended' ? 'bg-emerald-500' : 'bg-violet-500'
-                    }`} />
-                    <div>
-                      <p className="text-sm font-medium text-gray-800">{event.title}</p>
-                      <p className="text-xs text-gray-500">
-                        {format(new Date(event.startTime), 'EEEE, d. MMM • HH:mm', { locale: de })}
-                        {' - '}
-                        {format(new Date(event.endTime), 'HH:mm')}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void handleAttendanceToggle(event.id, event.attendanceStatus !== 'attended');
-                      }}
-                      disabled={attendanceBusyId === event.id}
-                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                        event.attendanceStatus === 'attended'
-                          ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                          : 'bg-sky-100 text-sky-700 hover:bg-sky-200'
-                      } disabled:opacity-60 disabled:cursor-not-allowed`}
-                      title="Anwesenheitsstatus setzen"
-                    >
-                      <CheckCircle2 size={12} />
-                      {attendanceBusyId === event.id
-                        ? 'Speichere...'
-                        : event.attendanceStatus === 'attended'
-                        ? 'Anwesend'
-                        : 'Anwesenheit'}
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setShowDeleteConfirm(event.id);
-                      }}
-                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 rounded-lg transition-all"
-                      title="Löschen"
-                    >
-                      <Trash2 size={14} className="text-gray-400 hover:text-red-500" />
-                    </button>
+              <div
+                key={event.id}
+                className="cal-upcoming-row group flex items-center justify-between p-4 cursor-pointer transition-colors"
+                onClick={() => openEventModal(event)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-2 h-2 rounded-full ${
+                    event.attendanceStatus === 'attended' ? 'bg-emerald-500' : 'bg-violet-500'
+                  }`} />
+                  <div>
+                    <p className="text-sm font-medium text-white/80">{event.title}</p>
+                    <p className="text-xs text-white/40">
+                      {format(new Date(event.startTime), 'EEEE, d. MMM • HH:mm', { locale: de })}
+                      {' - '}
+                      {format(new Date(event.endTime), 'HH:mm')}
+                    </p>
                   </div>
                 </div>
-              ))}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void handleAttendanceToggle(event.id, event.attendanceStatus !== 'attended');
+                    }}
+                    disabled={attendanceBusyId === event.id}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                      event.attendanceStatus === 'attended'
+                        ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                        : 'bg-sky-500/15 text-sky-300 hover:bg-sky-500/25'
+                    } disabled:opacity-60 disabled:cursor-not-allowed`}
+                    title="Anwesenheitsstatus setzen"
+                  >
+                    <CheckCircle2 size={12} />
+                    {attendanceBusyId === event.id
+                      ? 'Speichere...'
+                      : event.attendanceStatus === 'attended'
+                      ? 'Anwesend'
+                      : 'Anwesenheit'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowDeleteConfirm(event.id);
+                    }}
+                    className="p-2 opacity-0 group-hover:opacity-100 rounded-lg transition-all text-red-400 hover:bg-red-500/10"
+                    title="Löschen"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Delete Confirm Modal */}
+      {/* Slot Actions Modal */}
       {selectedSlot && (
         <div
-          className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+          className="cal-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={closeSlotActions}
         >
           <div
-            className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-100 p-5"
+            className="cal-modal-panel w-full max-w-md rounded-2xl shadow-2xl p-5"
             onClick={(e) => e.stopPropagation()}
           >
-            <p className="text-xs font-semibold uppercase tracking-wide text-indigo-500">Zeitslot</p>
-            <h3 className="mt-1 text-lg font-semibold text-gray-900">
+            <p className="text-xs font-semibold uppercase tracking-wide text-violet-400">Zeitslot</p>
+            <h3 className="mt-1 text-lg font-semibold text-white">
               {format(selectedSlot, 'EEEE, d. MMMM yyyy', { locale: de })}
             </h3>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-white/50 mt-1">
               Start: {format(selectedSlot, 'HH:mm')} Uhr
             </p>
 
             {!showQuickTaskForm ? (
               <div className="mt-5 grid gap-2">
                 <button
+                  type="button"
                   onClick={() => setShowQuickTaskForm(true)}
-                  className="w-full px-4 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors text-sm"
+                  className="cal-gradient-btn w-full px-4 py-3 rounded-xl text-white font-medium transition-all text-sm"
                 >
                   Schnellaufgabe hinzufügen
                 </button>
                 <button
+                  type="button"
                   onClick={openFullModalFromSlot}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors text-sm font-medium"
+                  className="cal-modal-btn-secondary w-full px-4 py-3 rounded-xl text-white/70 hover:text-white transition-colors text-sm font-medium"
                 >
                   Vollständig planen
                 </button>
                 <button
+                  type="button"
                   onClick={closeSlotActions}
-                  className="w-full px-4 py-2.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                  className="w-full px-4 py-2.5 text-sm text-white/40 hover:text-white/70 transition-colors"
                 >
                   Abbrechen
                 </button>
@@ -1048,29 +1065,29 @@ export default function CalendarPage() {
                   void createQuickTaskAtSlot();
                 }}
               >
-                <label className="block text-sm font-medium text-gray-700">Titel der Schnellaufgabe</label>
+                <label className="block text-sm font-medium text-white/70">Titel der Schnellaufgabe</label>
                 <input
                   value={quickTaskTitle}
                   onChange={(e) => setQuickTaskTitle(e.target.value)}
                   placeholder="z.B. Angebotsmail senden"
                   autoFocus
-                  className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                  className="cal-modal-input w-full px-3 py-2.5 text-sm rounded-lg text-white"
                 />
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-white/40">
                   Erstellt direkt eine Aufgabe plus 60-Minuten-Zeitblock ab {format(selectedSlot, 'HH:mm')} Uhr.
                 </p>
                 <div className="flex justify-end gap-2 pt-1">
                   <button
                     type="button"
                     onClick={() => setShowQuickTaskForm(false)}
-                    className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                    className="cal-modal-btn-ghost px-3 py-2 text-sm text-white/50 hover:text-white/80 rounded-lg transition-colors"
                   >
                     Zurück
                   </button>
                   <button
                     type="submit"
                     disabled={!quickTaskTitle.trim() || quickTaskSaving}
-                    className="px-4 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="cal-gradient-btn px-4 py-2 text-sm text-white rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {quickTaskSaving ? 'Erstelle...' : 'Schnell erstellen'}
                   </button>

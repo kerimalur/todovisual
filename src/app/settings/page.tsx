@@ -1,7 +1,7 @@
 'use client';
 
-import { 
-  User, Bell, Timer, Database, Download, Palette, Globe, Trash2, Check, 
+import {
+  User, Bell, Timer, Database, Download, Palette, Globe, Trash2, Check,
   Clock, Volume2, ListTodo, Shield, Sparkles, Coffee,
   Upload, Smartphone, Send, PlusCircle
 } from 'lucide-react';
@@ -14,11 +14,11 @@ function Toggle({ enabled, onChange, label }: { enabled: boolean; onChange: (v: 
   return (
     <button
       onClick={() => onChange(!enabled)}
-      className={`w-11 h-6 rounded-full relative transition-colors ${enabled ? 'bg-indigo-600' : 'bg-gray-200'}`}
+      className={`w-11 h-6 rounded-full relative transition-colors ${enabled ? 'bg-violet-600' : 'bg-white/15'}`}
       title={label}
     >
-      <span 
-        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${enabled ? 'right-1' : 'left-1'}`} 
+      <span
+        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform ${enabled ? 'right-1' : 'left-1'}`}
       />
     </button>
   );
@@ -28,8 +28,8 @@ function SettingRow({ children, label, description }: { children: React.ReactNod
   return (
     <div className="flex items-center justify-between py-4">
       <div className="flex-1">
-        <p className="text-sm font-medium text-gray-900">{label}</p>
-        {description && <p className="text-xs text-gray-500 mt-1">{description}</p>}
+        <p className="text-sm font-medium text-white">{label}</p>
+        {description && <p className="text-xs text-white/50 mt-1">{description}</p>}
       </div>
       {children}
     </div>
@@ -38,12 +38,12 @@ function SettingRow({ children, label, description }: { children: React.ReactNod
 
 function Section({ title, icon: Icon, children }: { title: string; icon: React.ElementType; children: React.ReactNode }) {
   return (
-    <section className="border border-gray-200 rounded-xl bg-white overflow-hidden shadow-sm">
-      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3 bg-gray-50/50">
-        <Icon size={18} className="text-gray-400" />
-        <h2 className="text-sm font-semibold text-gray-900">{title}</h2>
+    <section className="rounded-2xl border border-white/08 overflow-hidden" style={{ background: 'rgba(255,255,255,0.03)' }}>
+      <div className="px-5 py-4 border-b border-white/08 flex items-center gap-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
+        <Icon size={18} className="text-white/40" />
+        <h2 className="text-sm font-semibold text-white">{title}</h2>
       </div>
-      <div className="p-5 divide-y divide-gray-100">
+      <div className="p-5 divide-y divide-white/06">
         {children}
       </div>
     </section>
@@ -272,16 +272,21 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto animate-fade-in-up">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Einstellungen</h1>
-            <p className="text-gray-500 mt-1">Passe die App an deine Bedürfnisse an</p>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg, #64748b, #4b5563)' }}>
+              <Palette size={22} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white tracking-tight">Einstellungen</h1>
+              <p className="text-white/50 mt-1">Passe die App an deine Bedürfnisse an</p>
+            </div>
           </div>
           {saved && (
-            <div className="flex items-center gap-1.5 text-sm text-emerald-600 font-medium animate-fadeIn">
+            <div className="flex items-center gap-1.5 text-sm text-emerald-400 font-medium animate-fadeIn">
               <Check size={16} />
               Gespeichert
             </div>
@@ -290,7 +295,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 mb-6 border-b border-gray-200">
+      <div className="flex gap-1 mb-6 border-b border-white/10">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -300,9 +305,9 @@ export default function SettingsPage() {
               className={`
                 flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors
                 border-b-2 -mb-px
-                ${activeTab === tab.id 
-                  ? 'border-indigo-600 text-indigo-600' 
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
+                ${activeTab === tab.id
+                  ? 'border-violet-500 text-violet-400'
+                  : 'border-transparent text-white/50 hover:text-white/70'
                 }
               `}
             >
@@ -320,7 +325,7 @@ export default function SettingsPage() {
             {/* Profile */}
             <Section title="Profil" icon={User}>
               <div className="py-3">
-                <label className="block text-xs font-medium text-[#9b9a97] mb-2">Dein Name</label>
+                <label className="block text-xs font-medium text-white/50 mb-2">Dein Name</label>
                 <input
                   type="text"
                   value={settings.name}
@@ -328,10 +333,10 @@ export default function SettingsPage() {
                   placeholder="Wie heißt du?"
                   className="input w-full max-w-sm"
                 />
-                <p className="text-xs text-[#9b9a97] mt-1">Wird auf dem Dashboard und im Zen Modus angezeigt</p>
+                <p className="text-xs text-white/40 mt-1">Wird auf dem Dashboard und im Zen Modus angezeigt</p>
               </div>
               <div className="py-3">
-                <label className="block text-xs font-medium text-[#9b9a97] mb-2">E-Mail (optional)</label>
+                <label className="block text-xs font-medium text-white/50 mb-2">E-Mail (optional)</label>
                 <input
                   type="email"
                   value={settings.email}
@@ -341,7 +346,7 @@ export default function SettingsPage() {
                 />
               </div>
               <div className="py-3">
-                <label className="block text-xs font-medium text-[#9b9a97] mb-2">Persoenliches Motto</label>
+                <label className="block text-xs font-medium text-white/50 mb-2">Persoenliches Motto</label>
                 <input
                   type="text"
                   value={settings.personalMotto}
@@ -349,7 +354,7 @@ export default function SettingsPage() {
                   placeholder="Was soll dich taeglich erinnern?"
                   className="input w-full max-w-xl"
                 />
-                <p className="text-xs text-[#9b9a97] mt-1">Wird in der \u00DCbersicht und im Zen Modus angezeigt</p>
+                <p className="text-xs text-white/40 mt-1">Wird in der \u00DCbersicht und im Zen Modus angezeigt</p>
               </div>
             </Section>
 
@@ -446,14 +451,14 @@ export default function SettingsPage() {
               )}
 
               <div className="py-4 space-y-3">
-                <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+                <div className="rounded-xl border border-violet-500/20 p-4" style={{ background: 'rgba(124,58,237,0.06)' }}>
                   <div className="flex items-start gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-indigo-100 flex items-center justify-center">
-                      <Smartphone size={16} className="text-indigo-600" />
+                    <div className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      <Smartphone size={16} className="text-violet-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">SMS Erinnerungen</p>
-                      <p className="text-xs text-gray-600 mt-0.5">
+                      <p className="text-sm font-medium text-white">SMS Erinnerungen</p>
+                      <p className="text-xs text-white/50 mt-0.5">
                         Versand via Twilio (ENV: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`).
                       </p>
                     </div>
@@ -494,25 +499,26 @@ export default function SettingsPage() {
                         <button
                           onClick={() => void handleSendTestSms()}
                           disabled={smsSending}
-                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
                         >
                           <Send size={14} />
                           {smsSending ? 'Sende Test...' : 'Test SMS senden'}
                         </button>
-                        {smsStatus && <p className="text-xs text-gray-600 mt-2">{smsStatus}</p>}
+                        {smsStatus && <p className="text-xs text-white/50 mt-2">{smsStatus}</p>}
                       </div>
                     </>
                   )}
                 </div>
 
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
+                <div className="rounded-xl border border-emerald-500/20 p-4" style={{ background: 'rgba(16,185,129,0.05)' }}>
                   <div className="flex items-start gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-white border border-emerald-100 flex items-center justify-center">
-                      <Smartphone size={16} className="text-emerald-600" />
+                    <div className="w-8 h-8 rounded-lg border border-white/10 flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                      <Smartphone size={16} className="text-emerald-400" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-900">WhatsApp Erinnerungen</p>
-                      <p className="text-xs text-gray-600 mt-0.5">
+                      <p className="text-sm font-medium text-white">WhatsApp Erinnerungen</p>
+                      <p className="text-xs text-white/50 mt-0.5">
                         ENV fuer Sender: `TWILIO_WHATSAPP_FROM` (z.B. `whatsapp:+14155238886`).
                       </p>
                     </div>
@@ -658,11 +664,11 @@ export default function SettingsPage() {
                         />
                       </SettingRow>
 
-                      <div className="mt-5 rounded-2xl border-2 border-emerald-200 bg-white p-4">
+                      <div className="mt-5 rounded-2xl border border-emerald-500/20 p-4" style={{ background: 'rgba(255,255,255,0.03)' }}>
                         <div className="flex items-start justify-between gap-3 mb-3">
                           <div>
-                            <p className="text-sm font-semibold text-emerald-800">Große Option: Eigene WhatsApp-Regeln</p>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="text-sm font-semibold text-emerald-400">Große Option: Eigene WhatsApp-Regeln</p>
+                            <p className="text-xs text-white/50 mt-1">
                               Erstelle beliebig viele eigene Nachrichten-Regeln direkt in der Software.
                             </p>
                           </div>
@@ -676,13 +682,13 @@ export default function SettingsPage() {
                         </div>
 
                         {settings.whatsappCustomRules.length === 0 ? (
-                          <p className="text-xs text-gray-500 border border-dashed border-gray-200 rounded-lg p-3">
+                          <p className="text-xs text-white/40 border border-dashed border-white/10 rounded-lg p-3">
                             Noch keine eigenen Regeln vorhanden.
                           </p>
                         ) : (
                           <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
                             {settings.whatsappCustomRules.map((rule) => (
-                              <div key={rule.id} className="rounded-xl border border-gray-200 p-3 bg-gray-50/50">
+                              <div key={rule.id} className="rounded-xl border border-white/10 p-3" style={{ background: 'rgba(255,255,255,0.04)' }}>
                                 <div className="flex flex-wrap items-center gap-2">
                                   <input
                                     value={rule.name}
@@ -715,12 +721,12 @@ export default function SettingsPage() {
                                   />
                                   <button
                                     onClick={() => handleDeleteWhatsAppRule(rule.id)}
-                                    className="px-2 py-1.5 rounded-lg border border-red-200 text-red-600 text-xs hover:bg-red-50"
+                                    className="px-2 py-1.5 rounded-lg border border-red-500/30 text-red-400 text-xs hover:bg-red-500/10"
                                   >
                                     Entfernen
                                   </button>
                                 </div>
-                                <p className="text-[11px] text-gray-500 mt-2">
+                                <p className="text-[11px] text-white/40 mt-2">
                                   {CUSTOM_RULE_TRIGGERS.find((option) => option.value === rule.trigger)?.description}
                                 </p>
                                 <textarea
@@ -745,7 +751,7 @@ export default function SettingsPage() {
                           <Send size={14} />
                           {whatsappSending ? 'Sende Test...' : 'Test WhatsApp senden'}
                         </button>
-                        {whatsappStatus && <p className="text-xs text-gray-600 mt-2">{whatsappStatus}</p>}
+                        {whatsappStatus && <p className="text-xs text-white/50 mt-2">{whatsappStatus}</p>}
                       </div>
                     </>
                   )}
@@ -762,7 +768,7 @@ export default function SettingsPage() {
             <Section title="Timer Einstellungen" icon={Clock}>
               <div className="py-3 grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-[#9b9a97] mb-2">Fokus-Zeit (Min)</label>
+                  <label className="block text-xs font-medium text-white/50 mb-2">Fokus-Zeit (Min)</label>
                   <input
                     type="number"
                     value={settings.defaultFocusMinutes}
@@ -773,7 +779,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#9b9a97] mb-2">Kurze Pause (Min)</label>
+                  <label className="block text-xs font-medium text-white/50 mb-2">Kurze Pause (Min)</label>
                   <input
                     type="number"
                     value={settings.defaultBreakMinutes}
@@ -784,7 +790,7 @@ export default function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-[#9b9a97] mb-2">Lange Pause (Min)</label>
+                  <label className="block text-xs font-medium text-white/50 mb-2">Lange Pause (Min)</label>
                   <input
                     type="number"
                     value={settings.longBreakMinutes}
@@ -827,7 +833,7 @@ export default function SettingsPage() {
                       max={100}
                       className="w-24"
                     />
-                    <span className="text-xs text-[#6b6b6b] w-8">{settings.soundVolume}%</span>
+                    <span className="text-xs text-white/50 w-8">{settings.soundVolume}%</span>
                   </div>
                 </SettingRow>
               )}
@@ -859,7 +865,7 @@ export default function SettingsPage() {
             {/* Theme */}
             <Section title="Design" icon={Palette}>
               <SettingRow label="Farbschema" description="Aktuell ist nur heller Modus aktiv">
-                <div className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-900">
+                <div className="inline-flex items-center rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-white" style={{ background: 'rgba(255,255,255,0.06)' }}>
                   Hell
                 </div>
               </SettingRow>
@@ -869,7 +875,7 @@ export default function SettingsPage() {
                     <button
                       key={color}
                       onClick={() => handleChange('accentColor', color)}
-                      className={`w-6 h-6 rounded-full transition-transform ${settings.accentColor === color ? 'ring-2 ring-offset-2 ring-[#37352f] scale-110' : 'hover:scale-110'}`}
+                      className={`w-6 h-6 rounded-full transition-transform ${settings.accentColor === color ? 'ring-2 ring-offset-2 ring-white/50 scale-110' : 'hover:scale-110'}`}
                       style={{ backgroundColor: color }}
                       title={`Farbe ${color}`}
                     />
@@ -1009,9 +1015,9 @@ export default function SettingsPage() {
                   { label: 'Termine', value: events.length },
                   { label: 'Journal', value: journalEntries.length },
                 ].map((stat) => (
-                  <div key={stat.label} className="p-3 bg-[#f7f6f3] rounded-md text-center">
-                    <p className="text-xl font-semibold text-[#37352f]">{stat.value}</p>
-                    <p className="text-[10px] text-[#9b9a97]">{stat.label}</p>
+                  <div key={stat.label} className="p-3 rounded-xl text-center border border-white/08" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <p className="text-xl font-semibold text-white">{stat.value}</p>
+                    <p className="text-[10px] text-white/40">{stat.label}</p>
                   </div>
                 ))}
               </div>
@@ -1041,57 +1047,71 @@ export default function SettingsPage() {
                 </SettingRow>
               )}
               <div className="py-3 flex gap-2">
-                <button 
+                <button
                   onClick={handleExportData}
-                  className="flex items-center gap-2 px-3 py-2 border border-[#e9e9e7] rounded-md hover:bg-[rgba(55,53,47,0.04)] transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 transition-colors hover:bg-white/06"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
-                  <Download size={14} className="text-[#9b9a97]" />
-                  <span className="text-sm text-[#37352f]">Daten exportieren</span>
+                  <Download size={14} className="text-white/40" />
+                  <span className="text-sm text-white/70">Daten exportieren</span>
                 </button>
-                <button 
-                  className="flex items-center gap-2 px-3 py-2 border border-[#e9e9e7] rounded-md hover:bg-[rgba(55,53,47,0.04)] transition-colors"
+                <button
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 transition-colors hover:bg-white/06"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
-                  <Upload size={14} className="text-[#9b9a97]" />
-                  <span className="text-sm text-[#37352f]">Daten importieren</span>
+                  <Upload size={14} className="text-white/40" />
+                  <span className="text-sm text-white/70">Daten importieren</span>
                 </button>
               </div>
             </Section>
 
             {/* Danger Zone */}
-            <Section title="Gefahrenzone" icon={Trash2}>
-              <div className="py-3 space-y-3">
-                <button 
+            <section className="rounded-2xl border border-red-500/20 overflow-hidden" style={{ background: 'rgba(239,68,68,0.05)' }}>
+              <div className="px-5 py-4 border-b border-red-500/15 flex items-center gap-3" style={{ background: 'rgba(239,68,68,0.04)' }}>
+                <Trash2 size={18} className="text-red-400/70" />
+                <h2 className="text-sm font-semibold text-white">Gefahrenzone</h2>
+              </div>
+              <div className="p-5 space-y-3">
+                <button
                   onClick={() => setShowResetConfirm(true)}
-                  className="flex items-center gap-2 px-3 py-2 border border-[#e9e9e7] rounded-md hover:bg-[rgba(55,53,47,0.04)] transition-colors w-full"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-white/10 transition-colors w-full hover:bg-white/06"
+                  style={{ background: 'rgba(255,255,255,0.04)' }}
                 >
-                  <span className="text-sm text-[#37352f]">Einstellungen zurücksetzen</span>
+                  <span className="text-sm text-white/70">Einstellungen zurücksetzen</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setShowDeleteDataConfirm(true)}
-                  className="flex items-center gap-2 px-3 py-2 border border-red-200 text-red-600 rounded-md hover:bg-red-50 transition-colors w-full"
+                  className="flex items-center gap-2 px-3 py-2 rounded-xl border border-red-500/30 text-red-400 transition-colors w-full hover:bg-red-500/10"
                 >
                   <Trash2 size={14} />
                   <span className="text-sm">Alle Daten unwiderruflich löschen</span>
                 </button>
               </div>
-            </Section>
+            </section>
           </>
         )}
       </div>
 
       {/* Reset Settings Confirm */}
       {showResetConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white rounded-md p-5 w-full max-w-sm mx-4 shadow-lg">
-            <h3 className="font-semibold text-[#37352f] mb-2">Einstellungen zurücksetzen?</h3>
-            <p className="text-sm text-[#6b6b6b] mb-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="rounded-2xl border border-white/10 p-5 w-full max-w-sm mx-4 shadow-2xl" style={{ background: '#161827' }}>
+            <h3 className="font-semibold text-white mb-2">Einstellungen zurücksetzen?</h3>
+            <p className="text-sm text-white/60 mb-4">
               Alle Einstellungen werden auf die Standardwerte zurückgesetzt. Deine Daten bleiben erhalten.
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowResetConfirm(false)} className="btn btn-ghost">Abbrechen</button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:bg-white/06 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
+              >
+                Abbrechen
+              </button>
               <button
                 onClick={() => { resetSettings(); setShowResetConfirm(false); showSavedFeedback(); }}
-                className="btn btn-primary"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-colors"
+                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
               >
                 Zurücksetzen
               </button>
@@ -1102,18 +1122,24 @@ export default function SettingsPage() {
 
       {/* Delete Data Confirm */}
       {showDeleteDataConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 animate-fadeIn">
-          <div className="bg-white rounded-md p-5 w-full max-w-sm mx-4 shadow-lg">
-            <h3 className="font-semibold text-red-600 mb-2">⚠️ Alle Daten löschen?</h3>
-            <p className="text-sm text-[#6b6b6b] mb-4">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="rounded-2xl border border-red-500/20 p-5 w-full max-w-sm mx-4 shadow-2xl" style={{ background: '#161827' }}>
+            <h3 className="font-semibold text-red-400 mb-2">Alle Daten löschen?</h3>
+            <p className="text-sm text-white/60 mb-4">
               Diese Aktion kann nicht rückgängig gemacht werden. Alle Aufgaben, Ziele, Einträge und Einstellungen werden dauerhaft gelöscht.
             </p>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setShowDeleteDataConfirm(false)} className="btn btn-ghost">Abbrechen</button>
+              <button
+                onClick={() => setShowDeleteDataConfirm(false)}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-white/70 border border-white/10 hover:bg-white/06 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.04)' }}
+              >
+                Abbrechen
+              </button>
               <button
                 onClick={handleDeleteAllData}
                 disabled={deleteAllDataLoading}
-                className="px-3 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700 transition-colors"
+                className="px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-medium hover:bg-red-700 transition-colors disabled:opacity-50"
               >
                 Alle Daten löschen
               </button>
@@ -1124,4 +1150,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-

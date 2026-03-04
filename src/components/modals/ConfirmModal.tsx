@@ -31,21 +31,18 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
       <div className="space-y-4">
         <div className="flex items-start gap-3">
-          <div className={`
-            p-2 rounded-full flex-shrink-0
-            ${variant === 'danger' ? 'bg-red-100' : 'bg-yellow-100'}
-          `}>
-            <AlertTriangle 
-              size={20} 
-              className={variant === 'danger' ? 'text-red-600' : 'text-yellow-600'} 
+          <div className={`p-2 rounded-full flex-shrink-0 ${variant === 'danger' ? 'bg-red-500/15' : 'bg-yellow-500/15'}`}>
+            <AlertTriangle
+              size={20}
+              className={variant === 'danger' ? 'text-red-400' : 'text-yellow-400'}
             />
           </div>
-          <p className="text-gray-700 leading-relaxed">
+          <p className="text-white/70 leading-relaxed">
             {message}
           </p>
         </div>
 
-        <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/08">
           <Button type="button" variant="ghost" onClick={onClose}>
             Abbrechen
           </Button>
