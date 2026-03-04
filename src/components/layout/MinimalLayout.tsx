@@ -146,11 +146,11 @@ export function MinimalLayout({ children }: MinimalLayoutProps) {
       {/* Both contexts for compatibility with existing pages */}
       <ModalContext.Provider value={modalContext}>
       <MinimalModalContext.Provider value={modalContext}>
-        <div className="min-h-screen bg-zinc-900">
+        <div className="min-h-screen bg-page">
           <MinimalSidebar />
 
-          {/* Main content - Fixed width sidebar (200px) */}
-          <main className="min-h-screen transition-all duration-200 pt-14 md:pt-0 md:ml-[200px]">
+          {/* Main content - Fixed width sidebar (220px) */}
+          <main className="min-h-screen transition-all duration-200 pt-14 md:pt-0 md:ml-[220px]">
             <div className="p-4 md:p-6 lg:p-8">
               {children}
             </div>
