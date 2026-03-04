@@ -1,11 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { 
+import {
   TrendingUp, AlertCircle, Target, CheckCircle2, Calendar, Info, X, Zap, BarChart3, Rocket, HelpCircle,
   Clock, Timer, Coffee, Activity, FileText, Download, ChevronRight, Flame, Award, PlayCircle, Pause, CalendarDays, Tag, FolderOpen
 } from 'lucide-react';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid, Area, AreaChart,
   PieChart, Pie, Cell, Legend, RadialBarChart, RadialBar
 } from 'recharts';
@@ -52,34 +52,34 @@ export default function ProgressPage() {
   const goalVelocityData = useMemo(() => {
     const data = [];
     const completedTasks = tasks.filter(t => t.completedAt);
-    
+
     // Calculate for the last 5 weeks
     for (let i = 4; i >= 0; i--) {
       const weekStart = startOfWeek(subWeeks(new Date(), i), { weekStartsOn: 1 });
       const weekEnd = new Date(weekStart);
       weekEnd.setDate(weekEnd.getDate() + 6);
       weekEnd.setHours(23, 59, 59, 999);
-      
+
       const weekNum = getWeek(weekStart, { weekStartsOn: 1 });
-      
+
       const completedInWeek = completedTasks.filter(t => {
         const completedDate = new Date(t.completedAt!);
         return completedDate >= weekStart && completedDate <= weekEnd;
       }).length;
-      
+
       // Calculate average as target (rolling average of previous weeks)
       const avgTarget = Math.round(completedTasks.length / 5) || 5;
-      
+
       data.push({
         week: `KW ${weekNum}`,
         actual: completedInWeek,
         target: avgTarget,
       });
     }
-    
+
     return data;
   }, [tasks]);
-  
+
   // Check if we have any velocity data
   const hasVelocityData = goalVelocityData.some(d => d.actual > 0);
 
@@ -108,25 +108,25 @@ export default function ProgressPage() {
     const today = new Date();
     const todayStart = startOfDay(today);
     const todayEnd = endOfDay(today);
-    
+
     // Aufgaben für heute
     const todaysTasks = tasks.filter(t => {
       if (!t.dueDate) return false;
       const due = new Date(t.dueDate);
       return due >= todayStart && due <= todayEnd && t.status !== 'completed';
     });
-    
+
     // Überfällige Aufgaben
     const overdueTasks = tasks.filter(t => {
       if (!t.dueDate || t.status === 'completed') return false;
       return new Date(t.dueDate) < todayStart;
     });
-    
+
     // Ziel-verbundene Aufgaben
     const goalTasks = todaysTasks.filter(t => t.goalId);
     const projectTasks = todaysTasks.filter(t => t.projectId && !t.goalId);
     const freeTasks = todaysTasks.filter(t => !t.goalId && !t.projectId);
-    
+
     // Gestern erledigte
     const yesterday = subDays(today, 1);
     const yesterdayStart = startOfDay(yesterday);
@@ -136,14 +136,14 @@ export default function ProgressPage() {
       const completed = new Date(t.completedAt);
       return completed >= yesterdayStart && completed <= yesterdayEnd;
     }).length;
-    
+
     // Heute erledigte
     const todayCompleted = tasks.filter(t => {
       if (!t.completedAt) return false;
       const completed = new Date(t.completedAt);
       return completed >= todayStart && completed <= todayEnd;
     }).length;
-    
+
     return {
       total: todaysTasks.length + overdueTasks.length,
       todayDue: todaysTasks.length,
@@ -196,8 +196,8 @@ export default function ProgressPage() {
     const focusSessions = weekEntries.filter(e => (e.duration || 0) >= 25).length;
 
     // Durchschnittliche Session-Länge
-    const avgSessionLength = weekEntries.length > 0 
-      ? Math.round(weekMinutes / weekEntries.length) 
+    const avgSessionLength = weekEntries.length > 0
+      ? Math.round(weekMinutes / weekEntries.length)
       : 0;
 
     // Streak: Aufeinanderfolgende Tage mit erledigten Aufgaben
@@ -206,7 +206,7 @@ export default function ProgressPage() {
       const checkDate = subDays(today, i);
       const dayStart = startOfDay(checkDate);
       const dayEnd = endOfDay(checkDate);
-      
+
       const hasCompletedTask = tasks.some(t => {
         if (!t.completedAt) return false;
         const completed = new Date(t.completedAt);
@@ -226,7 +226,7 @@ export default function ProgressPage() {
       const hour = new Date(t.completedAt!).getHours();
       hourCounts[hour] = (hourCounts[hour] || 0) + 1;
     });
-    
+
     const mostProductiveHour = Object.entries(hourCounts)
       .sort(([,a], [,b]) => b - a)[0];
 
@@ -236,14 +236,14 @@ export default function ProgressPage() {
       const date = subDays(today, i);
       const dayStart = startOfDay(date);
       const dayEnd = endOfDay(date);
-      
+
       const dayEntries = timeEntries.filter(e => {
         const start = new Date(e.startTime);
         return start >= dayStart && start <= dayEnd;
       });
-      
+
       const minutes = calculateTotalMinutes(dayEntries);
-      
+
       dailyFocusData.push({
         day: format(date, 'EEE', { locale: de }),
         minutes: minutes,
@@ -295,7 +295,7 @@ export default function ProgressPage() {
     // Nach Projekt gruppieren
     const byProject: Record<string, number> = {};
     completedThisWeek.forEach(t => {
-      const projectName = t.projectId 
+      const projectName = t.projectId
         ? (projects.find(p => p.id === t.projectId)?.title || 'Unbekannt')
         : 'Ohne Projekt';
       byProject[projectName] = (byProject[projectName] || 0) + 1;
@@ -304,7 +304,7 @@ export default function ProgressPage() {
     // Nach Ziel gruppieren
     const byGoal: Record<string, number> = {};
     completedThisWeek.forEach(t => {
-      const goalName = t.goalId 
+      const goalName = t.goalId
         ? (goals.find(g => g.id === t.goalId)?.title || 'Unbekannt')
         : 'Ohne Ziel';
       byGoal[goalName] = (byGoal[goalName] || 0) + 1;
@@ -334,7 +334,7 @@ export default function ProgressPage() {
     const dailyData = eachDayOfInterval({ start: targetWeekStart, end: targetWeekEnd }).map(date => {
       const dayStart = startOfDay(date);
       const dayEnd = endOfDay(date);
-      
+
       const completed = tasks.filter(t => {
         if (!t.completedAt) return false;
         const completedDate = new Date(t.completedAt);
@@ -365,7 +365,7 @@ export default function ProgressPage() {
       return completed >= prevWeekStart && completed <= prevWeekEnd;
     }).length;
 
-    const weekOverWeekChange = prevWeekCompleted > 0 
+    const weekOverWeekChange = prevWeekCompleted > 0
       ? Math.round(((completedThisWeek.length - prevWeekCompleted) / prevWeekCompleted) * 100)
       : completedThisWeek.length > 0 ? 100 : 0;
 
@@ -398,44 +398,52 @@ export default function ProgressPage() {
   const PRIORITY_COLORS = { high: '#ef4444', medium: '#f59e0b', low: '#22c55e', none: '#9ca3af' };
 
   return (
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto animate-fade-in-up">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Fortschritt</h1>
-        <p className="text-gray-500 mt-1">Deine Statistiken, Fokuszeit und Trends</p>
+        <div className="flex items-center gap-3 mb-1">
+          <div className="p-2 rounded-xl bg-gradient-to-br from-red-500 to-orange-500">
+            <TrendingUp size={20} className="text-white" />
+          </div>
+          <h1 className="text-3xl font-bold text-white tracking-tight">Fortschritt</h1>
+        </div>
+        <p style={{ color: 'rgba(255,255,255,0.6)' }} className="mt-1 ml-12">Deine Statistiken, Fokuszeit und Trends</p>
       </div>
 
       {/* Tab Navigation */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-6">
+      <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
         <button
           onClick={() => setActiveTab('overview')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
             activeTab === 'overview'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+              ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25'
+              : 'hover:bg-white/5'
           }`}
+          style={activeTab !== 'overview' ? { color: 'rgba(255,255,255,0.4)' } : undefined}
         >
           <BarChart3 size={16} />
           Übersicht
         </button>
         <button
           onClick={() => setActiveTab('focus')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
             activeTab === 'focus'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+              ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25'
+              : 'hover:bg-white/5'
           }`}
+          style={activeTab !== 'focus' ? { color: 'rgba(255,255,255,0.4)' } : undefined}
         >
           <Timer size={16} />
           Fokus-Statistik
         </button>
         <button
           onClick={() => setActiveTab('weekly')}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
             activeTab === 'weekly'
-              ? 'bg-white text-gray-900 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
+              ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/25'
+              : 'hover:bg-white/5'
           }`}
+          style={activeTab !== 'weekly' ? { color: 'rgba(255,255,255,0.4)' } : undefined}
         >
           <FileText size={16} />
           Wochenreport
@@ -447,367 +455,377 @@ export default function ProgressPage() {
         <>
           {/* Stats Grid */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-          <div className="flex items-center gap-2 text-gray-500 mb-2">
-            <CheckCircle2 size={16} />
-            <span className="text-sm font-medium">Erledigt</span>
-          </div>
-          <p className="text-2xl font-bold text-gray-900">{stats.completedTasks}</p>
-          <p className="text-xs text-gray-400 mt-1">von {stats.totalTasks}</p>
-        </div>
-
-        {/* Tagesziel mit Erklärung */}
-        <div 
-          className="relative p-5 bg-white border border-gray-200 rounded-xl cursor-pointer hover:shadow-md hover:border-indigo-200 transition-all group"
-          onClick={() => setShowGoalExplanation(!showGoalExplanation)}
-        >
-          <div className="flex items-center justify-between text-gray-500 mb-2">
-            <div className="flex items-center gap-2">
-              <Target size={16} />
-              <span className="text-sm font-medium">Tagesziel</span>
-            </div>
-            <HelpCircle size={12} className="opacity-0 group-hover:opacity-100 text-indigo-400 transition-opacity" />
-          </div>
-          <p className="text-2xl font-semibold text-[#37352f]">{dailyGoalBreakdown.total}</p>
-          <p className="text-xs text-[#9b9a97]">
-            {dailyGoalBreakdown.todayCompleted} erledigt
-          </p>
-          
-          {/* Hover Tooltip */}
-          {showGoalExplanation && (
-            <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 bg-white rounded-xl shadow-xl border border-gray-100 animate-fadeIn">
-              <div className="flex items-center justify-between mb-3">
-                <h4 className="font-semibold text-gray-800 flex items-center gap-2">
-                  <Target size={16} className="text-indigo-500" />
-                  Tagesziel-Zusammensetzung
-                </h4>
-                <button onClick={(e) => { e.stopPropagation(); setShowGoalExplanation(false); }} title="Schließen">
-                  <X size={14} className="text-gray-400 hover:text-gray-600" />
-                </button>
+            <div className="p-5 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <CheckCircle2 size={16} />
+                <span className="text-sm font-medium">Erledigt</span>
               </div>
-              
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span className="text-gray-600">📅 Heute fällig:</span>
-                  <span className="font-medium text-gray-800">{dailyGoalBreakdown.todayDue}</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span className="text-gray-600">⚠️ Überfällig:</span>
-                  <span className="font-medium text-red-600">{dailyGoalBreakdown.overdue}</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span className="text-gray-600">🎯 Für Ziele:</span>
-                  <span className="font-medium text-emerald-600">{dailyGoalBreakdown.goalTasks}</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span className="text-gray-600">📁 Für Projekte:</span>
-                  <span className="font-medium text-blue-600">{dailyGoalBreakdown.projectTasks}</span>
-                </div>
-                <div className="flex justify-between items-center py-1.5 border-b border-gray-50">
-                  <span className="text-gray-600">📝 Freie Aufgaben:</span>
-                  <span className="font-medium text-gray-600">{dailyGoalBreakdown.freeTasks}</span>
-                </div>
-                <div className="pt-2 mt-2 border-t border-gray-100">
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-gray-500">Gestern erledigt:</span>
-                    <span className="text-gray-700">{dailyGoalBreakdown.yesterdayCompleted}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-xs mt-1">
-                    <span className="text-gray-500">Heute erledigt:</span>
-                    <span className="text-emerald-600 font-medium">{dailyGoalBreakdown.todayCompleted}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-3 p-2 bg-indigo-50 rounded-lg">
-                <p className="text-xs text-indigo-600">
-                  💡 <strong>Tipp:</strong> Fokussiere dich auf ziel- und projektgebundene Aufgaben für maximale Produktivität!
-                </p>
-              </div>
+              <p className="text-2xl font-bold text-white">{stats.completedTasks}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>von {stats.totalTasks}</p>
             </div>
-          )}
-        </div>
 
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <div className="flex items-center gap-2 text-[#9b9a97] mb-2">
-            <TrendingUp size={14} />
-            <span className="text-xs font-medium">Ø pro Tag</span>
-          </div>
-          <p className="text-2xl font-semibold text-[#37352f]">{stats.avgCompletionRate}</p>
-          <p className="text-xs text-[#9b9a97]">letzte 7 Tage</p>
-        </div>
-
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <div className="flex items-center gap-2 text-[#9b9a97] mb-2">
-            <AlertCircle size={14} />
-            <span className="text-xs font-medium">Überfällig</span>
-          </div>
-          <p className="text-2xl font-semibold text-red-600">{stats.overdueTasks}</p>
-          <p className="text-xs text-[#9b9a97]">offen</p>
-        </div>
-      </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        {/* Daily Completed Tasks */}
-        <div className="p-4 border border-[#e9e9e7] rounded-md bg-white">
-          <h3 className="text-sm font-medium text-[#37352f] mb-4">
-            Erledigte Aufgaben pro Tag
-          </h3>
-          <div className="h-[200px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyCompletedData}>
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false} 
-                  tickLine={false}
-                  tick={{ fill: '#9b9a97', fontSize: 11 }}
-                />
-                <YAxis 
-                  axisLine={false} 
-                  tickLine={false}
-                  tick={{ fill: '#9b9a97', fontSize: 11 }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#fff', 
-                    border: '1px solid #e9e9e7',
-                    borderRadius: '4px',
-                    fontSize: '12px',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-                  }}
-                  formatter={(value) => [`${value} Aufgaben`, 'Erledigt']}
-                  labelFormatter={(label, payload) => payload[0]?.payload?.fullDate || label}
-                />
-                <Bar 
-                  dataKey="completed" 
-                  fill="#2383e2" 
-                  radius={[2, 2, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Goal Velocity - Clickable */}
-        <div 
-          className="p-4 border border-[#e9e9e7] rounded-md bg-white cursor-pointer hover:shadow-lg hover:border-indigo-200 transition-all duration-300 group"
-          onClick={() => setShowVelocityModal(true)}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-medium text-[#37352f]">
-              Ziel-Velocity (Aufgaben/Woche)
-            </h3>
-            <div className="flex items-center gap-1 text-xs text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Info size={14} />
-              <span>Mehr erfahren</span>
-            </div>
-          </div>
-          
-          {hasVelocityData ? (
-            <div className="h-[200px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={goalVelocityData}>
-                  <defs>
-                    <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0ef" />
-                  <XAxis 
-                    dataKey="week" 
-                    axisLine={false} 
-                    tickLine={false}
-                    tick={{ fill: '#9b9a97', fontSize: 11 }}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false}
-                    tick={{ fill: '#9b9a97', fontSize: 11 }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      border: '1px solid #e9e9e7',
-                      borderRadius: '8px',
-                      fontSize: '12px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="actual"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    fill="url(#velocityGradient)"
-                    name="Tatsächlich"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="target" 
-                    stroke="#d1d5db" 
-                    strokeWidth={2}
-                    strokeDasharray="5 5"
-                    dot={false}
-                    name="Ziel"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          ) : (
-            /* Empty State */
-            <div className="h-[200px] flex flex-col items-center justify-center text-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center mb-3">
-                <Rocket size={28} className="text-indigo-400" />
+            {/* Tagesziel mit Erklärung */}
+            <div
+              className="relative p-5 rounded-xl cursor-pointer transition-all hover:scale-[1.02] group"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onClick={() => setShowGoalExplanation(!showGoalExplanation)}
+            >
+              <div className="flex items-center justify-between mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <div className="flex items-center gap-2">
+                  <Target size={16} />
+                  <span className="text-sm font-medium">Tagesziel</span>
+                </div>
+                <HelpCircle size={12} className="opacity-0 group-hover:opacity-100 text-violet-400 transition-opacity" />
               </div>
-              <p className="text-sm font-medium text-gray-600 mb-1">Noch keine Velocity-Daten</p>
-              <p className="text-xs text-gray-400 max-w-[200px]">
-                Erledige Aufgaben, um deine wöchentliche Geschwindigkeit zu tracken
+              <p className="text-2xl font-semibold text-white">{dailyGoalBreakdown.total}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                {dailyGoalBreakdown.todayCompleted} erledigt
               </p>
+
+              {/* Hover Tooltip */}
+              {showGoalExplanation && (
+                <div className="absolute left-0 top-full mt-2 z-50 w-80 p-4 rounded-xl shadow-2xl animate-fadeIn" style={{ background: 'rgba(20,22,40,0.98)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-semibold text-white flex items-center gap-2">
+                      <Target size={16} className="text-violet-400" />
+                      Tagesziel-Zusammensetzung
+                    </h4>
+                    <button onClick={(e) => { e.stopPropagation(); setShowGoalExplanation(false); }} title="Schließen">
+                      <X size={14} style={{ color: 'rgba(255,255,255,0.4)' }} className="hover:text-white transition-colors" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>📅 Heute fällig:</span>
+                      <span className="font-medium text-white">{dailyGoalBreakdown.todayDue}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>⚠️ Überfällig:</span>
+                      <span className="font-medium text-red-400">{dailyGoalBreakdown.overdue}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>🎯 Für Ziele:</span>
+                      <span className="font-medium text-emerald-400">{dailyGoalBreakdown.goalTasks}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>📁 Für Projekte:</span>
+                      <span className="font-medium text-blue-400">{dailyGoalBreakdown.projectTasks}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.6)' }}>📝 Freie Aufgaben:</span>
+                      <span className="font-medium" style={{ color: 'rgba(255,255,255,0.7)' }}>{dailyGoalBreakdown.freeTasks}</span>
+                    </div>
+                    <div className="pt-2 mt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                      <div className="flex justify-between items-center text-xs">
+                        <span style={{ color: 'rgba(255,255,255,0.4)' }}>Gestern erledigt:</span>
+                        <span style={{ color: 'rgba(255,255,255,0.7)' }}>{dailyGoalBreakdown.yesterdayCompleted}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs mt-1">
+                        <span style={{ color: 'rgba(255,255,255,0.4)' }}>Heute erledigt:</span>
+                        <span className="text-emerald-400 font-medium">{dailyGoalBreakdown.todayCompleted}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 p-2 rounded-lg" style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)' }}>
+                    <p className="text-xs text-violet-300">
+                      💡 <strong>Tipp:</strong> Fokussiere dich auf ziel- und projektgebundene Aufgaben für maximale Produktivität!
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <TrendingUp size={14} />
+                <span className="text-xs font-medium">Ø pro Tag</span>
+              </div>
+              <p className="text-2xl font-semibold text-white">{stats.avgCompletionRate}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>letzte 7 Tage</p>
+            </div>
+
+            <div className="p-4 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                <AlertCircle size={14} />
+                <span className="text-xs font-medium">Überfällig</span>
+              </div>
+              <p className="text-2xl font-semibold text-red-400">{stats.overdueTasks}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>offen</p>
+            </div>
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {/* Daily Completed Tasks */}
+            <div className="p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-medium text-white mb-4">
+                Erledigte Aufgaben pro Tag
+              </h3>
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dailyCompletedData}>
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(20,22,40,0.95)',
+                        border: '1px solid rgba(255,255,255,0.12)',
+                        borderRadius: '8px',
+                        fontSize: '12px',
+                        color: '#ffffff',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                      }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
+                      formatter={(value) => [`${value} Aufgaben`, 'Erledigt']}
+                      labelFormatter={(label, payload) => payload[0]?.payload?.fullDate || label}
+                    />
+                    <Bar
+                      dataKey="completed"
+                      fill="#7c3aed"
+                      radius={[4, 4, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Goal Velocity - Clickable */}
+            <div
+              className="p-4 rounded-xl cursor-pointer transition-all duration-300 group hover:scale-[1.01]"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+              onClick={() => setShowVelocityModal(true)}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-medium text-white">
+                  Ziel-Velocity (Aufgaben/Woche)
+                </h3>
+                <div className="flex items-center gap-1 text-xs text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Info size={14} />
+                  <span>Mehr erfahren</span>
+                </div>
+              </div>
+
+              {hasVelocityData ? (
+                <div className="h-[200px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={goalVelocityData}>
+                      <defs>
+                        <linearGradient id="velocityGradient" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                      <XAxis
+                        dataKey="week"
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                      />
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(20,22,40,0.95)',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          color: '#ffffff',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
+                        }}
+                        labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="actual"
+                        stroke="#7c3aed"
+                        strokeWidth={2}
+                        fill="url(#velocityGradient)"
+                        name="Tatsächlich"
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="target"
+                        stroke="rgba(255,255,255,0.25)"
+                        strokeWidth={2}
+                        strokeDasharray="5 5"
+                        dot={false}
+                        name="Ziel"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                /* Empty State */
+                <div className="h-[200px] flex flex-col items-center justify-center text-center">
+                  <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-3" style={{ background: 'rgba(124,58,237,0.15)' }}>
+                    <Rocket size={28} className="text-violet-400" />
+                  </div>
+                  <p className="text-sm font-medium mb-1" style={{ color: 'rgba(255,255,255,0.6)' }}>Noch keine Velocity-Daten</p>
+                  <p className="text-xs max-w-[200px]" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                    Erledige Aufgaben, um deine wöchentliche Geschwindigkeit zu tracken
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Velocity Explanation Modal */}
+          {showVelocityModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fadeIn" style={{ background: 'rgba(0,0,0,0.7)' }}>
+              <div className="rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp" style={{ background: 'rgba(20,22,40,0.98)', border: '1px solid rgba(255,255,255,0.12)' }}>
+                {/* Modal Header */}
+                <div className="bg-gradient-to-r from-violet-600 to-purple-600 p-6 text-white">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                        <Zap size={24} />
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold">Velocity erklärt</h3>
+                        <p className="text-white/70 text-sm">Deine Produktivitäts-Metrik</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setShowVelocityModal(false)}
+                      className="p-2 rounded-lg transition-colors hover:bg-white/20"
+                      title="Schließen"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg mt-0.5" style={{ background: 'rgba(124,58,237,0.2)' }}>
+                      <BarChart3 size={16} className="text-violet-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white mb-1">Was ist Velocity?</h4>
+                      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Velocity misst, wie viele Aufgaben du pro Woche erledigst.
+                        Sie hilft dir, deine Produktivität zu verstehen und realistische Ziele zu setzen.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg mt-0.5" style={{ background: 'rgba(16,185,129,0.15)' }}>
+                      <TrendingUp size={16} className="text-emerald-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white mb-1">So wird sie berechnet</h4>
+                      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Wir zählen alle abgeschlossenen Aufgaben pro Kalenderwoche.
+                        Die gestrichelte Linie zeigt deinen Durchschnitt als Zielwert.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="p-2 rounded-lg mt-0.5" style={{ background: 'rgba(245,158,11,0.15)' }}>
+                      <Target size={16} className="text-amber-400" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-white mb-1">Warum ist das wichtig?</h4>
+                      <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        Eine stabile Velocity hilft dir, Projekte besser zu planen.
+                        Schwankungen zeigen, wann du überlastet warst oder freie Kapazität hattest.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.25)' }}>
+                    <p className="text-sm text-violet-300 font-medium">
+                      💡 Tipp: Versuche, deine Velocity stabil zu halten statt sie zu maximieren.
+                      Konsistenz schlägt Intensität!
+                    </p>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="px-6 pb-6">
+                  <button
+                    onClick={() => setShowVelocityModal(false)}
+                    className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-semibold rounded-xl hover:from-violet-700 hover:to-purple-700 transition-all shadow-lg shadow-violet-500/25"
+                  >
+                    Verstanden!
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Velocity Explanation Modal */}
-      {showVelocityModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-slideUp">
-            {/* Modal Header */}
-            <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white/20 rounded-xl">
-                    <Zap size={24} />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-bold">Velocity erklärt</h3>
-                    <p className="text-white/70 text-sm">Deine Produktivitäts-Metrik</p>
-                  </div>
-                </div>
-                <button 
-                  onClick={() => setShowVelocityModal(false)}
-                  className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-                  title="Schließen"
-                >
-                  <X size={20} />
-                </button>
-              </div>
+          {/* Goal Progress */}
+          <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.03)' }}>
+            <div className="p-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-medium text-white">Ziel-Fortschritt</h3>
             </div>
-            
-            {/* Modal Content */}
-            <div className="p-6 space-y-4">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-indigo-100 rounded-lg mt-0.5">
-                  <BarChart3 size={16} className="text-indigo-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-1">Was ist Velocity?</h4>
-                  <p className="text-sm text-gray-600">
-                    Velocity misst, wie viele Aufgaben du pro Woche erledigst. 
-                    Sie hilft dir, deine Produktivität zu verstehen und realistische Ziele zu setzen.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-emerald-100 rounded-lg mt-0.5">
-                  <TrendingUp size={16} className="text-emerald-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-1">So wird sie berechnet</h4>
-                  <p className="text-sm text-gray-600">
-                    Wir zählen alle abgeschlossenen Aufgaben pro Kalenderwoche. 
-                    Die gestrichelte Linie zeigt deinen Durchschnitt als Zielwert.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-100 rounded-lg mt-0.5">
-                  <Target size={16} className="text-amber-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-800 mb-1">Warum ist das wichtig?</h4>
-                  <p className="text-sm text-gray-600">
-                    Eine stabile Velocity hilft dir, Projekte besser zu planen. 
-                    Schwankungen zeigen, wann du überlastet warst oder freie Kapazität hattest.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
-                <p className="text-sm text-indigo-700 font-medium">
-                  💡 Tipp: Versuche, deine Velocity stabil zu halten statt sie zu maximieren. 
-                  Konsistenz schlägt Intensität!
-                </p>
-              </div>
-            </div>
-            
-            {/* Modal Footer */}
-            <div className="px-6 pb-6">
-              <button
-                onClick={() => setShowVelocityModal(false)}
-                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-600 hover:to-purple-700 transition-all shadow-lg shadow-indigo-500/25"
-              >
-                Verstanden!
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
-      {/* Goal Progress */}
-      <div className="border border-[#e9e9e7] rounded-md bg-white">
-        <div className="p-4 border-b border-[#e9e9e7]">
-          <h3 className="text-sm font-medium text-[#37352f]">Ziel-Fortschritt</h3>
-        </div>
-        
-        {activeGoals.length === 0 ? (
-          <div className="p-8 text-center">
-            <Target size={32} className="mx-auto text-[#c3c3c1] mb-2" />
-            <p className="text-sm text-[#9b9a97]">Keine aktiven Ziele</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[#f0f0ef]">
-            {activeGoals.map((goal) => {
-              const goalTasks = tasks.filter(t => t.goalId === goal.id);
-              const completedGoalTasks = goalTasks.filter(t => t.status === 'completed').length;
-              const progress = goalTasks.length > 0 
-                ? Math.round((completedGoalTasks / goalTasks.length) * 100) 
-                : 0;
+            {activeGoals.length === 0 ? (
+              <div className="p-8 text-center">
+                <Target size={32} className="mx-auto mb-2" style={{ color: 'rgba(255,255,255,0.2)' }} />
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>Keine aktiven Ziele</p>
+              </div>
+            ) : (
+              <div>
+                {activeGoals.map((goal, idx) => {
+                  const goalTasks = tasks.filter(t => t.goalId === goal.id);
+                  const completedGoalTasks = goalTasks.filter(t => t.status === 'completed').length;
+                  const progress = goalTasks.length > 0
+                    ? Math.round((completedGoalTasks / goalTasks.length) * 100)
+                    : 0;
 
-              return (
-                <div key={goal.id} className="p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <div 
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: goal.color }}
-                      />
-                      <span className="text-sm font-medium text-[#37352f]">{goal.title}</span>
+                  return (
+                    <div
+                      key={goal.id}
+                      className="p-4"
+                      style={idx < activeGoals.length - 1 ? { borderBottom: '1px solid rgba(255,255,255,0.05)' } : undefined}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className="w-2 h-2 rounded-full"
+                            style={{ backgroundColor: goal.color }}
+                          />
+                          <span className="text-sm font-medium text-white">{goal.title}</span>
+                        </div>
+                        <span className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{progress}%</span>
+                      </div>
+                      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div
+                          className="h-full rounded-full transition-all"
+                          style={{
+                            width: `${progress}%`,
+                            backgroundColor: goal.color
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                        {completedGoalTasks} von {goalTasks.length} Aufgaben erledigt
+                      </p>
                     </div>
-                    <span className="text-sm text-[#6b6b6b]">{progress}%</span>
-                  </div>
-                  <div className="h-1.5 bg-[#f0f0ef] rounded-full overflow-hidden">
-                    <div 
-                      className="h-full rounded-full transition-all"
-                      style={{ 
-                        width: `${progress}%`,
-                        backgroundColor: goal.color
-                      }}
-                    />
-                  </div>
-                  <p className="text-xs text-[#9b9a97] mt-1">
-                    {completedGoalTasks} von {goalTasks.length} Aufgaben erledigt
-                  </p>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </div>
-        )}
-      </div>
         </>
       )}
 
@@ -816,87 +834,89 @@ export default function ProgressPage() {
         <>
           {/* Fokus Stats Grid */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <Timer size={16} />
                 <span className="text-sm font-medium">Heute</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
-                {focusStats.todayMinutes >= 60 
+              <p className="text-2xl font-bold text-white">
+                {focusStats.todayMinutes >= 60
                   ? `${Math.floor(focusStats.todayMinutes / 60)}h ${focusStats.todayMinutes % 60}m`
                   : `${focusStats.todayMinutes}m`
                 }
               </p>
-              <p className="text-xs text-gray-400 mt-1">Fokuszeit</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Fokuszeit</p>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <Clock size={16} />
                 <span className="text-sm font-medium">Diese Woche</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
-                {focusStats.weekMinutes >= 60 
+              <p className="text-2xl font-bold text-white">
+                {focusStats.weekMinutes >= 60
                   ? `${Math.floor(focusStats.weekMinutes / 60)}h`
                   : `${focusStats.weekMinutes}m`
                 }
               </p>
-              <p className="text-xs text-gray-400 mt-1">Gesamt</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Gesamt</p>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <Flame size={16} />
                 <span className="text-sm font-medium">Streak</span>
               </div>
-              <p className="text-2xl font-bold text-orange-500">{focusStats.streak}</p>
-              <p className="text-xs text-gray-400 mt-1">Tage in Folge</p>
+              <p className="text-2xl font-bold text-orange-400">{focusStats.streak}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Tage in Folge</p>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl hover:shadow-md transition-all">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl transition-all hover:scale-[1.02]" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <PlayCircle size={16} />
                 <span className="text-sm font-medium">Sessions</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{focusStats.focusSessions}</p>
-              <p className="text-xs text-gray-400 mt-1">Diese Woche (≥25min)</p>
+              <p className="text-2xl font-bold text-white">{focusStats.focusSessions}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Diese Woche (≥25min)</p>
             </div>
           </div>
 
           {/* Charts Row */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Tägliche Fokuszeit */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Fokuszeit pro Tag</h3>
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4">Fokuszeit pro Tag</h3>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={focusStats.dailyFocusData}>
-                    <XAxis 
-                      dataKey="day" 
-                      axisLine={false} 
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     />
-                    <YAxis 
-                      axisLine={false} 
+                    <YAxis
+                      axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                       tickFormatter={(value) => `${value}m`}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb',
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(20,22,40,0.95)',
+                        border: '1px solid rgba(255,255,255,0.12)',
                         borderRadius: '8px',
                         fontSize: '12px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        color: '#ffffff',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                       }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
                       formatter={(value) => [`${value} Minuten`, 'Fokuszeit']}
                       labelFormatter={(label, payload) => payload[0]?.payload?.fullDate || label}
                     />
-                    <Bar 
-                      dataKey="minutes" 
-                      fill="#6366f1" 
+                    <Bar
+                      dataKey="minutes"
+                      fill="#7c3aed"
                       radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
@@ -905,45 +925,45 @@ export default function ProgressPage() {
             </div>
 
             {/* Produktivitäts-Insights */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Produktivitäts-Insights</h3>
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4">Produktivitäts-Insights</h3>
               <div className="space-y-4">
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-3 bg-indigo-100 rounded-xl">
-                    <Clock size={20} className="text-indigo-600" />
+                <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="p-3 rounded-xl" style={{ background: 'rgba(124,58,237,0.2)' }}>
+                    <Clock size={20} className="text-violet-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">Ø Session-Länge</p>
-                    <p className="text-xl font-bold text-gray-900">{focusStats.avgSessionLength} Minuten</p>
+                    <p className="text-sm font-medium text-white">Ø Session-Länge</p>
+                    <p className="text-xl font-bold text-white">{focusStats.avgSessionLength} Minuten</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-3 bg-emerald-100 rounded-xl">
-                    <Zap size={20} className="text-emerald-600" />
+                <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="p-3 rounded-xl" style={{ background: 'rgba(16,185,129,0.15)' }}>
+                    <Zap size={20} className="text-emerald-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">Produktivste Stunde</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {focusStats.mostProductiveHour !== null 
+                    <p className="text-sm font-medium text-white">Produktivste Stunde</p>
+                    <p className="text-xl font-bold text-white">
+                      {focusStats.mostProductiveHour !== null
                         ? `${focusStats.mostProductiveHour}:00 - ${focusStats.mostProductiveHour + 1}:00 Uhr`
                         : 'Noch keine Daten'
                       }
                     </p>
                     {focusStats.mostProductiveCount > 0 && (
-                      <p className="text-xs text-gray-500 mt-0.5">{focusStats.mostProductiveCount} Aufgaben erledigt</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>{focusStats.mostProductiveCount} Aufgaben erledigt</p>
                     )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
-                  <div className="p-3 bg-purple-100 rounded-xl">
-                    <CalendarDays size={20} className="text-purple-600" />
+                <div className="flex items-center gap-4 p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.04)' }}>
+                  <div className="p-3 rounded-xl" style={{ background: 'rgba(168,85,247,0.15)' }}>
+                    <CalendarDays size={20} className="text-purple-400" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-800">Monatliche Fokuszeit</p>
-                    <p className="text-xl font-bold text-gray-900">
-                      {focusStats.monthMinutes >= 60 
+                    <p className="text-sm font-medium text-white">Monatliche Fokuszeit</p>
+                    <p className="text-xl font-bold text-white">
+                      {focusStats.monthMinutes >= 60
                         ? `${Math.floor(focusStats.monthMinutes / 60)}h ${focusStats.monthMinutes % 60}m`
                         : `${focusStats.monthMinutes}m`
                       }
@@ -955,15 +975,15 @@ export default function ProgressPage() {
           </div>
 
           {/* Tipps */}
-          <div className="p-5 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl">
+          <div className="p-5 rounded-xl" style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(124,58,237,0.2)' }}>
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-white rounded-xl shadow-sm">
-                <Activity size={24} className="text-indigo-600" />
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                <Activity size={24} className="text-violet-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">💡 Fokus-Tipp</h3>
-                <p className="text-sm text-gray-600">
-                  {focusStats.streak >= 7 
+                <h3 className="font-semibold text-white mb-2">💡 Fokus-Tipp</h3>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  {focusStats.streak >= 7
                     ? `Fantastisch! Du hast einen ${focusStats.streak}-Tage-Streak. Halte diesen Momentum aufrecht!`
                     : focusStats.focusSessions >= 5
                     ? 'Du hast diese Woche gute Fokus-Sessions absolviert. Versuche, mindestens 4 Stunden pro Woche zu fokussieren.'
@@ -984,16 +1004,17 @@ export default function ProgressPage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setSelectedWeek(prev => prev + 1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 rounded-lg transition-colors hover:bg-white/5"
+                style={{ color: 'rgba(255,255,255,0.6)' }}
                 title="Vorherige Woche"
               >
-                <ChevronRight size={20} className="text-gray-500 rotate-180" />
+                <ChevronRight size={20} className="rotate-180" />
               </button>
               <div className="text-center">
-                <h2 className="font-semibold text-gray-800">
+                <h2 className="font-semibold text-white">
                   KW {weeklyReport.weekNumber}
                 </h2>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   {format(weeklyReport.weekStart, 'dd.MM.', { locale: de })} - {format(weeklyReport.weekEnd, 'dd.MM.yyyy', { locale: de })}
                 </p>
               </div>
@@ -1001,8 +1022,9 @@ export default function ProgressPage() {
                 onClick={() => setSelectedWeek(prev => Math.max(0, prev - 1))}
                 disabled={selectedWeek === 0}
                 className={`p-2 rounded-lg transition-colors ${
-                  selectedWeek === 0 ? 'text-gray-300 cursor-not-allowed' : 'hover:bg-gray-100 text-gray-500'
+                  selectedWeek === 0 ? 'cursor-not-allowed opacity-30' : 'hover:bg-white/5'
                 }`}
+                style={{ color: 'rgba(255,255,255,0.6)' }}
                 title="Nächste Woche"
               >
                 <ChevronRight size={20} />
@@ -1010,7 +1032,7 @@ export default function ProgressPage() {
             </div>
 
             {selectedWeek === 0 && (
-              <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-medium rounded-full">
+              <span className="px-3 py-1 text-xs font-medium rounded-full" style={{ background: 'rgba(16,185,129,0.15)', color: '#34d399', border: '1px solid rgba(16,185,129,0.25)' }}>
                 Aktuelle Woche
               </span>
             )}
@@ -1018,101 +1040,105 @@ export default function ProgressPage() {
 
           {/* Week Stats Grid */}
           <div className="grid grid-cols-4 gap-4 mb-6">
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <CheckCircle2 size={16} />
                 <span className="text-sm font-medium">Erledigt</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{weeklyReport.completed}</p>
+              <p className="text-2xl font-bold text-white">{weeklyReport.completed}</p>
               <div className="flex items-center gap-1 mt-1">
                 {weeklyReport.weekOverWeekChange !== 0 && (
                   <span className={`text-xs font-medium ${
-                    weeklyReport.weekOverWeekChange > 0 ? 'text-green-600' : 'text-red-500'
+                    weeklyReport.weekOverWeekChange > 0 ? 'text-emerald-400' : 'text-red-400'
                   }`}>
                     {weeklyReport.weekOverWeekChange > 0 ? '+' : ''}{weeklyReport.weekOverWeekChange}%
                   </span>
                 )}
-                <span className="text-xs text-gray-400">vs. Vorwoche</span>
+                <span className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>vs. Vorwoche</span>
               </div>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <Target size={16} />
                 <span className="text-sm font-medium">Erstellt</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{weeklyReport.created}</p>
-              <p className="text-xs text-gray-400 mt-1">neue Aufgaben</p>
+              <p className="text-2xl font-bold text-white">{weeklyReport.created}</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>neue Aufgaben</p>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <Timer size={16} />
                 <span className="text-sm font-medium">Fokuszeit</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">
-                {weeklyReport.totalMinutes >= 60 
+              <p className="text-2xl font-bold text-white">
+                {weeklyReport.totalMinutes >= 60
                   ? `${Math.floor(weeklyReport.totalMinutes / 60)}h`
                   : `${weeklyReport.totalMinutes}m`
                 }
               </p>
-              <p className="text-xs text-gray-400 mt-1">getrackt</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>getrackt</p>
             </div>
 
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <div className="flex items-center gap-2 text-gray-500 mb-2">
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div className="flex items-center gap-2 mb-2" style={{ color: 'rgba(255,255,255,0.6)' }}>
                 <TrendingUp size={16} />
                 <span className="text-sm font-medium">Balance</span>
               </div>
               <p className={`text-2xl font-bold ${
-                weeklyReport.completed >= weeklyReport.created ? 'text-green-600' : 'text-orange-500'
+                weeklyReport.completed >= weeklyReport.created ? 'text-emerald-400' : 'text-orange-400'
               }`}>
                 {weeklyReport.completed >= weeklyReport.created ? '+' : ''}{weeklyReport.completed - weeklyReport.created}
               </p>
-              <p className="text-xs text-gray-400 mt-1">Erledigt vs. Erstellt</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.35)' }}>Erledigt vs. Erstellt</p>
             </div>
           </div>
 
           {/* Charts Row */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* Daily Breakdown */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Täglicher Verlauf</h3>
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4">Täglicher Verlauf</h3>
               <div className="h-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyReport.dailyData}>
-                    <XAxis 
-                      dataKey="day" 
-                      axisLine={false} 
+                    <XAxis
+                      dataKey="day"
+                      axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     />
-                    <YAxis 
-                      axisLine={false} 
+                    <YAxis
+                      axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#9b9a97', fontSize: 11 }}
+                      tick={{ fill: 'rgba(255,255,255,0.4)', fontSize: 11 }}
                     />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: '#fff', 
-                        border: '1px solid #e5e7eb',
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: 'rgba(20,22,40,0.95)',
+                        border: '1px solid rgba(255,255,255,0.12)',
                         borderRadius: '8px',
                         fontSize: '12px',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                        color: '#ffffff',
+                        boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                       }}
+                      labelStyle={{ color: 'rgba(255,255,255,0.6)' }}
                       labelFormatter={(label, payload) => payload[0]?.payload?.fullDate || label}
                     />
                     <Bar dataKey="completed" name="Erledigt" fill="#22c55e" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="created" name="Erstellt" fill="#6366f1" radius={[4, 4, 0, 0]} />
-                    <Legend />
+                    <Bar dataKey="created" name="Erstellt" fill="#7c3aed" radius={[4, 4, 0, 0]} />
+                    <Legend
+                      formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>{value}</span>}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* By Project Pie */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Nach Projekt</h3>
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4">Nach Projekt</h3>
               {projectPieData.length > 0 ? (
                 <div className="h-[220px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -1130,29 +1156,31 @@ export default function ProgressPage() {
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: '#fff', 
-                          border: '1px solid #e5e7eb',
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'rgba(20,22,40,0.95)',
+                          border: '1px solid rgba(255,255,255,0.12)',
                           borderRadius: '8px',
-                          fontSize: '12px'
+                          fontSize: '12px',
+                          color: '#ffffff',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.4)'
                         }}
                         formatter={(value) => [`${value} Aufgaben`, '']}
                       />
-                      <Legend 
-                        layout="vertical" 
-                        align="right" 
+                      <Legend
+                        layout="vertical"
+                        align="right"
                         verticalAlign="middle"
                         iconType="circle"
                         iconSize={8}
-                        formatter={(value) => <span className="text-xs text-gray-600">{value}</span>}
+                        formatter={(value) => <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>{value}</span>}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
                 <div className="h-[220px] flex items-center justify-center">
-                  <p className="text-sm text-gray-400">Keine Daten</p>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Keine Daten</p>
                 </div>
               )}
             </div>
@@ -1161,9 +1189,9 @@ export default function ProgressPage() {
           {/* Priority & Tags Breakdown */}
           <div className="grid grid-cols-2 gap-4 mb-6">
             {/* By Priority */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <AlertCircle size={16} className="text-gray-400" />
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <AlertCircle size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
                 Nach Priorität
               </h3>
               <div className="space-y-3">
@@ -1178,11 +1206,11 @@ export default function ProgressPage() {
                   return (
                     <div key={key}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm text-gray-600">{label}</span>
-                        <span className="text-sm font-medium text-gray-800">{value}</span>
+                        <span className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>{label}</span>
+                        <span className="text-sm font-medium text-white">{value}</span>
                       </div>
-                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
+                      <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
+                        <div
                           className="h-full rounded-full transition-all"
                           style={{ width: `${percentage}%`, backgroundColor: color }}
                         />
@@ -1194,9 +1222,9 @@ export default function ProgressPage() {
             </div>
 
             {/* By Goal */}
-            <div className="p-5 bg-white border border-gray-200 rounded-xl">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Target size={16} className="text-gray-400" />
+            <div className="p-5 rounded-xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <Target size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
                 Nach Ziel
               </h3>
               {Object.keys(weeklyReport.byGoal).length > 0 ? (
@@ -1207,15 +1235,15 @@ export default function ProgressPage() {
                     .map(([name, count]) => {
                       const goal = goals.find(g => g.title === name);
                       return (
-                        <div key={name} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div key={name} className="flex items-center justify-between p-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.04)' }}>
                           <div className="flex items-center gap-2">
-                            <div 
+                            <div
                               className="w-2 h-2 rounded-full"
-                              style={{ backgroundColor: goal?.color || '#6b7280' }}
+                              style={{ backgroundColor: goal?.color || 'rgba(255,255,255,0.3)' }}
                             />
-                            <span className="text-sm text-gray-700 truncate max-w-[150px]">{name}</span>
+                            <span className="text-sm truncate max-w-[150px]" style={{ color: 'rgba(255,255,255,0.7)' }}>{name}</span>
                           </div>
-                          <span className="text-sm font-semibold text-gray-900">{count}</span>
+                          <span className="text-sm font-semibold text-white">{count}</span>
                         </div>
                       );
                     })
@@ -1223,7 +1251,7 @@ export default function ProgressPage() {
                 </div>
               ) : (
                 <div className="h-[140px] flex items-center justify-center">
-                  <p className="text-sm text-gray-400">Keine ziel-gebundenen Aufgaben</p>
+                  <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>Keine ziel-gebundenen Aufgaben</p>
                 </div>
               )}
             </div>
@@ -1231,9 +1259,9 @@ export default function ProgressPage() {
 
           {/* Tags Overview */}
           {Object.keys(weeklyReport.byTag).length > 0 && (
-            <div className="p-5 bg-white border border-gray-200 rounded-xl mb-6">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                <Tag size={16} className="text-gray-400" />
+            <div className="p-5 rounded-xl mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 className="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                <Tag size={16} style={{ color: 'rgba(255,255,255,0.4)' }} />
                 Verwendete Tags
               </h3>
               <div className="flex flex-wrap gap-2">
@@ -1242,12 +1270,12 @@ export default function ProgressPage() {
                   .map(([tagName, count]) => {
                     const tag = tags.find(t => t.name === tagName);
                     return (
-                      <span 
+                      <span
                         key={tagName}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm"
-                        style={{ 
-                          backgroundColor: tag?.color ? `${tag.color}20` : '#f3f4f6',
-                          color: tag?.color || '#6b7280'
+                        style={{
+                          backgroundColor: tag?.color ? `${tag.color}25` : 'rgba(255,255,255,0.08)',
+                          color: tag?.color || 'rgba(255,255,255,0.6)'
                         }}
                       >
                         {tagName}
@@ -1261,17 +1289,17 @@ export default function ProgressPage() {
           )}
 
           {/* Weekly Summary */}
-          <div className="p-5 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-100 rounded-xl">
+          <div className="p-5 rounded-xl" style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-white rounded-xl shadow-sm">
-                <Award size={24} className="text-emerald-600" />
+              <div className="p-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                <Award size={24} className="text-emerald-400" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800 mb-2">Wochenzusammenfassung</h3>
-                <p className="text-sm text-gray-600">
-                  {weeklyReport.completed === 0 
+                <h3 className="font-semibold text-white mb-2">Wochenzusammenfassung</h3>
+                <p className="text-sm" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                  {weeklyReport.completed === 0
                     ? 'In dieser Woche wurden noch keine Aufgaben erledigt.'
-                    : weeklyReport.weekOverWeekChange > 0 
+                    : weeklyReport.weekOverWeekChange > 0
                     ? `Super! Du hast ${weeklyReport.completed} Aufgaben erledigt - das sind ${weeklyReport.weekOverWeekChange}% mehr als letzte Woche!`
                     : weeklyReport.weekOverWeekChange < 0
                     ? `Du hast ${weeklyReport.completed} Aufgaben erledigt. Letzte Woche waren es ${weeklyReport.prevWeekCompleted}.`

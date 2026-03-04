@@ -14,59 +14,59 @@ interface TaskModalProps {
 }
 
 const impactOptions: { value: TaskImpact; label: string; description: string; icon: React.ReactNode; color: string; bgGradient: string }[] = [
-  { 
-    value: 'goal-advancing', 
-    label: 'Ziel-fördernd', 
+  {
+    value: 'goal-advancing',
+    label: 'Ziel-fördernd',
     description: 'Bringt mich meinem Ziel direkt näher',
     icon: <Target size={18} />,
-    color: 'text-emerald-600',
-    bgGradient: 'from-emerald-50 to-emerald-100 border-emerald-200 hover:border-emerald-400'
+    color: 'text-emerald-400',
+    bgGradient: 'border-emerald-500/20 hover:border-emerald-500/40'
   },
-  { 
-    value: 'urgent-important', 
-    label: 'Dringend & Wichtig', 
+  {
+    value: 'urgent-important',
+    label: 'Dringend & Wichtig',
     description: 'Muss heute erledigt werden, hohe Priorität',
     icon: <AlertTriangle size={18} />,
-    color: 'text-red-600',
-    bgGradient: 'from-red-50 to-red-100 border-red-200 hover:border-red-400'
+    color: 'text-red-400',
+    bgGradient: 'border-red-500/20 hover:border-red-500/40'
   },
-  { 
-    value: 'urgent-not-important', 
-    label: 'Dringend, nicht wichtig', 
+  {
+    value: 'urgent-not-important',
+    label: 'Dringend, nicht wichtig',
     description: 'Zeitkritisch, aber delegierbar',
     icon: <Clock size={18} />,
-    color: 'text-amber-600',
-    bgGradient: 'from-amber-50 to-amber-100 border-amber-200 hover:border-amber-400'
+    color: 'text-amber-400',
+    bgGradient: 'border-amber-500/20 hover:border-amber-500/40'
   },
-  { 
-    value: 'maintenance', 
-    label: 'Routine/Wartung', 
+  {
+    value: 'maintenance',
+    label: 'Routine/Wartung',
     description: 'Notwendig, aber nicht transformativ',
     icon: <Zap size={18} />,
-    color: 'text-blue-600',
-    bgGradient: 'from-blue-50 to-blue-100 border-blue-200 hover:border-blue-400'
+    color: 'text-blue-400',
+    bgGradient: 'border-blue-500/20 hover:border-blue-500/40'
   },
-  { 
-    value: 'filler', 
-    label: 'Lückenfüller', 
+  {
+    value: 'filler',
+    label: 'Lückenfüller',
     description: 'Nice-to-have, wenn Zeit übrig ist',
     icon: <Coffee size={18} />,
-    color: 'text-gray-500',
-    bgGradient: 'from-gray-50 to-gray-100 border-gray-200 hover:border-gray-400'
+    color: 'text-white/40',
+    bgGradient: 'border-white/10 hover:border-white/20'
   },
 ];
 
 const energyOptions = [
-  { value: 'low', label: 'Niedrig', emoji: '😴', description: 'Kann ich auch müde erledigen', color: 'from-slate-50 to-slate-100 border-slate-200' },
-  { value: 'medium', label: 'Mittel', emoji: '🙂', description: 'Braucht etwas Konzentration', color: 'from-blue-50 to-blue-100 border-blue-200' },
-  { value: 'high', label: 'Hoch', emoji: '⚡', description: 'Braucht volle Aufmerksamkeit', color: 'from-amber-50 to-amber-100 border-amber-200' },
+  { value: 'low', label: 'Niedrig', emoji: '😴', description: 'Kann ich auch müde erledigen', color: 'border-white/10' },
+  { value: 'medium', label: 'Mittel', emoji: '🙂', description: 'Braucht etwas Konzentration', color: 'border-blue-500/20' },
+  { value: 'high', label: 'Hoch', emoji: '⚡', description: 'Braucht volle Aufmerksamkeit', color: 'border-amber-500/20' },
 ];
 
 const priorityOptions = [
-  { value: 'low', label: 'Niedrig', color: 'bg-gray-100 text-gray-600 border-gray-200', icon: '○' },
-  { value: 'medium', label: 'Mittel', color: 'bg-blue-100 text-blue-600 border-blue-200', icon: '◐' },
-  { value: 'high', label: 'Hoch', color: 'bg-orange-100 text-orange-600 border-orange-200', icon: '◉' },
-  { value: 'urgent', label: 'Dringend', color: 'bg-red-100 text-red-600 border-red-200', icon: '●' },
+  { value: 'low', label: 'Niedrig', color: 'bg-white/08 text-white/50 border-white/10', icon: '○' },
+  { value: 'medium', label: 'Mittel', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: '◐' },
+  { value: 'high', label: 'Hoch', color: 'bg-orange-500/20 text-orange-400 border-orange-500/30', icon: '◉' },
+  { value: 'urgent', label: 'Dringend', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: '●' },
 ];
 
 export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
@@ -352,9 +352,9 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
     >
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Header Section - Title & Description */}
-        <div className="space-y-4 p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100">
+        <div className="space-y-4 p-4 rounded-xl border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="relative">
-            <div className="absolute left-3 top-3 text-indigo-500">
+            <div className="absolute left-3 top-3 text-violet-400">
               <Sparkles size={18} />
             </div>
             <input
@@ -364,9 +364,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               onChange={(e) => setTitle(e.target.value)}
               required
               autoFocus
-              className="w-full pl-11 pr-4 py-3 text-base font-medium text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                         placeholder:text-gray-400 transition-all"
+              className="w-full pl-11 pr-4 py-3 text-base font-medium text-white rounded-lg border border-white/10
+                         focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
+                         placeholder:text-white/25 transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)' }}
             />
           </div>
 
@@ -375,9 +376,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
-            className="w-full px-4 py-3 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg resize-none
-                       focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                       placeholder:text-gray-400 transition-all"
+            className="w-full px-4 py-3 text-sm text-white rounded-lg border border-white/10 resize-none
+                       focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
+                       placeholder:text-white/25 transition-all"
+            style={{ background: 'rgba(255,255,255,0.05)' }}
           />
         </div>
 
@@ -385,7 +387,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         <div className="grid grid-cols-2 gap-3">
           {/* Date Picker */}
           <div className="relative">
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
               <Calendar size={12} />
               Startdatum
             </label>
@@ -393,15 +395,16 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+              className="w-full px-3 py-2.5 text-sm text-white border border-white/10 rounded-lg
+                         focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
                          transition-all cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
           </div>
 
           {/* Priority Selector */}
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
               <AlertTriangle size={12} />
               Priorität
             </label>
@@ -413,11 +416,12 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                   onClick={() => setPriority(opt.value as Task['priority'])}
                   className={`
                     px-2 py-2 rounded-lg text-xs font-medium transition-all border
-                    ${priority === opt.value 
-                      ? `${opt.color} ring-2 ring-offset-1 ring-gray-300` 
-                      : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
+                    ${priority === opt.value
+                      ? `${opt.color} ring-1 ring-violet-500/40`
+                      : 'text-white/40 border-white/08 hover:bg-white/06'
                     }
                   `}
+                  style={priority !== opt.value ? { background: 'rgba(255,255,255,0.03)' } : {}}
                   title={opt.label}
                 >
                   {opt.icon}
@@ -430,7 +434,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         {/* Zeit-Felder - immer sichtbar */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
               <Clock size={12} />
               Startzeit (optional)
             </label>
@@ -439,13 +443,14 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               value={startTime}
               onChange={(e) => setStartTime(e.target.value)}
               title="Startzeit"
-              className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+              className="w-full px-3 py-2.5 text-sm text-white border border-white/10 rounded-lg
+                         focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
                          transition-all cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+            <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
               <Clock size={12} />
               Endzeit (optional)
             </label>
@@ -454,44 +459,35 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               value={endTime}
               onChange={(e) => setEndTime(e.target.value)}
               title="Endzeit"
-              className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                         focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
+              className="w-full px-3 py-2.5 text-sm text-white border border-white/10 rounded-lg
+                         focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
                          transition-all cursor-pointer"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
             />
           </div>
         </div>
 
         {/* Als Termin markieren Toggle */}
-        <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+        <div className="flex items-center justify-between p-3 rounded-lg border border-white/08" style={{ background: 'rgba(255,255,255,0.03)' }}>
           <div className="flex items-center gap-2">
-            <Calendar size={16} className="text-indigo-600" />
+            <Calendar size={16} className="text-violet-400" />
             <div>
-              <span className="text-sm font-medium text-gray-900">Als Termin markieren</span>
-              <p className="text-xs text-gray-500">Für Arzttermine, Meetings, etc. ohne Ziel/Projekt</p>
+              <span className="text-sm font-medium text-white/80">Als Termin markieren</span>
+              <p className="text-xs text-white/40">Für Arzttermine, Meetings, etc. ohne Ziel/Projekt</p>
             </div>
           </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              className={`
-                w-10 h-6 rounded-full transition-colors relative cursor-pointer
-                ${createAsEvent ? 'bg-indigo-600' : 'bg-gray-200'}
-              `}
-              onClick={() => setCreateAsEvent(!createAsEvent)}
-            >
-              <div
-                className={`
-                  absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm
-                  ${createAsEvent ? 'left-5' : 'left-1'}
-                `}
-              />
-            </div>
-          </label>
+          <div
+            className={`w-10 h-6 rounded-full transition-colors relative cursor-pointer ${createAsEvent ? 'bg-violet-600' : 'bg-white/15'}`}
+            onClick={() => setCreateAsEvent(!createAsEvent)}
+          >
+            <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all shadow-sm ${createAsEvent ? 'left-5' : 'left-1'}`} />
+          </div>
         </div>
 
         {/* Goal & Project Selection */}
         <div className="grid grid-cols-1 gap-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-3">
-            <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+          <div className="rounded-xl border border-white/08 p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <label className="block text-xs font-semibold text-white/60 mb-2 flex items-center gap-1.5">
               <Target size={12} />
               Ziele zuordnen ({goalIds.length})
             </label>
@@ -506,8 +502,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                       onClick={() => toggleGoalLink(goal.id)}
                       className={
                         active
-                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-indigo-300 bg-indigo-100 text-indigo-800'
-                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-violet-500/40 bg-violet-500/20 text-violet-300'
+                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-white/10 text-white/50 hover:bg-white/06 hover:text-white/70'
                       }
                     >
                       {goal.title}
@@ -516,12 +512,12 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                 })}
               </div>
             ) : (
-              <p className="text-xs text-gray-700">Noch keine Ziele vorhanden.</p>
+              <p className="text-xs text-white/40">Noch keine Ziele vorhanden.</p>
             )}
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-3">
-            <label className="block text-xs font-semibold text-gray-700 mb-2 flex items-center gap-1.5">
+          <div className="rounded-xl border border-white/08 p-3" style={{ background: 'rgba(255,255,255,0.03)' }}>
+            <label className="block text-xs font-semibold text-white/60 mb-2 flex items-center gap-1.5">
               <FolderKanban size={12} />
               Projekte zuordnen ({projectIds.length})
             </label>
@@ -536,8 +532,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                       onClick={() => toggleProjectLink(project.id)}
                       className={
                         active
-                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-emerald-300 bg-emerald-100 text-emerald-800'
-                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                          ? 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-emerald-500/40 bg-emerald-500/20 text-emerald-300'
+                          : 'rounded-full px-3 py-1.5 text-xs font-medium border transition-colors border-white/10 text-white/50 hover:bg-white/06 hover:text-white/70'
                       }
                     >
                       {project.title}
@@ -546,7 +542,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                 })}
               </div>
             ) : (
-              <p className="text-xs text-gray-700">
+              <p className="text-xs text-white/40">
                 {goalIds.length > 0
                   ? 'Keine passenden Projekte zu den gewählten Zielen.'
                   : 'Noch keine Projekte vorhanden.'}
@@ -559,9 +555,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="w-full py-2.5 text-sm font-medium text-indigo-600 hover:text-indigo-700
+          className="w-full py-2.5 text-sm font-medium text-violet-400 hover:text-violet-300
                      flex items-center justify-center gap-2 transition-colors
-                     bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-100"
+                     rounded-lg border border-violet-500/20 hover:bg-violet-500/08"
+          style={{ background: 'rgba(124,58,237,0.06)' }}
         >
           <Target size={14} />
           {showAdvanced ? 'Weniger Optionen' : 'Erweiterte Optionen'}
@@ -570,14 +567,14 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
 
         {/* Advanced Options Panel */}
         {showAdvanced && (
-          <div className="space-y-5 p-4 bg-gradient-to-br from-indigo-50/50 to-purple-50/30 rounded-xl border border-indigo-100 animate-fadeIn">
+          <div className="space-y-5 p-4 rounded-xl border border-white/08 animate-fade-in" style={{ background: 'rgba(255,255,255,0.03)' }}>
             {/* Impact Selection */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <CheckCircle2 size={14} className="text-indigo-600" />
-                <label className="text-sm font-medium text-gray-700">Impact-Bewertung</label>
+                <CheckCircle2 size={14} className="text-violet-400" />
+                <label className="text-sm font-medium text-white/80">Impact-Bewertung</label>
               </div>
-              <p className="text-xs text-gray-500 -mt-1">
+              <p className="text-xs text-white/40 -mt-1">
                 Ist diese Aufgabe wirklich wichtig oder nur Beschäftigung?
               </p>
               <div className="grid gap-2">
@@ -588,20 +585,21 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                     onClick={() => setImpact(opt.value)}
                     className={`
                       w-full p-3 rounded-xl border text-left transition-all flex items-center gap-3
-                      bg-gradient-to-r ${opt.bgGradient}
-                      ${impact === opt.value 
-                        ? 'ring-2 ring-offset-1 ring-indigo-300 shadow-sm' 
-                        : 'hover:shadow-sm'
+                      ${opt.bgGradient}
+                      ${impact === opt.value
+                        ? 'ring-1 ring-violet-500/40 bg-white/06'
+                        : 'hover:bg-white/04'
                       }
                     `}
+                    style={{ background: impact === opt.value ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.02)' }}
                   >
-                    <span className={`${opt.color}`}>{opt.icon}</span>
+                    <span className={opt.color}>{opt.icon}</span>
                     <div className="flex-1">
-                      <span className="font-medium text-sm text-gray-800">{opt.label}</span>
-                      <p className="text-xs text-gray-500 mt-0.5">{opt.description}</p>
+                      <span className="font-medium text-sm text-white/80">{opt.label}</span>
+                      <p className="text-xs text-white/40 mt-0.5">{opt.description}</p>
                     </div>
                     {impact === opt.value && (
-                      <CheckCircle2 size={16} className="text-indigo-600" />
+                      <CheckCircle2 size={16} className="text-violet-400" />
                     )}
                   </button>
                 ))}
@@ -611,8 +609,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             {/* Energy Level */}
             <div className="space-y-3">
               <div className="flex items-center gap-2">
-                <Zap size={14} className="text-amber-500" />
-                <label className="text-sm font-medium text-gray-700">Benötigte Energie</label>
+                <Zap size={14} className="text-amber-400" />
+                <label className="text-sm font-medium text-white/80">Benötigte Energie</label>
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {energyOptions.map((opt) => (
@@ -621,16 +619,16 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                     type="button"
                     onClick={() => setEnergyLevel(opt.value as typeof energyLevel)}
                     className={`
-                      p-3 rounded-xl text-center transition-all border
-                      bg-gradient-to-br ${opt.color}
-                      ${energyLevel === opt.value 
-                        ? 'ring-2 ring-offset-1 ring-indigo-300 shadow-sm' 
-                        : 'hover:shadow-sm'
+                      p-3 rounded-xl text-center transition-all border ${opt.color}
+                      ${energyLevel === opt.value
+                        ? 'ring-1 ring-violet-500/40'
+                        : 'hover:bg-white/04'
                       }
                     `}
+                    style={{ background: energyLevel === opt.value ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.03)' }}
                   >
                     <span className="block text-xl mb-1">{opt.emoji}</span>
-                    <span className="text-xs font-medium text-gray-700">{opt.label}</span>
+                    <span className="text-xs font-medium text-white/60">{opt.label}</span>
                   </button>
                 ))}
               </div>
@@ -639,7 +637,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             {/* Time & Tags */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                   <Timer size={12} />
                   Geschätzte Zeit (Min)
                 </label>
@@ -648,14 +646,15 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                   placeholder="25"
                   value={estimatedMinutes}
                   onChange={(e) => setEstimatedMinutes(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                             focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                             transition-all placeholder:text-gray-400"
+                  className="w-full px-3 py-2.5 text-sm text-white border border-white/10 rounded-lg
+                             focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
+                             transition-all placeholder:text-white/25"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                   <Tag size={12} />
                   Tags (manuell)
                 </label>
@@ -664,9 +663,10 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                   placeholder="arbeit, wichtig, ..."
                   value={tags}
                   onChange={(e) => setTags(e.target.value)}
-                  className="w-full px-3 py-2.5 text-sm text-gray-900 bg-white border border-gray-200 rounded-lg
-                             focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-400
-                             transition-all placeholder:text-gray-400"
+                  className="w-full px-3 py-2.5 text-sm text-white border border-white/10 rounded-lg
+                             focus:outline-none focus:ring-1 focus:ring-violet-500/30 focus:border-violet-500/50
+                             transition-all placeholder:text-white/25"
+                  style={{ background: 'rgba(255,255,255,0.06)' }}
                 />
               </div>
             </div>
@@ -674,7 +674,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
             {/* Gespeicherte Tags auswählen */}
             {allTags.length > 0 && (
               <div>
-                <label className="block text-xs font-medium text-gray-600 mb-1.5 flex items-center gap-1.5">
+                <label className="block text-xs font-medium text-white/50 mb-1.5 flex items-center gap-1.5">
                   <Tag size={12} />
                   Gespeicherte Tags
                 </label>
@@ -690,15 +690,15 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                           setSelectedTags([...selectedTags, tag.name]);
                         }
                       }}
-                      className={`px-3 py-1.5 text-xs font-medium rounded-full transition-all ${
+                      className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-all ${
                         selectedTags.includes(tag.name)
-                          ? 'ring-2 ring-offset-1 ring-gray-400'
-                          : 'opacity-70 hover:opacity-100'
+                          ? 'ring-1 ring-violet-500/40'
+                          : 'opacity-60 hover:opacity-100'
                       }`}
-                      style={{ 
-                        backgroundColor: tag.color + '20', 
+                      style={{
+                        backgroundColor: tag.color + '20',
                         color: tag.color,
-                        borderColor: tag.color 
+                        borderColor: tag.color + '40'
                       }}
                     >
                       {tag.icon && <span className="mr-1">{tag.icon}</span>}
@@ -714,7 +714,7 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
               <button
                 type="button"
                 onClick={() => setShowNewTag(!showNewTag)}
-                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium flex items-center gap-1"
+                className="text-xs text-violet-400 hover:text-violet-300 font-medium flex items-center gap-1"
               >
                 <Plus size={12} />
                 Neuen Tag erstellen
@@ -726,13 +726,14 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                     placeholder="Tag-Name"
                     value={newTagName}
                     onChange={(e) => setNewTagName(e.target.value)}
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                    className="flex-1 px-3 py-2 text-sm text-white border border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-violet-500/30 placeholder:text-white/25"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
                   />
                   <input
                     type="color"
                     value={newTagColor}
                     onChange={(e) => setNewTagColor(e.target.value)}
-                    className="w-10 h-10 rounded-lg cursor-pointer border border-gray-200"
+                    className="w-10 h-10 rounded-lg cursor-pointer border border-white/10"
                     title="Tag-Farbe"
                   />
                   <button
@@ -745,7 +746,8 @@ export function TaskModal({ isOpen, onClose, editTask }: TaskModalProps) {
                         setShowNewTag(false);
                       }
                     }}
-                    className="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700"
+                    className="px-3 py-2 text-white text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                    style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
                   >
                     Hinzufügen
                   </button>

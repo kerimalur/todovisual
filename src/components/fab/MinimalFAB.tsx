@@ -97,7 +97,8 @@ export function MinimalFAB({ onOpenTaskModal }: MinimalFABProps) {
           : 'opacity-0 translate-y-2 pointer-events-none'
         }
       `}>
-        <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden w-[180px]">
+        <div className="rounded-xl shadow-2xl border border-white/10 overflow-hidden w-[180px]"
+          style={{ background: '#1a1d31' }}>
           {fabActions.map((action) => {
             const Icon = action.icon;
 
@@ -110,13 +111,13 @@ export function MinimalFAB({ onOpenTaskModal }: MinimalFABProps) {
                   w-full flex items-center gap-3 px-4 py-3 text-left
                   transition-colors
                   ${action.disabled
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'hover:bg-gray-50'
+                    ? 'opacity-40 cursor-not-allowed'
+                    : 'hover:bg-white/08'
                   }
                 `}
               >
-                <Icon size={18} className="text-gray-600" />
-                <span className="text-sm font-medium text-gray-800">
+                <Icon size={18} className="text-violet-400" />
+                <span className="text-sm font-medium text-white/80">
                   {action.label}
                 </span>
               </button>
@@ -125,19 +126,20 @@ export function MinimalFAB({ onOpenTaskModal }: MinimalFABProps) {
         </div>
       </div>
 
-      {/* Minimal FAB Button */}
+      {/* FAB Button */}
       <button
         onClick={() => setFabMenuOpen(!fabMenuOpen)}
         className={`
-          w-14 h-14 rounded-full shadow-lg
+          w-14 h-14 rounded-full shadow-lg shadow-violet-900/40
           flex items-center justify-center
           transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-gray-300
+          focus:outline-none
           ${fabMenuOpen
-            ? 'bg-gray-900 rotate-45'
-            : 'bg-gray-900 hover:bg-gray-800'
+            ? 'rotate-45'
+            : 'hover:opacity-90 active:scale-95'
           }
         `}
+        style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
         aria-label={fabMenuOpen ? 'Menü schließen' : 'Schnellaktionen öffnen'}
       >
         {fabMenuOpen ? (
