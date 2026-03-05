@@ -158,7 +158,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <main
             className={`
               min-h-screen pt-14 md:pt-0 transition-[margin] duration-300
-              ${sidebarCollapsed ? 'md:ml-[92px]' : 'md:ml-[228px]'}
+              ${sidebarCollapsed ? 'md:ml-[84px]' : 'md:ml-[210px]'}
             `}
           >
             <div className="mx-auto w-full max-w-[1320px] p-4 md:p-7">

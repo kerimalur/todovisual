@@ -59,8 +59,8 @@ function MobileNavLink({
         flex items-center gap-3 rounded-xl px-3 py-2.5 border transition-colors
         ${
           active
-            ? 'border-violet-300/45 bg-violet-300/20 text-[#f8f7ff]'
-            : 'border-transparent text-white/70 hover:text-white hover:border-white/10 hover:bg-white/8'
+            ? 'border-violet-300/60 bg-violet-100 text-violet-700'
+            : 'border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-200 hover:bg-white'
         }
       `}
     >
@@ -100,29 +100,29 @@ export function MinimalSidebar() {
   return (
     <>
       <header
-        className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center justify-between px-4 border-b border-white/10"
+        className="md:hidden fixed top-0 left-0 right-0 h-14 z-40 flex items-center justify-between px-4 border-b border-slate-200/90"
         style={{
           background:
-            'linear-gradient(90deg, rgba(28,34,74,0.96) 0%, rgba(20,25,58,0.96) 100%)',
+            'linear-gradient(90deg, rgba(251,252,255,0.96) 0%, rgba(244,247,255,0.98) 100%)',
           backdropFilter: 'blur(16px)',
         }}
       >
         <button
           onClick={() => setMobileSidebarOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+          className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           aria-label="Navigation oeffnen"
         >
           <Menu size={20} />
         </button>
 
-        <Link href="/" className="text-sm font-semibold text-[#f4f6ff]">
+        <Link href="/" className="text-sm font-semibold text-slate-800">
           Productive
         </Link>
 
         {timer.isRunning ? (
           <button
             onClick={toggleZenMode}
-            className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-400/15 text-emerald-200"
+            className="w-10 h-10 flex items-center justify-center rounded-xl bg-emerald-100 text-emerald-700"
             title="Fokus oeffnen"
           >
             <Timer size={17} />
@@ -134,23 +134,23 @@ export function MinimalSidebar() {
 
       <div
         className={`md:hidden fixed inset-0 z-50 transition-opacity duration-250 ${
-          mobileSidebarOpen ? 'opacity-100 bg-[#030511]/70 backdrop-blur-sm' : 'opacity-0 pointer-events-none'
+          mobileSidebarOpen ? 'opacity-100 bg-slate-900/30 backdrop-blur-sm' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeSidebar}
       />
 
       <aside
         className={`
-          md:hidden fixed left-0 top-0 bottom-0 z-50 w-[268px] border-r border-white/10
+          md:hidden fixed left-0 top-0 bottom-0 z-50 w-[252px] border-r border-slate-200
           transition-transform duration-300 flex flex-col
           ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
         style={{
           background:
-            'linear-gradient(180deg, rgba(28,34,74,0.98) 0%, rgba(18,22,49,0.97) 100%)',
+            'linear-gradient(180deg, rgba(252,253,255,0.98) 0%, rgba(244,247,255,0.98) 100%)',
         }}
       >
-        <div className="h-14 px-4 border-b border-white/10 flex items-center justify-between">
+        <div className="h-14 px-4 border-b border-slate-200/90 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5" onClick={closeSidebar}>
             <span className="w-8 h-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center text-white shadow-lg shadow-indigo-950/35">
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4">
@@ -159,12 +159,12 @@ export function MinimalSidebar() {
                 <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </span>
-            <span className="text-sm font-semibold text-[#f4f6ff]">Productive</span>
+            <span className="text-sm font-semibold text-slate-800">Productive</span>
           </Link>
 
           <button
             onClick={closeSidebar}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             aria-label="Navigation schliessen"
           >
             <X size={18} />
@@ -185,10 +185,10 @@ export function MinimalSidebar() {
           ))}
         </div>
 
-        <div className="p-3 border-t border-white/10 space-y-2">
-          <div className="rounded-xl border border-white/10 bg-white/6 px-3 py-2.5">
-            <p className="text-xs text-white/45">Offene Aufgaben</p>
-            <p className="text-lg leading-none font-semibold text-white mt-1">{openTasksCount}</p>
+        <div className="p-3 border-t border-slate-200 space-y-2">
+          <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+            <p className="text-xs text-slate-500">Offene Aufgaben</p>
+            <p className="text-lg leading-none font-semibold text-slate-800 mt-1">{openTasksCount}</p>
           </div>
 
           <button
@@ -206,7 +206,7 @@ export function MinimalSidebar() {
           <Link
             href="/archive"
             onClick={closeSidebar}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             <Archive size={15} />
             Archiv
@@ -214,7 +214,7 @@ export function MinimalSidebar() {
           <Link
             href="/settings"
             onClick={closeSidebar}
-            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-white/70 hover:text-white hover:bg-white/8 transition-colors"
+            className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
           >
             <Settings size={15} />
             Einstellungen
@@ -226,7 +226,7 @@ export function MinimalSidebar() {
                 closeSidebar();
                 signOut();
               }}
-              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-300 hover:text-red-200 hover:bg-red-500/15 transition-colors"
+              className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm text-red-600 hover:text-red-700 hover:bg-red-100 transition-colors"
             >
               <LogOut size={15} />
               Abmelden
