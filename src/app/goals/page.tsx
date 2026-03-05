@@ -47,17 +47,17 @@ const getSmartScore = (goal: Goal): number => {
 };
 
 const healthConfig: Record<GoalHealth, { label: string; color: string; dot: string }> = {
-  'on-track': { label: 'On Track', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
-  'at-risk': { label: 'At Risk', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
+  'on-track': { label: 'Im Plan', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
+  'at-risk': { label: 'Gefährdet', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
   overdue: { label: 'Überfällig', color: 'bg-red-500/15 text-red-400 border-red-500/20', dot: 'bg-red-400' },
-  done: { label: 'Erreicht', color: 'bg-white/08 text-white/40 border-white/10', dot: 'bg-white/30' },
+  done: { label: 'Erreicht', color: 'bg-slate-50 text-slate-500 border-slate-200', dot: 'bg-white/30' },
 };
 
 function DarkProgressBar({ value, max, color }: { value: number; max: number; color?: string }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   const barColor = color || '#7c3aed';
   return (
-    <div className="w-full h-1.5 rounded-full bg-white/08 overflow-hidden">
+    <div className="w-full h-1.5 rounded-full bg-slate-50 overflow-hidden">
       <div
         className="h-full rounded-full transition-all duration-700"
         style={{ width: `${pct}%`, background: barColor }}
@@ -118,22 +118,22 @@ function GoalCard({ goal }: { goal: Goal }) {
       }
       if (created === 0) alert('Keine neuen Automationen nötig.');
       else alert(`${created} Aufgaben erstellt.`);
-    } catch (e) { alert('Automation fehlgeschlagen.'); }
+    } catch (e) { alert('Automatisierung fehlgeschlagen.'); }
     finally { setBusy(false); }
   };
 
   return (
     <>
       <div className={`rounded-2xl border transition-all duration-300 overflow-hidden card-hover ${
-        expanded ? 'border-violet-500/30' : 'border-white/08'
-      }`} style={{ background: expanded ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.03)' }}>
+        expanded ? 'border-violet-500/30' : 'border-slate-200'
+      }`} style={{ background: expanded ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.92)' }}>
 
         {/* Clickable header */}
-        <button onClick={() => setExpanded((v) => !v)} className="w-full text-left p-5 hover:bg-white/02 transition-colors">
+        <button onClick={() => setExpanded((v) => !v)} className="w-full text-left p-5 hover:bg-white transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h3 className="text-base font-semibold text-white truncate">{goal.title}</h3>
+                <h3 className="text-base font-semibold text-slate-900 truncate">{goal.title}</h3>
                 <span className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold ${hConfig.color}`}>
                   <span className={`w-1.5 h-1.5 rounded-full ${hConfig.dot}`} />
                   {hConfig.label}
@@ -142,42 +142,42 @@ function GoalCard({ goal }: { goal: Goal }) {
                   SMART {smartScore}/5
                 </span>
               </div>
-              <p className="text-sm text-white/40 line-clamp-1 mb-3">{goal.description || 'Keine Beschreibung'}</p>
+              <p className="text-sm text-slate-500 line-clamp-1 mb-3">{goal.description || 'Keine Beschreibung'}</p>
 
               <div className="mb-3">
-                <div className="flex items-center justify-between text-xs text-white/40 mb-1.5">
+                <div className="flex items-center justify-between text-xs text-slate-500 mb-1.5">
                   <span>{openTasks.length} offen · {completedTasks.length} erledigt</span>
-                  <span className="font-bold text-white">{goal.progress}%</span>
+                  <span className="font-bold text-slate-900">{goal.progress}%</span>
                 </div>
                 <DarkProgressBar value={goal.progress} max={100} color={goal.color} />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
+                <span className="inline-flex items-center gap-1 rounded-lg bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
                   <Calendar size={11} />
                   {goal.deadline ? format(new Date(goal.deadline), 'd. MMM yyyy', { locale: de }) : 'Keine Deadline'}
                 </span>
-                <span className="inline-flex items-center rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
+                <span className="inline-flex items-center rounded-lg bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
                   {completedMilestones}/{milestones.length} Meilensteine
                 </span>
-                <span className="inline-flex items-center rounded-lg bg-white/06 px-2.5 py-1 text-xs text-white/40">
+                <span className="inline-flex items-center rounded-lg bg-slate-50 px-2.5 py-1 text-xs text-slate-500">
                   {linkedProjects.length} Projekte
                 </span>
               </div>
             </div>
             <div className="flex-shrink-0 mt-1">
-              {expanded ? <ChevronUp size={18} className="text-white/30" /> : <ChevronDown size={18} className="text-white/30" />}
+              {expanded ? <ChevronUp size={18} className="text-slate-400" /> : <ChevronDown size={18} className="text-slate-400" />}
             </div>
           </div>
         </button>
 
         {/* Expanded content */}
         {expanded && (
-          <div className="border-t border-white/06 p-5 space-y-4 animate-fade-in">
+          <div className="border-t border-slate-200 p-5 space-y-4 animate-fade-in">
             {/* Actions */}
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => openGoalModal(goal)}
-                className="flex items-center gap-1.5 rounded-xl border border-white/10 px-3 py-2 text-xs font-medium text-white/60 hover:bg-white/05 hover:text-white transition-all">
+                className="flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-all">
                 <Edit2 size={12} /> Bearbeiten
               </button>
               <button onClick={() => setShowDeleteConfirm(true)}
@@ -198,8 +198,8 @@ function GoalCard({ goal }: { goal: Goal }) {
                   value={quickTaskTitle}
                   onChange={(e) => setQuickTaskTitle(e.target.value)}
                   placeholder="Konkrete nächste Aufgabe..."
-                  className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)' }}
+                  className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500/50 transition-all"
+                  style={{ background: 'rgba(148,163,184,0.2)' }}
                 />
                 <button onClick={() => void handleQuickTask()}
                   className="flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-500 transition-all">
@@ -210,55 +210,55 @@ function GoalCard({ goal }: { goal: Goal }) {
 
             {/* Details Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm font-semibold text-white mb-3">SMART-Kriterien</p>
+              <div className="rounded-xl border border-slate-200 p-4" style={{ background: 'rgba(255,255,255,0.88)' }}>
+                <p className="text-sm font-semibold text-slate-900 mb-3">SMART-Kriterien</p>
                 <ul className="space-y-1.5 text-xs">
                   {(['specific', 'measurable', 'achievable', 'relevant', 'timeBound'] as const).map((key) => {
                     const labels: Record<string, string> = { specific: 'Spezifisch', measurable: 'Messbar', achievable: 'Erreichbar', relevant: 'Relevant', timeBound: 'Terminiert' };
                     const has = !!(goal.smartCriteria?.[key]);
                     return (
-                      <li key={key} className={`flex items-center gap-2 ${has ? 'text-white/60' : 'text-white/25'}`}>
-                        <CheckCircle2 size={13} className={has ? 'text-emerald-400' : 'text-white/15'} />
+                      <li key={key} className={`flex items-center gap-2 ${has ? 'text-slate-600' : 'text-slate-400'}`}>
+                        <CheckCircle2 size={13} className={has ? 'text-emerald-400' : 'text-slate-300'} />
                         {labels[key]}
                       </li>
                     );
                   })}
                 </ul>
               </div>
-              <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm font-semibold text-white mb-3">Wochenplan</p>
+              <div className="rounded-xl border border-slate-200 p-4" style={{ background: 'rgba(255,255,255,0.88)' }}>
+                <p className="text-sm font-semibold text-slate-900 mb-3">Wochenplan</p>
                 {weeklyPlan.length > 0 ? (
                   <div className="space-y-2">
                     {weeklyPlan.slice(0, 5).map((item) => (
                       <div key={item.id} className="flex items-center justify-between gap-2 text-xs">
-                        <span className="text-white/60 truncate">{item.title}</span>
-                        <span className="text-white/30 whitespace-nowrap flex-shrink-0">
+                        <span className="text-slate-600 truncate">{item.title}</span>
+                        <span className="text-slate-400 whitespace-nowrap flex-shrink-0">
                           {['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][item.weekday]}
                         </span>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs text-white/25">Kein Wochenplan.</p>}
+                ) : <p className="text-xs text-slate-400">Kein Wochenplan.</p>}
               </div>
             </div>
 
             {/* Milestones */}
             {milestones.length > 0 && (
               <div>
-                <p className="text-sm font-semibold text-white mb-3">Meilensteine</p>
+                <p className="text-sm font-semibold text-slate-900 mb-3">Meilensteine</p>
                 <div className="space-y-2">
                   {milestones.map((milestone) => (
                     <button key={milestone.id} onClick={() => void handleToggleMilestone(milestone.id)}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/06 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white/02 transition-all">
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white transition-all">
                       <div className="min-w-0">
-                        <span className={`text-sm ${milestone.completed ? 'text-white/25 line-through' : 'text-white/70'}`}>
+                        <span className={`text-sm ${milestone.completed ? 'text-slate-400 line-through' : 'text-slate-700'}`}>
                           {milestone.title}
                         </span>
                         {milestone.targetDate && (
-                          <p className="text-xs text-white/30 mt-0.5">{format(new Date(milestone.targetDate), 'd. MMM yyyy', { locale: de })}</p>
+                          <p className="text-xs text-slate-400 mt-0.5">{format(new Date(milestone.targetDate), 'd. MMM yyyy', { locale: de })}</p>
                         )}
                       </div>
-                      <CheckCircle2 size={16} className={milestone.completed ? 'text-emerald-400' : 'text-white/20'} />
+                      <CheckCircle2 size={16} className={milestone.completed ? 'text-emerald-400' : 'text-slate-300'} />
                     </button>
                   ))}
                 </div>
@@ -267,15 +267,15 @@ function GoalCard({ goal }: { goal: Goal }) {
 
             {/* Open Tasks */}
             <div>
-              <p className="text-sm font-semibold text-white mb-3">Aktive Aufgaben</p>
+              <p className="text-sm font-semibold text-slate-900 mb-3">Aktive Aufgaben</p>
               {openTasks.length > 0 ? (
                 <div className="space-y-2">
                   {openTasks.slice(0, 6).map((task) => (
                     <button key={task.id} onClick={() => openTaskDetailModal(task)}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/06 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white/02 transition-all">
-                      <span className="text-sm text-white/70 truncate">{task.title}</span>
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-left hover:border-violet-500/25 hover:bg-white transition-all">
+                      <span className="text-sm text-slate-700 truncate">{task.title}</span>
                       {task.dueDate && (
-                        <span className="text-xs text-white/30 whitespace-nowrap flex-shrink-0">
+                        <span className="text-xs text-slate-400 whitespace-nowrap flex-shrink-0">
                           {format(new Date(task.dueDate), 'd. MMM', { locale: de })}
                         </span>
                       )}
@@ -283,7 +283,7 @@ function GoalCard({ goal }: { goal: Goal }) {
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed border-white/08 px-4 py-3 text-sm text-white/25">
+                <div className="rounded-xl border border-dashed border-slate-200 px-4 py-3 text-sm text-slate-400">
                   Noch keine Aufgabe. Erstelle oben den nächsten Schritt.
                 </div>
               )}
@@ -361,15 +361,15 @@ export default function GoalsPage() {
       }
       if (created === 0) alert('Keine neuen Aufgaben nötig.');
       else alert(`${created} Wochenplan-Aufgaben erstellt.`);
-    } catch { alert('Automation fehlgeschlagen.'); }
+    } catch { alert('Automatisierung fehlgeschlagen.'); }
     finally { setAutomationBusy(false); }
   };
 
   const statCards = [
-    { label: 'On Track', value: goalStats.onTrack, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
-    { label: 'At Risk', value: goalStats.atRisk, color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+    { label: 'Im Plan', value: goalStats.onTrack, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
+    { label: 'Gefährdet', value: goalStats.atRisk, color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/20', text: 'text-amber-400' },
     { label: 'Überfällig', value: goalStats.overdue, color: 'from-red-500/20 to-red-600/10', border: 'border-red-500/20', text: 'text-red-400' },
-    { label: 'SMART Ready', value: goalStats.smartReady, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-400' },
+    { label: 'SMART bereit', value: goalStats.smartReady, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-400' },
     { label: 'Wochenaktionen', value: goalStats.weeklyActions, color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/20', text: 'text-blue-400' },
   ];
 
@@ -380,16 +380,16 @@ export default function GoalsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-900/30">
-            <Target size={22} className="text-white" />
+            <Target size={22} className="text-slate-900" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Ziele</h1>
-            <p className="text-white/40 text-sm mt-0.5">SMART · Meilensteine · Wochenplan</p>
+            <h1 className="text-2xl font-bold text-slate-900">Ziele</h1>
+            <p className="text-slate-500 text-sm mt-0.5">SMART · Meilensteine · Wochenplan</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <button onClick={() => openTaskModal()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white/70 border border-white/10 hover:bg-white/05 hover:text-white transition-all">
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 transition-all">
             <Plus size={15} /> Aufgabe
           </button>
           <button onClick={() => openGoalModal()}
@@ -404,40 +404,40 @@ export default function GoalsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         {statCards.map((card) => (
           <div key={card.label} className={`rounded-2xl border ${card.border} p-4 bg-gradient-to-br ${card.color} card-hover`}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{card.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
             <p className={`text-3xl font-bold mt-1 ${card.text}`}>{card.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Automation Board */}
+      {/* Automationszentrale */}
       <div className="rounded-2xl border border-violet-500/20 p-5" style={{ background: 'rgba(124,58,237,0.05)' }}>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={16} className="text-violet-400" />
-          <p className="font-semibold text-white">Automation Board</p>
-          <p className="text-white/35 text-sm">— Wochenplan & Meilensteine automatisch planen</p>
+          <p className="font-semibold text-slate-900">Automationszentrale</p>
+          <p className="text-slate-400 text-sm">— Wochenplan & Meilensteine automatisch planen</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+          <div className="rounded-xl border border-slate-200 p-4" style={{ background: 'rgba(255,255,255,0.88)' }}>
             <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">Heute automatisch planen</p>
-            <p className="text-sm text-white/40 mb-3">Erstellt Aufgaben aus dem Wochenplan für den heutigen Tag.</p>
+            <p className="text-sm text-slate-500 mb-3">Erstellt Aufgaben aus dem Wochenplan für den heutigen Tag.</p>
             <button onClick={() => void runGlobalAutomation()} disabled={automationBusy}
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40 transition-all">
               <Wand2 size={12} /> Wochenplan ausführen
             </button>
           </div>
-          <div className="rounded-xl border border-white/06 p-4" style={{ background: 'rgba(255,255,255,0.02)' }}>
+          <div className="rounded-xl border border-slate-200 p-4" style={{ background: 'rgba(255,255,255,0.88)' }}>
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-400 mb-2">Nächste Meilensteine (14 Tage)</p>
             {nextMilestones.length > 0 ? (
               <div className="space-y-2">
                 {nextMilestones.map((entry) => (
                   <div key={`${entry.goalTitle}-${entry.milestoneTitle}`} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="text-white/60 truncate">{entry.goalTitle}: {entry.milestoneTitle}</span>
+                    <span className="text-slate-600 truncate">{entry.goalTitle}: {entry.milestoneTitle}</span>
                     <span className="text-xs text-amber-400 whitespace-nowrap flex-shrink-0">{format(entry.targetDate, 'd. MMM', { locale: de })}</span>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm text-white/25">Keine kurzfristigen Meilensteine.</p>}
+            ) : <p className="text-sm text-slate-400">Keine kurzfristigen Meilensteine.</p>}
           </div>
         </div>
       </div>
@@ -446,8 +446,8 @@ export default function GoalsPage() {
       <div className="flex items-center gap-1">
         {([
           { key: 'all', label: 'Alle' },
-          { key: 'on-track', label: 'On Track' },
-          { key: 'at-risk', label: 'At Risk' },
+          { key: 'on-track', label: 'Im Plan' },
+          { key: 'at-risk', label: 'Gefährdet' },
           { key: 'overdue', label: 'Überfällig' },
           { key: 'done', label: 'Erreicht' },
         ] as const).map((tab) => (
@@ -455,7 +455,7 @@ export default function GoalsPage() {
             key={tab.key}
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
-              filter === tab.key ? 'bg-violet-600 text-white' : 'text-white/40 hover:text-white/70 hover:bg-white/05'
+              filter === tab.key ? 'bg-violet-600 text-white' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
             }`}
           >
             {tab.label}
@@ -471,13 +471,13 @@ export default function GoalsPage() {
             .sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
             .map((goal) => <GoalCard key={goal.id} goal={goal} />)
         ) : (
-          <div className="rounded-2xl border border-dashed border-white/10 p-12 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-white/04 flex items-center justify-center mx-auto mb-4">
-              <Target size={24} className="text-white/20" />
+          <div className="rounded-2xl border border-dashed border-slate-200 p-12 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4">
+              <Target size={24} className="text-slate-300" />
             </div>
-            <p className="text-white/35 text-sm mb-4">Noch keine Ziele definiert.</p>
+            <p className="text-slate-400 text-sm mb-4">Noch keine Ziele definiert.</p>
             <button onClick={() => openGoalModal()}
-              className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
+              className="px-4 py-2 rounded-xl text-sm font-medium text-slate-900 transition-all hover:opacity-90"
               style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)' }}>
               Erstes Ziel erstellen
             </button>
