@@ -28,7 +28,7 @@ const priorityColors: Record<Task['priority'], string> = {
   urgent: 'bg-red-500/15 text-red-300 border-red-500/30',
   high: 'bg-orange-500/15 text-orange-300 border-orange-500/30',
   medium: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
-  low: 'bg-white/10 text-white/60 border-white/15',
+  low: 'bg-slate-200 text-slate-500 border-slate-300',
 };
 
 const priorityLabels: Record<Task['priority'], string> = {
@@ -125,9 +125,9 @@ export function Dashboard() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-950/35">
               <LayoutDashboard size={18} className="text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[#f4f6ff]">{greetingText}</h1>
+            <h1 className="text-2xl font-bold text-slate-800">{greetingText}</h1>
           </div>
-          <p className="text-white/55 text-sm pl-[52px]">
+          <p className="text-slate-500 text-sm pl-[52px]">
             {importantTasks.length} priorisierte Aufgaben und {upcomingEvents.length} kommende Termine
           </p>
         </div>
@@ -135,14 +135,14 @@ export function Dashboard() {
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => openTaskModal()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow-lg shadow-indigo-950/35"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold text-white transition-opacity hover:opacity-90 shadow"
             style={{ background: 'linear-gradient(135deg, #7c3aed, #5b7cff)' }}
           >
             <Plus size={15} /> Neue Aufgabe
           </button>
           <button
             onClick={() => openEventModal()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-white/14 text-white/75 hover:bg-white/8 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-slate-300 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
           >
             <CalendarClock size={15} /> Neuer Termin
           </button>
@@ -190,7 +190,7 @@ export function Dashboard() {
             <div key={stat.label} className={`rounded-2xl border ${stat.border} p-4 bg-gradient-to-br ${stat.color} card-hover`}>
               <div className="flex items-center gap-2 mb-2">
                 <Icon size={14} className={stat.text} />
-                <p className="text-xs font-semibold uppercase tracking-wide text-white/55">{stat.label}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{stat.label}</p>
               </div>
               <p className={`text-3xl font-bold ${stat.text}`}>{stat.value}</p>
             </div>
@@ -199,34 +199,34 @@ export function Dashboard() {
       </div>
 
       <div className="space-y-5">
-        <section className="rounded-2xl border border-white/10 p-5 bg-white/5">
+        <section className="rounded-2xl border border-slate-200 p-5 bg-white/90">
           <div className="flex items-center justify-between gap-4 mb-4">
             <div className="flex items-center gap-2">
               <Calendar size={16} className="text-sky-300" />
-              <p className="font-semibold text-[#f2f4ff]">Diese Woche</p>
+              <p className="font-semibold text-slate-800">Diese Woche</p>
             </div>
-            <Link href="/calendar" className="flex items-center gap-1 text-xs text-violet-200 hover:text-white font-medium transition-colors">
+            <Link href="/calendar" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors">
               Kalender oeffnen <ArrowRight size={12} />
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
             {calendarStrip.map((item) => (
               <div
                 key={item.day.toISOString()}
-                className={`rounded-xl border px-2.5 py-3.5 min-h-[108px] transition-colors ${
+                className={`rounded-xl border px-2.5 py-3.5 min-h-[130px] transition-colors ${
                   isToday(item.day)
-                    ? 'border-violet-300/45 bg-violet-300/20'
-                    : 'border-white/10 bg-white/4'
+                    ? 'border-violet-300 bg-violet-100'
+                    : 'border-slate-200 bg-white'
                 }`}
               >
-                <p className={`text-[11px] font-semibold uppercase ${isToday(item.day) ? 'text-violet-100' : 'text-white/45'}`}>
+                <p className={`text-[11px] font-semibold uppercase ${isToday(item.day) ? 'text-violet-700' : 'text-slate-500'}`}>
                   {format(item.day, 'EE', { locale: de })}
                 </p>
-                <p className={`text-xl font-bold mt-1 ${isToday(item.day) ? 'text-white' : 'text-white/85'}`}>
+                <p className={`text-xl font-bold mt-1 ${isToday(item.day) ? 'text-violet-800' : 'text-slate-700'}`}>
                   {format(item.day, 'd')}
                 </p>
-                <div className="mt-3 space-y-1 text-[11px] text-white/55">
+                <div className="mt-3 space-y-1 text-[11px] text-slate-500">
                   <p>{item.taskCount} Aufgaben</p>
                   <p>{item.eventCount} Termine</p>
                 </div>
@@ -234,38 +234,38 @@ export function Dashboard() {
             ))}
           </div>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2.5">
+          <div className="mt-4 grid grid-cols-1 gap-2.5">
             {upcomingEvents.slice(0, 4).map((event) => (
               <button
                 key={event.id}
                 type="button"
                 onClick={() => openEventModal(event)}
-                className="w-full flex items-center justify-between gap-3 rounded-xl border border-white/10 px-3.5 py-3 text-left hover:border-violet-300/35 hover:bg-white/7 transition-colors"
+                className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3.5 py-3 text-left hover:border-violet-300/50 hover:bg-violet-50 transition-colors"
               >
-                <span className="text-sm text-white/85 truncate">{event.title}</span>
-                <span className="text-xs text-white/50 whitespace-nowrap">{formatEventLabel(new Date(event.startTime))}</span>
+                <span className="text-sm text-slate-700 truncate">{event.title}</span>
+                <span className="text-xs text-slate-500 whitespace-nowrap">{formatEventLabel(new Date(event.startTime))}</span>
               </button>
             ))}
             {upcomingEvents.length === 0 && (
-              <p className="text-sm text-white/45 col-span-full">Keine Termine in den naechsten Tagen.</p>
+              <p className="text-sm text-slate-500 col-span-full">Keine Termine in den naechsten Tagen.</p>
             )}
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 overflow-hidden bg-white/5">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+        <section className="rounded-2xl border border-slate-200 overflow-hidden bg-white/90">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
             <div className="flex items-center gap-2">
               <Target size={15} className="text-amber-300" />
-              <p className="font-semibold text-[#f2f4ff] text-sm">Wichtige Aufgaben</p>
+              <p className="font-semibold text-slate-800 text-sm">Wichtige Aufgaben</p>
             </div>
-            <Link href="/tasks" className="flex items-center gap-1 text-xs text-violet-200 hover:text-white font-medium transition-colors">
+            <Link href="/tasks" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors">
               Alle Aufgaben <ArrowRight size={12} />
             </Link>
           </div>
 
           <div className="p-3 space-y-2.5">
             {importantTasks.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/12 p-6 text-center text-sm text-white/45">
+              <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
                 Keine priorisierten Aufgaben fuer heute.
               </div>
             ) : (
@@ -279,16 +279,16 @@ export function Dashboard() {
                   <div
                     key={task.id}
                     onClick={() => openTaskDetailModal(task)}
-                    className="cursor-pointer rounded-xl border border-white/10 px-4 py-3 hover:border-violet-300/35 hover:bg-white/7 transition-colors"
+                    className="cursor-pointer rounded-xl border border-slate-200 px-4 py-3 hover:border-violet-300/50 hover:bg-violet-50 transition-colors"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white truncate mb-1.5">{task.title}</p>
+                        <p className="text-sm font-medium text-slate-800 truncate mb-1.5">{task.title}</p>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold border ${priorityClass}`}>
                             {priorityLabel}
                           </span>
-                          {dueDate && <span className="text-xs text-white/55">{formatTaskDueLabel(dueDate)}</span>}
+                          {dueDate && <span className="text-xs text-slate-500">{formatTaskDueLabel(dueDate)}</span>}
                           {isOverdue && (
                             <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold bg-red-500/15 text-red-300 border border-red-500/30">
                               Ueberfaellig
@@ -303,7 +303,7 @@ export function Dashboard() {
                           event.stopPropagation();
                           completeTask(task.id);
                         }}
-                        className="flex items-center gap-1.5 rounded-lg bg-emerald-500 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-400 transition-colors flex-shrink-0"
+                        className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-emerald-500 transition-colors flex-shrink-0"
                       >
                         <CheckCircle2 size={12} /> Erledigt
                       </button>
@@ -315,20 +315,20 @@ export function Dashboard() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-white/10 overflow-hidden bg-white/5">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+        <section className="rounded-2xl border border-slate-200 overflow-hidden bg-white/90">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
             <div className="flex items-center gap-2">
               <Calendar size={15} className="text-sky-300" />
-              <p className="font-semibold text-[#f2f4ff] text-sm">Naechste Termine</p>
+              <p className="font-semibold text-slate-800 text-sm">Naechste Termine</p>
             </div>
-            <Link href="/calendar" className="flex items-center gap-1 text-xs text-violet-200 hover:text-white font-medium transition-colors">
+            <Link href="/calendar" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors">
               Zum Kalender <ArrowRight size={12} />
             </Link>
           </div>
 
           <div className="p-3 space-y-2.5">
             {upcomingEvents.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/12 p-6 text-center text-sm text-white/45">
+              <div className="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
                 Keine anstehenden Termine.
               </div>
             ) : (
@@ -339,13 +339,13 @@ export function Dashboard() {
                     key={event.id}
                     type="button"
                     onClick={() => openEventModal(event)}
-                    className="w-full flex items-center justify-between gap-2 rounded-xl border border-white/10 px-4 py-3 hover:border-violet-300/35 hover:bg-white/7 text-left transition-colors"
+                    className="w-full flex items-center justify-between gap-2 rounded-xl border border-slate-200 px-4 py-3 hover:border-violet-300/50 hover:bg-violet-50 text-left transition-colors"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span className="w-2 h-2 rounded-full bg-sky-300 flex-shrink-0" />
-                      <span className="truncate text-sm text-white/85">{event.title}</span>
+                      <span className="truncate text-sm text-slate-700">{event.title}</span>
                     </div>
-                    <span className="text-xs text-white/50 whitespace-nowrap flex-shrink-0">{formatEventLabel(start)}</span>
+                    <span className="text-xs text-slate-500 whitespace-nowrap flex-shrink-0">{formatEventLabel(start)}</span>
                   </button>
                 );
               })
@@ -354,13 +354,13 @@ export function Dashboard() {
         </section>
 
         {activeGoals.length > 0 && (
-          <section className="rounded-2xl border border-white/10 overflow-hidden bg-white/5">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
+          <section className="rounded-2xl border border-slate-200 overflow-hidden bg-white/90">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200">
               <div className="flex items-center gap-2">
                 <Target size={15} className="text-amber-300" />
-                <p className="font-semibold text-[#f2f4ff] text-sm">Aktive Ziele</p>
+                <p className="font-semibold text-slate-800 text-sm">Aktive Ziele</p>
               </div>
-              <Link href="/goals" className="flex items-center gap-1 text-xs text-violet-200 hover:text-white font-medium transition-colors">
+              <Link href="/goals" className="flex items-center gap-1 text-xs text-violet-600 hover:text-violet-700 font-medium transition-colors">
                 Alle Ziele <ArrowRight size={12} />
               </Link>
             </div>
@@ -369,10 +369,10 @@ export function Dashboard() {
               {activeGoals.slice(0, 6).map((goal) => (
                 <div key={goal.id} className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/80 truncate">{goal.title}</span>
-                    <span className="text-xs text-white/55 ml-2 flex-shrink-0">{goal.progress}%</span>
+                    <span className="text-sm text-slate-700 truncate">{goal.title}</span>
+                    <span className="text-xs text-slate-500 ml-2 flex-shrink-0">{goal.progress}%</span>
                   </div>
-                  <div className="w-full h-1.5 rounded-full overflow-hidden bg-white/10">
+                  <div className="w-full h-1.5 rounded-full overflow-hidden bg-slate-200">
                     <div
                       className="h-full rounded-full transition-all duration-700"
                       style={{ width: `${goal.progress}%`, background: goal.color || '#7c3aed' }}

@@ -47,8 +47,8 @@ const getSmartScore = (goal: Goal): number => {
 };
 
 const healthConfig: Record<GoalHealth, { label: string; color: string; dot: string }> = {
-  'on-track': { label: 'On Track', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
-  'at-risk': { label: 'At Risk', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
+  'on-track': { label: 'Im Plan', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20', dot: 'bg-emerald-400' },
+  'at-risk': { label: 'Gefaehrdet', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20', dot: 'bg-amber-400' },
   overdue: { label: 'Überfällig', color: 'bg-red-500/15 text-red-400 border-red-500/20', dot: 'bg-red-400' },
   done: { label: 'Erreicht', color: 'bg-white/08 text-white/40 border-white/10', dot: 'bg-white/30' },
 };
@@ -118,7 +118,7 @@ function GoalCard({ goal }: { goal: Goal }) {
       }
       if (created === 0) alert('Keine neuen Automationen nötig.');
       else alert(`${created} Aufgaben erstellt.`);
-    } catch (e) { alert('Automation fehlgeschlagen.'); }
+    } catch (e) { alert('Automatisierung fehlgeschlagen.'); }
     finally { setBusy(false); }
   };
 
@@ -361,15 +361,15 @@ export default function GoalsPage() {
       }
       if (created === 0) alert('Keine neuen Aufgaben nötig.');
       else alert(`${created} Wochenplan-Aufgaben erstellt.`);
-    } catch { alert('Automation fehlgeschlagen.'); }
+    } catch { alert('Automatisierung fehlgeschlagen.'); }
     finally { setAutomationBusy(false); }
   };
 
   const statCards = [
-    { label: 'On Track', value: goalStats.onTrack, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
-    { label: 'At Risk', value: goalStats.atRisk, color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/20', text: 'text-amber-400' },
+    { label: 'Im Plan', value: goalStats.onTrack, color: 'from-emerald-500/20 to-emerald-600/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
+    { label: 'Gefaehrdet', value: goalStats.atRisk, color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500/20', text: 'text-amber-400' },
     { label: 'Überfällig', value: goalStats.overdue, color: 'from-red-500/20 to-red-600/10', border: 'border-red-500/20', text: 'text-red-400' },
-    { label: 'SMART Ready', value: goalStats.smartReady, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-400' },
+    { label: 'SMART bereit', value: goalStats.smartReady, color: 'from-violet-500/20 to-violet-600/10', border: 'border-violet-500/20', text: 'text-violet-400' },
     { label: 'Wochenaktionen', value: goalStats.weeklyActions, color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500/20', text: 'text-blue-400' },
   ];
 
@@ -410,11 +410,11 @@ export default function GoalsPage() {
         ))}
       </div>
 
-      {/* Automation Board */}
+      {/* Automationszentrale */}
       <div className="rounded-2xl border border-violet-500/20 p-5" style={{ background: 'rgba(124,58,237,0.05)' }}>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={16} className="text-violet-400" />
-          <p className="font-semibold text-white">Automation Board</p>
+          <p className="font-semibold text-white">Automationszentrale</p>
           <p className="text-white/35 text-sm">— Wochenplan & Meilensteine automatisch planen</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -446,8 +446,8 @@ export default function GoalsPage() {
       <div className="flex items-center gap-1">
         {([
           { key: 'all', label: 'Alle' },
-          { key: 'on-track', label: 'On Track' },
-          { key: 'at-risk', label: 'At Risk' },
+          { key: 'on-track', label: 'Im Plan' },
+          { key: 'at-risk', label: 'Gefaehrdet' },
           { key: 'overdue', label: 'Überfällig' },
           { key: 'done', label: 'Erreicht' },
         ] as const).map((tab) => (

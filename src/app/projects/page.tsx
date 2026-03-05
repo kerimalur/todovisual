@@ -96,13 +96,13 @@ function ProjectCard({ project }: { project: Project }) {
 
   const runTimelineAutomation = async () => {
     if (!nextPhase) { alert('Keine offene Phase.'); return; }
-    const title = `Timeline: ${nextPhase.title}`;
+    const title = `Zeitplan: ${nextPhase.title}`;
     if (openTasks.some((t) => t.title.toLowerCase() === title.toLowerCase())) { alert('Aufgabe existiert bereits.'); return; }
     try {
       setBusy(true);
       await createTask({ title, dueDate: nextPhase.targetDate ? new Date(nextPhase.targetDate) : (project.deadline ? new Date(project.deadline) : undefined), priority: project.riskLevel === 'high' ? 'high' : 'medium', status: 'todo', tags: ['projekt', 'timeline'], projectId: project.id, projectIds: [project.id], goalId: linkedGoalIds[0], goalIds: linkedGoalIds });
-      alert('Timeline-Aufgabe erstellt.');
-    } catch { alert('Automation fehlgeschlagen.'); }
+      alert('Zeitplan-Aufgabe erstellt.');
+    } catch { alert('Automatisierung fehlgeschlagen.'); }
     finally { setBusy(false); }
   };
 
@@ -119,7 +119,7 @@ function ProjectCard({ project }: { project: Project }) {
                 <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${cat.color}`}>{cat.label}</span>
                 <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${stat.color}`}>{stat.label}</span>
                 {project.workflowMode === 'timeline' && (
-                  <span className="inline-flex items-center rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-400">Timeline</span>
+                  <span className="inline-flex items-center rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-400">Zeitplan</span>
                 )}
               </div>
               <p className="text-sm mb-3 line-clamp-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{project.description || 'Keine Beschreibung'}</p>
@@ -190,7 +190,7 @@ function ProjectCard({ project }: { project: Project }) {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                <p className="text-sm font-semibold text-white mb-3">Timeline-Phasen</p>
+                <p className="text-sm font-semibold text-white mb-3">Zeitplan-Phasen</p>
                 {phases.length > 0 ? (
                   <div className="space-y-2">
                     {phases.map((phase) => (
@@ -303,15 +303,15 @@ export default function ProjectsPage() {
         const nextPhase = phases.find((ph) => !ph.completed);
         if (!nextPhase) continue;
         const open = tasks.filter((t) => getTaskProjectIds(t).includes(p.id) && t.status !== 'completed');
-        const title = `Timeline: ${nextPhase.title}`;
+        const title = `Zeitplan: ${nextPhase.title}`;
         if (open.some((t) => t.title.toLowerCase() === title.toLowerCase())) continue;
         const goalIds = p.goalIds?.length ? p.goalIds : (p.goalId ? [p.goalId] : []);
         await createTask({ title, dueDate: nextPhase.targetDate ? new Date(nextPhase.targetDate) : (p.deadline ? new Date(p.deadline) : undefined), priority: p.riskLevel === 'high' ? 'high' : 'medium', status: 'todo', tags: ['projekt', 'timeline'], projectId: p.id, projectIds: [p.id], goalId: goalIds[0], goalIds });
         created++;
       }
       if (created === 0) alert('Keine neuen Aufgaben nötig.');
-      else alert(`${created} Timeline-Aufgaben erstellt.`);
-    } catch { alert('Automation fehlgeschlagen.'); }
+      else alert(`${created} Zeitplan-Aufgaben erstellt.`);
+    } catch { alert('Automatisierung fehlgeschlagen.'); }
     finally { setAutomationBusy(false); }
   };
 
@@ -320,7 +320,7 @@ export default function ProjectsPage() {
     { label: 'Pausiert', value: blockedProjects.length, grad: 'from-amber-500/20 to-amber-600/10', bord: 'border-amber-500/20', txt: 'text-amber-400' },
     { label: 'Abgeschlossen', value: completedProjects.length, grad: 'from-blue-500/20 to-blue-600/10', bord: 'border-blue-500/20', txt: 'text-blue-400' },
     { label: 'Deadline ≤ 7 d', value: dueSoonProjects.length, grad: 'from-red-500/20 to-red-600/10', bord: 'border-red-500/20', txt: 'text-red-400' },
-    { label: 'Timeline', value: `${timelineCoverage}%`, grad: 'from-violet-500/20 to-violet-600/10', bord: 'border-violet-500/20', txt: 'text-violet-400' },
+    { label: 'Zeitplan', value: `${timelineCoverage}%`, grad: 'from-violet-500/20 to-violet-600/10', bord: 'border-violet-500/20', txt: 'text-violet-400' },
   ];
 
   return (
@@ -333,7 +333,7 @@ export default function ProjectsPage() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-white">Projekte</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Timeline · Phasen · Delivery</p>
+            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Zeitplan · Phasen · Umsetzung</p>
           </div>
         </div>
         <button onClick={() => openProjectModal()}
@@ -353,11 +353,11 @@ export default function ProjectsPage() {
         ))}
       </div>
 
-      {/* Delivery Board */}
+      {/* Projektuebersicht */}
       <div className="rounded-2xl border border-violet-500/20 p-5" style={{ background: 'rgba(124,58,237,0.05)' }}>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={16} className="text-violet-400" />
-          <p className="font-semibold text-white">Project Delivery Board</p>
+          <p className="font-semibold text-white">Projektuebersicht</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
@@ -374,7 +374,7 @@ export default function ProjectsPage() {
             ) : <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Alle aktiven Projekte haben Aufgaben.</p>}
             <button onClick={() => void runGlobalTimelineAutomation()} disabled={automationBusy}
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40 transition-all">
-              <Wand2 size={12} /> Timeline-Aufgaben erzeugen
+              <Wand2 size={12} /> Zeitplan-Aufgaben erzeugen
             </button>
           </div>
           <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
