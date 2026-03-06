@@ -98,19 +98,19 @@ export default function HabitsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-900/30">
-            <Repeat size={22} className="text-white" />
+            <Repeat size={22} className="text-slate-900" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-white">Gewohnheiten</h1>
-            <p className="text-white/40 text-sm mt-0.5">Tägliche Routinen · Streaks · Wochenansicht</p>
+            <h1 className="text-2xl font-bold text-slate-900">Gewohnheiten</h1>
+            <p className="text-slate-500 text-sm mt-0.5">Tägliche Routinen · Streaks · Wochenansicht</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="px-3 py-2.5 text-sm text-white/60 rounded-xl border border-white/08 focus:outline-none focus:border-violet-500/50 transition-all cursor-pointer"
-            style={{ background: 'rgba(255,255,255,0.04)' }}
+            className="px-3 py-2.5 text-sm text-slate-600 rounded-xl border border-slate-200 focus:outline-none focus:border-violet-500/50 transition-all cursor-pointer"
+            style={{ background: 'rgba(255,255,255,0.95)' }}
             title="Kategorie"
           >
             <option value="all">Alle Kategorien</option>
@@ -132,7 +132,7 @@ export default function HabitsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {statCards.map((card) => (
           <div key={card.label} className={`rounded-2xl border ${card.border} p-4 bg-gradient-to-br ${card.color} card-hover`}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-white/40">{card.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{card.label}</p>
             <p className={`text-3xl font-bold mt-1 ${card.text}`}>
               {card.icon}{card.value}
             </p>
@@ -141,18 +141,18 @@ export default function HabitsPage() {
       </div>
 
       {/* Today Focus */}
-      <div className="rounded-2xl border border-white/08 p-5" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="rounded-2xl border border-slate-200 p-5" style={{ background: 'rgba(255,255,255,0.88)' }}>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+          <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
             <Sparkles size={16} className="text-pink-400" />
             Heute im Fokus
           </h2>
-          <span className="text-xs text-white/30">{format(today, 'EEEE, d. MMMM', { locale: de })}</span>
+          <span className="text-xs text-slate-400">{format(today, 'EEEE, d. MMMM', { locale: de })}</span>
         </div>
 
         {todayHabits.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/10 p-8 text-center">
-            <p className="text-sm text-white/30">Keine aktiven Routinen für heute.</p>
+          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center">
+            <p className="text-sm text-slate-400">Keine aktiven Routinen für heute.</p>
             <button onClick={() => openHabitModal()}
               className="mt-3 flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-xl text-white transition-all hover:opacity-90 mx-auto"
               style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
@@ -172,22 +172,22 @@ export default function HabitsPage() {
                 <div
                   key={habit.id}
                   className={`rounded-xl border p-4 transition-all duration-300 ${
-                    completed ? 'border-emerald-500/25 bg-emerald-500/08' : 'border-white/08 bg-white/02'
+                    completed ? 'border-emerald-500/25 bg-emerald-500/08' : 'border-slate-200 bg-white'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => void toggleHabitCompletion(habit)}
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
-                        completed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/30' : 'bg-white/08 text-white/30 hover:bg-white/12'
+                        completed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-900/30' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
                       }`}
                       title={completed ? 'Offen markieren' : 'Erledigt markieren'}
                     >
                       {completed ? <CheckCircle2 size={18} /> : <Circle size={18} />}
                     </button>
                     <button onClick={() => openHabitModal(habit)} className="text-left flex-1 min-w-0">
-                      <p className={`font-semibold ${completed ? 'text-emerald-300' : 'text-white'}`}>{habit.title}</p>
-                      <p className="text-xs text-white/35 mt-0.5">{freqLabel}</p>
+                      <p className={`font-semibold ${completed ? 'text-emerald-300' : 'text-slate-900'}`}>{habit.title}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{freqLabel}</p>
                     </button>
                   </div>
                   <div className="flex items-center gap-2 mt-3 flex-wrap">
@@ -195,7 +195,7 @@ export default function HabitsPage() {
                       <Flame size={11} /> {streak} Tage
                     </span>
                     {category && (
-                      <span className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-white/08 text-white/40 bg-white/05">
+                      <span className="flex items-center gap-1 px-2.5 py-1 text-xs rounded-lg border border-slate-200 text-slate-500 bg-slate-50">
                         {category.emoji} {category.name}
                       </span>
                     )}
@@ -213,50 +213,50 @@ export default function HabitsPage() {
       </div>
 
       {/* Week View */}
-      <div className="rounded-2xl border border-white/08 p-5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.02)' }}>
+      <div className="rounded-2xl border border-slate-200 p-5 overflow-hidden" style={{ background: 'rgba(255,255,255,0.88)' }}>
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-5">
-          <h2 className="text-base font-semibold text-white flex items-center gap-2">
+          <h2 className="text-base font-semibold text-slate-900 flex items-center gap-2">
             <CalendarDays size={16} className="text-blue-400" />
             Wochenansicht
           </h2>
           <div className="flex items-center gap-2">
             <button onClick={() => setCurrentWeek(subWeeks(currentWeek, 1))}
-              className="p-2 rounded-xl border border-white/08 text-white/40 hover:text-white/70 hover:bg-white/05 transition-all" title="Vorherige Woche">
+              className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all" title="Vorherige Woche">
               <ChevronLeft size={16} />
             </button>
-            <p className="text-sm text-white/60 min-w-[200px] text-center">
+            <p className="text-sm text-slate-600 min-w-[200px] text-center">
               {format(weekStart, 'd. MMM', { locale: de })} – {format(weekEnd, 'd. MMM yyyy', { locale: de })}
             </p>
             <button onClick={() => setCurrentWeek(addWeeks(currentWeek, 1))}
-              className="p-2 rounded-xl border border-white/08 text-white/40 hover:text-white/70 hover:bg-white/05 transition-all" title="Nächste Woche">
+              className="p-2 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all" title="Nächste Woche">
               <ChevronRight size={16} />
             </button>
             <button onClick={() => setCurrentWeek(new Date())}
-              className="px-3 py-2 text-sm font-medium rounded-xl border border-white/08 text-white/50 hover:bg-white/05 hover:text-white/80 transition-all">
+              className="px-3 py-2 text-sm font-medium rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all">
               Diese Woche
             </button>
           </div>
         </div>
 
         {filteredHabits.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-white/10 p-8 text-center text-white/30 text-sm">
+          <div className="rounded-xl border border-dashed border-slate-200 p-8 text-center text-slate-400 text-sm">
             Keine Routinen für diesen Filter.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               {/* Header Row */}
-              <div className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] pb-2 mb-2 border-b border-white/06">
-                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-white/30">Routine</div>
+              <div className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] pb-2 mb-2 border-b border-slate-200">
+                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400">Routine</div>
                 {weekDays.map((day) => (
                   <div key={day.toISOString()} className={`text-center px-2 py-1 rounded-lg ${isToday(day) ? 'bg-violet-500/15' : ''}`}>
-                    <p className="text-[11px] uppercase text-white/30">{format(day, 'EEE', { locale: de })}</p>
-                    <p className={`text-sm font-bold mt-0.5 ${isToday(day) ? 'text-violet-400' : 'text-white/60'}`}>
+                    <p className="text-[11px] uppercase text-slate-400">{format(day, 'EEE', { locale: de })}</p>
+                    <p className={`text-sm font-bold mt-0.5 ${isToday(day) ? 'text-violet-400' : 'text-slate-600'}`}>
                       {format(day, 'd')}
                     </p>
                   </div>
                 ))}
-                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-white/30 text-center">Status</div>
+                <div className="px-3 text-xs font-semibold uppercase tracking-wide text-slate-400 text-center">Status</div>
               </div>
 
               {/* Habit Rows */}
@@ -267,11 +267,11 @@ export default function HabitsPage() {
                 const weeklyLabel = habit.frequency === 'weekly' ? `${completionsThisWeek}/${weeklyTarget}` : `${streak} d`;
 
                 return (
-                  <div key={habit.id} className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] py-2 border-b border-white/04 last:border-b-0 hover:bg-white/01 transition-colors">
+                  <div key={habit.id} className="grid grid-cols-[240px_repeat(7,minmax(60px,1fr))_100px] py-2 border-b border-slate-200 last:border-b-0 hover:bg-white transition-colors">
                     <div className="px-3 flex items-center">
                       <button onClick={() => openHabitModal(habit)} className="text-left">
-                        <p className="font-medium text-white/80 text-sm">{habit.title}</p>
-                        <p className="text-xs text-white/30 mt-0.5">
+                        <p className="font-medium text-slate-700 text-sm">{habit.title}</p>
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {habit.frequency === 'daily' ? 'Täglich' : habit.frequency === 'weekly' ? `${weeklyTarget}x/Woche` : getSpecificDaysLabel(habit.specificDays)}
                         </p>
                       </button>
@@ -289,21 +289,21 @@ export default function HabitsPage() {
                               onClick={() => !inFuture && void toggleHabitCompletion(habit, day)}
                               disabled={inFuture}
                               className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all ${
-                                completed ? 'bg-emerald-500 text-white' : 'bg-white/06 text-white/20 hover:bg-white/10'
+                                completed ? 'bg-emerald-500 text-slate-900' : 'bg-slate-50 text-slate-300 hover:bg-slate-100'
                               } ${inFuture ? 'opacity-30 cursor-not-allowed' : ''}`}
                               title={completed ? 'Offen markieren' : 'Erledigt markieren'}
                             >
                               {completed ? <CheckCircle2 size={15} /> : <Circle size={15} />}
                             </button>
                           ) : (
-                            <span className="text-white/15 text-sm">–</span>
+                            <span className="text-slate-300 text-sm">–</span>
                           )}
                         </div>
                       );
                     })}
 
                     <div className="px-3 flex items-center justify-center">
-                      <span className="text-sm font-semibold text-white/50">{weeklyLabel}</span>
+                      <span className="text-sm font-semibold text-slate-500">{weeklyLabel}</span>
                     </div>
                   </div>
                 );
