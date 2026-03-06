@@ -33,15 +33,15 @@ const categoryConfig: Record<ProjectCategory, { label: string; color: string }> 
   wealth: { label: 'Vermögen', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
   programming: { label: 'Tech', color: 'bg-violet-500/15 text-violet-400 border-violet-500/20' },
   improvement: { label: 'Verbesserung', color: 'bg-purple-500/15 text-purple-400 border-purple-500/20' },
-  other: { label: 'Sonstiges', color: 'bg-slate-50 text-slate-500 border-slate-200' },
+  other: { label: 'Sonstiges', color: 'bg-white/8 text-white/40 border-white/10' },
 };
 
 const statusConfig: Record<Project['status'], { label: string; color: string }> = {
-  planning: { label: 'Planung', color: 'bg-slate-50 text-slate-500 border-slate-200' },
+  planning: { label: 'Planung', color: 'bg-white/8 text-white/50 border-white/10' },
   active: { label: 'Aktiv', color: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' },
   'on-hold': { label: 'Pausiert', color: 'bg-amber-500/15 text-amber-400 border-amber-500/20' },
   completed: { label: 'Abgeschlossen', color: 'bg-blue-500/15 text-blue-400 border-blue-500/20' },
-  archived: { label: 'Archiviert', color: 'bg-slate-50 text-slate-400 border-slate-200' },
+  archived: { label: 'Archiviert', color: 'bg-white/5 text-white/25 border-white/8' },
 };
 
 const getTaskProjectIds = (task: Task): string[] =>
@@ -50,7 +50,7 @@ const getTaskProjectIds = (task: Task): string[] =>
 function DarkProgressBar({ value, max }: { value: number; max: number }) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return (
-    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(148,163,184,0.26)' }}>
+    <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
       <div className="h-full rounded-full transition-all duration-700"
         style={{ width: `${pct}%`, background: 'linear-gradient(90deg, #7c3aed, #a78bfa)' }} />
     </div>
@@ -96,72 +96,72 @@ function ProjectCard({ project }: { project: Project }) {
 
   const runTimelineAutomation = async () => {
     if (!nextPhase) { alert('Keine offene Phase.'); return; }
-    const title = `Zeitplan: ${nextPhase.title}`;
+    const title = `Timeline: ${nextPhase.title}`;
     if (openTasks.some((t) => t.title.toLowerCase() === title.toLowerCase())) { alert('Aufgabe existiert bereits.'); return; }
     try {
       setBusy(true);
       await createTask({ title, dueDate: nextPhase.targetDate ? new Date(nextPhase.targetDate) : (project.deadline ? new Date(project.deadline) : undefined), priority: project.riskLevel === 'high' ? 'high' : 'medium', status: 'todo', tags: ['projekt', 'timeline'], projectId: project.id, projectIds: [project.id], goalId: linkedGoalIds[0], goalIds: linkedGoalIds });
-      alert('Zeitplan-Aufgabe erstellt.');
-    } catch { alert('Automatisierung fehlgeschlagen.'); }
+      alert('Timeline-Aufgabe erstellt.');
+    } catch { alert('Automation fehlgeschlagen.'); }
     finally { setBusy(false); }
   };
 
   return (
     <>
-      <div className={`rounded-2xl border transition-all duration-300 overflow-hidden card-hover ${expanded ? 'border-violet-500/30' : 'border-slate-200'}`}
-        style={{ background: expanded ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.92)' }}>
+      <div className={`rounded-2xl border transition-all duration-300 overflow-hidden card-hover ${expanded ? 'border-violet-500/30' : 'border-white/8'}`}
+        style={{ background: expanded ? 'rgba(124,58,237,0.04)' : 'rgba(255,255,255,0.03)' }}>
 
-        <button onClick={() => setExpanded((v) => !v)} className="w-full text-left p-5 hover:bg-slate-50 transition-colors">
+        <button onClick={() => setExpanded((v) => !v)} className="w-full text-left p-5 hover:bg-white/2 transition-colors">
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-2">
-                <h3 className="text-base font-semibold text-slate-900 truncate">{project.title}</h3>
+                <h3 className="text-base font-semibold text-white truncate">{project.title}</h3>
                 <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${cat.color}`}>{cat.label}</span>
                 <span className={`inline-flex items-center rounded-lg border px-2.5 py-1 text-xs font-semibold ${stat.color}`}>{stat.label}</span>
                 {project.workflowMode === 'timeline' && (
-                  <span className="inline-flex items-center rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-400">Zeitplan</span>
+                  <span className="inline-flex items-center rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 text-xs font-semibold text-violet-400">Timeline</span>
                 )}
               </div>
-              <p className="text-sm mb-3 line-clamp-1" style={{ color: 'rgba(71,85,105,0.72)' }}>{project.description || 'Keine Beschreibung'}</p>
+              <p className="text-sm mb-3 line-clamp-1" style={{ color: 'rgba(255,255,255,0.4)' }}>{project.description || 'Keine Beschreibung'}</p>
 
               <div className="mb-3">
-                <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: 'rgba(71,85,105,0.72)' }}>
+                <div className="flex items-center justify-between text-xs mb-1.5" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   <span>{openTasks.length} offen · {completedTasks.length} erledigt</span>
-                  <span className="font-bold text-slate-900">{progress}%</span>
+                  <span className="font-bold text-white">{progress}%</span>
                 </div>
                 <DarkProgressBar value={progress} max={100} />
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs" style={{ background: 'rgba(148,163,184,0.22)', color: 'rgba(71,85,105,0.72)' }}>
+                <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
                   <Milestone size={11} /> {completedPhases}/{phases.length} Phasen
                 </span>
                 {project.deadline && (
                   <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs ${deadlineRisk ? 'bg-red-500/15 text-red-400 border border-red-500/20' : ''}`}
-                    style={!deadlineRisk ? { background: 'rgba(148,163,184,0.22)', color: 'rgba(71,85,105,0.72)' } : {}}>
+                    style={!deadlineRisk ? { background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' } : {}}>
                     <Calendar size={11} />
                     {format(new Date(project.deadline), 'd. MMM yyyy', { locale: de })}
                     {daysLeft !== null && ` · ${daysLeft >= 0 ? `${daysLeft}d` : `${Math.abs(daysLeft)}d drüber`}`}
                   </span>
                 )}
-                <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs" style={{ background: 'rgba(148,163,184,0.22)', color: 'rgba(71,85,105,0.72)' }}>
+                <span className="inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.4)' }}>
                   <Target size={11} /> {linkedGoals.length} Ziele
                 </span>
               </div>
             </div>
-            <div className="flex-shrink-0 mt-1" style={{ color: 'rgba(100,116,139,0.68)' }}>
+            <div className="flex-shrink-0 mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>
               {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
             </div>
           </div>
         </button>
 
         {expanded && (
-          <div className="border-t p-5 space-y-4 animate-fade-in" style={{ borderColor: 'rgba(148,163,184,0.22)' }}>
+          <div className="border-t p-5 space-y-4 animate-fade-in" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2 flex-wrap">
               <button onClick={() => openProjectModal(project)}
                 className="flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all"
-                style={{ borderColor: 'rgba(148,163,184,0.24)', color: 'rgba(51,65,85,0.78)' }}
-                onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'rgba(148,163,184,0.2)'; }}
+                style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.6)' }}
+                onMouseEnter={(e) => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; }}
                 onMouseLeave={(e) => { (e.target as HTMLElement).style.background = ''; }}>
                 <Edit2 size={12} /> Bearbeiten
               </button>
@@ -179,8 +179,8 @@ function ProjectCard({ project }: { project: Project }) {
               <p className="text-xs font-semibold uppercase tracking-wide text-violet-400 mb-2">Nächster Schritt</p>
               <div className="flex items-center gap-2">
                 <input value={quickTaskTitle} onChange={(e) => setQuickTaskTitle(e.target.value)} placeholder="Konkrete nächste Aufgabe..."
-                  className="flex-1 rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:border-violet-500/50 transition-all"
-                  style={{ background: 'rgba(148,163,184,0.2)' }} />
+                  className="flex-1 rounded-xl border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500/50 transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)' }} />
                 <button onClick={() => void handleQuickTask()}
                   className="flex items-center gap-1 rounded-xl bg-violet-600 px-3 py-2 text-xs font-medium text-white hover:bg-violet-500 transition-all">
                   <Plus size={12} /> Hinzufügen
@@ -189,55 +189,55 @@ function ProjectCard({ project }: { project: Project }) {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-              <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(148,163,184,0.22)', background: 'rgba(255,255,255,0.88)' }}>
-                <p className="text-sm font-semibold text-slate-900 mb-3">Zeitplan-Phasen</p>
+              <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm font-semibold text-white mb-3">Timeline-Phasen</p>
                 {phases.length > 0 ? (
                   <div className="space-y-2">
                     {phases.map((phase) => (
                       <button key={phase.id} onClick={() => void handleTogglePhase(phase.id)}
-                        className="w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left hover:bg-slate-50 transition-all"
-                        style={{ borderColor: 'rgba(148,163,184,0.22)' }}>
+                        className="w-full flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-left hover:bg-white/2 transition-all"
+                        style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                         <div className="min-w-0">
-                          <p className={`text-sm ${phase.completed ? 'line-through' : ''}`} style={{ color: phase.completed ? 'rgba(100,116,139,0.62)' : 'rgba(51,65,85,0.85)' }}>{phase.title}</p>
-                          {phase.targetDate && <p className="text-xs mt-0.5" style={{ color: 'rgba(100,116,139,0.68)' }}>{format(new Date(phase.targetDate), 'd. MMM yyyy', { locale: de })}</p>}
+                          <p className={`text-sm ${phase.completed ? 'line-through' : ''}`} style={{ color: phase.completed ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.7)' }}>{phase.title}</p>
+                          {phase.targetDate && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>{format(new Date(phase.targetDate), 'd. MMM yyyy', { locale: de })}</p>}
                         </div>
-                        <CheckCircle2 size={16} className={phase.completed ? 'text-emerald-400' : ''} style={!phase.completed ? { color: 'rgba(148,163,184,0.5)' } : {}} />
+                        <CheckCircle2 size={16} className={phase.completed ? 'text-emerald-400' : ''} style={!phase.completed ? { color: 'rgba(255,255,255,0.2)' } : {}} />
                       </button>
                     ))}
                   </div>
-                ) : <p className="text-xs" style={{ color: 'rgba(100,116,139,0.62)' }}>Keine Phasen definiert.</p>}
+                ) : <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>Keine Phasen definiert.</p>}
               </div>
 
-              <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(148,163,184,0.22)', background: 'rgba(255,255,255,0.88)' }}>
-                <p className="text-sm font-semibold text-slate-900 mb-3">Verknüpfte Ziele</p>
+              <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                <p className="text-sm font-semibold text-white mb-3">Verknüpfte Ziele</p>
                 {linkedGoals.length > 0 ? (
                   <div className="space-y-2">
                     {linkedGoals.map((g) => (
                       <div key={g.id} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="truncate" style={{ color: 'rgba(51,65,85,0.78)' }}>{g.title}</span>
-                        <span className="text-xs" style={{ color: 'rgba(100,116,139,0.68)' }}>{g.progress}%</span>
+                        <span className="truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{g.title}</span>
+                        <span className="text-xs" style={{ color: 'rgba(255,255,255,0.3)' }}>{g.progress}%</span>
                       </div>
                     ))}
                   </div>
-                ) : <p className="text-xs" style={{ color: 'rgba(100,116,139,0.62)' }}>Kein Ziel verknüpft.</p>}
+                ) : <p className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>Kein Ziel verknüpft.</p>}
               </div>
             </div>
 
             <div>
-              <p className="text-sm font-semibold text-slate-900 mb-3">Aktive Aufgaben</p>
+              <p className="text-sm font-semibold text-white mb-3">Aktive Aufgaben</p>
               {openTasks.length > 0 ? (
                 <div className="space-y-2">
                   {openTasks.slice(0, 6).map((task) => (
                     <button key={task.id} onClick={() => openTaskDetailModal(task)}
-                      className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left hover:bg-slate-50 transition-all"
-                      style={{ borderColor: 'rgba(148,163,184,0.22)' }}>
-                      <span className="text-sm truncate" style={{ color: 'rgba(51,65,85,0.85)' }}>{task.title}</span>
-                      {task.dueDate && <span className="text-xs whitespace-nowrap" style={{ color: 'rgba(100,116,139,0.68)' }}>{format(new Date(task.dueDate), 'd. MMM', { locale: de })}</span>}
+                      className="w-full flex items-center justify-between gap-3 rounded-xl border px-4 py-2.5 text-left hover:bg-white/2 transition-all"
+                      style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                      <span className="text-sm truncate" style={{ color: 'rgba(255,255,255,0.7)' }}>{task.title}</span>
+                      {task.dueDate && <span className="text-xs whitespace-nowrap" style={{ color: 'rgba(255,255,255,0.3)' }}>{format(new Date(task.dueDate), 'd. MMM', { locale: de })}</span>}
                     </button>
                   ))}
                 </div>
               ) : (
-                <div className="rounded-xl border border-dashed px-4 py-3 text-sm" style={{ borderColor: 'rgba(148,163,184,0.26)', color: 'rgba(100,116,139,0.62)' }}>
+                <div className="rounded-xl border border-dashed px-4 py-3 text-sm" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
                   Keine aktive Aufgabe.
                 </div>
               )}
@@ -303,15 +303,15 @@ export default function ProjectsPage() {
         const nextPhase = phases.find((ph) => !ph.completed);
         if (!nextPhase) continue;
         const open = tasks.filter((t) => getTaskProjectIds(t).includes(p.id) && t.status !== 'completed');
-        const title = `Zeitplan: ${nextPhase.title}`;
+        const title = `Timeline: ${nextPhase.title}`;
         if (open.some((t) => t.title.toLowerCase() === title.toLowerCase())) continue;
         const goalIds = p.goalIds?.length ? p.goalIds : (p.goalId ? [p.goalId] : []);
         await createTask({ title, dueDate: nextPhase.targetDate ? new Date(nextPhase.targetDate) : (p.deadline ? new Date(p.deadline) : undefined), priority: p.riskLevel === 'high' ? 'high' : 'medium', status: 'todo', tags: ['projekt', 'timeline'], projectId: p.id, projectIds: [p.id], goalId: goalIds[0], goalIds });
         created++;
       }
       if (created === 0) alert('Keine neuen Aufgaben nötig.');
-      else alert(`${created} Zeitplan-Aufgaben erstellt.`);
-    } catch { alert('Automatisierung fehlgeschlagen.'); }
+      else alert(`${created} Timeline-Aufgaben erstellt.`);
+    } catch { alert('Automation fehlgeschlagen.'); }
     finally { setAutomationBusy(false); }
   };
 
@@ -320,7 +320,7 @@ export default function ProjectsPage() {
     { label: 'Pausiert', value: blockedProjects.length, grad: 'from-amber-500/20 to-amber-600/10', bord: 'border-amber-500/20', txt: 'text-amber-400' },
     { label: 'Abgeschlossen', value: completedProjects.length, grad: 'from-blue-500/20 to-blue-600/10', bord: 'border-blue-500/20', txt: 'text-blue-400' },
     { label: 'Deadline ≤ 7 d', value: dueSoonProjects.length, grad: 'from-red-500/20 to-red-600/10', bord: 'border-red-500/20', txt: 'text-red-400' },
-    { label: 'Zeitplan', value: `${timelineCoverage}%`, grad: 'from-violet-500/20 to-violet-600/10', bord: 'border-violet-500/20', txt: 'text-violet-400' },
+    { label: 'Timeline', value: `${timelineCoverage}%`, grad: 'from-violet-500/20 to-violet-600/10', bord: 'border-violet-500/20', txt: 'text-violet-400' },
   ];
 
   return (
@@ -329,11 +329,11 @@ export default function ProjectsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-violet-900/30">
-            <FolderKanban size={22} className="text-slate-900" />
+            <FolderKanban size={22} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Projekte</h1>
-            <p className="text-sm mt-0.5" style={{ color: 'rgba(71,85,105,0.72)' }}>Zeitplan · Phasen · Umsetzung</p>
+            <h1 className="text-2xl font-bold text-white">Projekte</h1>
+            <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.4)' }}>Timeline · Phasen · Delivery</p>
           </div>
         </div>
         <button onClick={() => openProjectModal()}
@@ -347,48 +347,48 @@ export default function ProjectsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
         {statCards.map((c) => (
           <div key={c.label} className={`rounded-2xl border ${c.bord} p-4 bg-gradient-to-br ${c.grad} card-hover`}>
-            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(71,85,105,0.72)' }}>{c.label}</p>
+            <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.4)' }}>{c.label}</p>
             <p className={`text-3xl font-bold mt-1 ${c.txt}`}>{c.value}</p>
           </div>
         ))}
       </div>
 
-      {/* Projektübersicht */}
+      {/* Delivery Board */}
       <div className="rounded-2xl border border-violet-500/20 p-5" style={{ background: 'rgba(124,58,237,0.05)' }}>
         <div className="flex items-center gap-2 mb-4">
           <Sparkles size={16} className="text-violet-400" />
-          <p className="font-semibold text-slate-900">Projektübersicht</p>
+          <p className="font-semibold text-white">Project Delivery Board</p>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(148,163,184,0.22)', background: 'rgba(255,255,255,0.88)' }}>
+          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
             <p className="text-xs font-semibold uppercase tracking-wide text-amber-400 mb-2">Ohne nächsten Schritt</p>
             {withoutNextStep.length > 0 ? (
               <div className="space-y-2 mb-3">
                 {withoutNextStep.map((p) => (
                   <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate" style={{ color: 'rgba(51,65,85,0.78)' }}>{p.title}</span>
+                    <span className="truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{p.title}</span>
                     <span className="text-xs text-amber-400">0 Aufgaben</span>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm mb-3" style={{ color: 'rgba(100,116,139,0.68)' }}>Alle aktiven Projekte haben Aufgaben.</p>}
+            ) : <p className="text-sm mb-3" style={{ color: 'rgba(255,255,255,0.3)' }}>Alle aktiven Projekte haben Aufgaben.</p>}
             <button onClick={() => void runGlobalTimelineAutomation()} disabled={automationBusy}
               className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40 transition-all">
-              <Wand2 size={12} /> Zeitplan-Aufgaben erzeugen
+              <Wand2 size={12} /> Timeline-Aufgaben erzeugen
             </button>
           </div>
-          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(148,163,184,0.22)', background: 'rgba(255,255,255,0.88)' }}>
+          <div className="rounded-xl border p-4" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
             <p className="text-xs font-semibold uppercase tracking-wide text-red-400 mb-2">Deadline-Risiko</p>
             {dueSoonProjects.length > 0 ? (
               <div className="space-y-2">
                 {dueSoonProjects.slice(0, 6).map((p) => (
                   <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
-                    <span className="truncate" style={{ color: 'rgba(51,65,85,0.78)' }}>{p.title}</span>
+                    <span className="truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{p.title}</span>
                     <span className="text-xs text-red-400">{p.deadline ? format(new Date(p.deadline), 'd. MMM', { locale: de }) : '–'}</span>
                   </div>
                 ))}
               </div>
-            ) : <p className="text-sm" style={{ color: 'rgba(100,116,139,0.68)' }}>Keine kurzfristigen Risiken.</p>}
+            ) : <p className="text-sm" style={{ color: 'rgba(255,255,255,0.3)' }}>Keine kurzfristigen Risiken.</p>}
           </div>
         </div>
       </div>
@@ -396,20 +396,20 @@ export default function ProjectsPage() {
       {/* Filter + Search */}
       <div className="flex flex-col lg:flex-row gap-3">
         <div className="relative flex-1">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(100,116,139,0.68)' }} />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }} />
           <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Projekte durchsuchen..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm text-slate-900 rounded-xl border focus:outline-none transition-all"
-            style={{ background: 'rgba(255,255,255,0.95)', borderColor: 'rgba(148,163,184,0.26)' }} />
+            className="w-full pl-9 pr-4 py-2.5 text-sm text-white rounded-xl border focus:outline-none transition-all"
+            style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }} />
         </div>
         <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value as ProjectCategory | 'all')}
           className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none transition-all cursor-pointer"
-          style={{ background: 'rgba(255,255,255,0.95)', borderColor: 'rgba(148,163,184,0.26)', color: 'rgba(51,65,85,0.78)' }} title="Kategorie">
+          style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }} title="Kategorie">
           <option value="all">Alle Kategorien</option>
           {Object.entries(categoryConfig).map(([key, cfg]) => <option key={key} value={key}>{cfg.label}</option>)}
         </select>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as ProjectFilterStatus)}
           className="px-3 py-2.5 text-sm rounded-xl border focus:outline-none transition-all cursor-pointer"
-          style={{ background: 'rgba(255,255,255,0.95)', borderColor: 'rgba(148,163,184,0.26)', color: 'rgba(51,65,85,0.78)' }} title="Status">
+          style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.6)' }} title="Status">
           <option value="all">Alle Status</option>
           <option value="planning">Planung</option>
           <option value="active">Aktiv</option>
@@ -432,13 +432,13 @@ export default function ProjectsPage() {
             .map((project) => <ProjectCard key={project.id} project={project} />)}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed p-12 text-center" style={{ borderColor: 'rgba(148,163,184,0.24)' }}>
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(255,255,255,0.95)' }}>
-            <FolderKanban size={24} style={{ color: 'rgba(148,163,184,0.5)' }} />
+        <div className="rounded-2xl border border-dashed p-12 text-center" style={{ borderColor: 'rgba(255,255,255,0.1)' }}>
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(255,255,255,0.04)' }}>
+            <FolderKanban size={24} style={{ color: 'rgba(255,255,255,0.2)' }} />
           </div>
-          <p className="text-sm mb-4" style={{ color: 'rgba(100,116,139,0.7)' }}>Keine Projekte gefunden.</p>
+          <p className="text-sm mb-4" style={{ color: 'rgba(255,255,255,0.35)' }}>Keine Projekte gefunden.</p>
           <button onClick={() => openProjectModal()}
-            className="px-4 py-2 rounded-xl text-sm font-medium text-slate-900 transition-all hover:opacity-90"
+            className="px-4 py-2 rounded-xl text-sm font-medium text-white transition-all hover:opacity-90"
             style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
             Projekt erstellen
           </button>
